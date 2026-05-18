@@ -4,6 +4,50 @@ Home Assistant Add-on für die Verwaltung einer nachbarschaftlichen EV-Ladestati
 
 ---
 
+## Für wen ist das?
+
+Du hast eine PV-Anlage, eine Wallbox – und Nachbarn, die gerne günstiger laden würden?
+
+**Nachbarschaft-Laden** macht genau das möglich: Der Ladepreis sinkt automatisch, wenn gerade viel Sonne scheint. Per RFID-Karte wird jeder Ladevorgang einem Nutzer zugeordnet und abgerechnet. Kein Cloud-Dienst, keine Abonnements – alles läuft lokal in Home Assistant.
+
+<p align="center">
+  <img src="docs/flyer_instagram.png" width="480" alt="Nachbarschaft-Laden Projektübersicht"/>
+</p>
+
+---
+
+## Screenshots
+
+### Web-Dashboard
+
+Der aktuelle Ladepreis, der Tagesverlauf und die PV-Prognose für die nächsten drei Tage – alles auf einen Blick im Browser, ohne App.
+
+<p align="center">
+  <img src="docs/mockup_startseite.png" width="280" alt="Web-Dashboard Startseite"/>
+</p>
+
+- **Grün** = günstiger Preis (viel PV-Überschuss)
+- **Gelb** = mittlerer Preis
+- **Rot** = teurer Preis (Netzbezug)
+- Die **beste Ladezeit** des Tages wird automatisch berechnet und hervorgehoben
+
+### E-Paper-Display
+
+Ein Waveshare 7,5"-Display am Eingang zeigt immer den aktuellen Ladepreis, die PV-Prognose als Smiley-Skala und den laufenden Ladevorgang an – auch ohne Smartphone oder Browser.
+
+<p align="center">
+  <img src="docs/mockup_epaper.png" width="360" alt="E-Paper-Display Vorschau"/>
+</p>
+
+- **😄 Sehr glücklich** = voller PV-Überschuss, günstigster Preis
+- **🙂 Glücklich** = guter Überschuss
+- **😐 Neutral** = gemischte Bedingungen
+- **😞 Traurig** = wenig PV, hoher Netzanteil
+
+Das Display aktualisiert sich alle 60 Sekunden automatisch. Es läuft auf einem ESP32 via ESPHome und benötigt keinen eigenen Server.
+
+---
+
 ## Funktionen
 
 - **Dynamischer Ladepreis** – berechnet in Echtzeit aus Netzleistung, Wallbox-Leistung und Batterieentladung
