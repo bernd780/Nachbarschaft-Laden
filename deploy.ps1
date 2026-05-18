@@ -1,4 +1,4 @@
-﻿$HA_HOST     = "192.168.198.25"
+﻿$HA_HOST     = "<HA-IP-ADRESSE>"
 $HA_USER     = "root"
 $AD_APPS     = "/addon_configs/a0d7b954_appdaemon/apps"
 $HA_WWW      = "/homeassistant/www/nachbarschaft-laden"
