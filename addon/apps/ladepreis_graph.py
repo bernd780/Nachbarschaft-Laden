@@ -279,6 +279,12 @@ class LadepreisGraph(hass.Hass):
         os.replace(tmp, out)
         self.log(f"Display-Preview gespeichert: {out}")
 
+        # HA-Kamera-Entity liest noch aus dem alten Pfad – dort ebenfalls schreiben
+        legacy_dir = "/homeassistant/www/nachbarschaftsladen"
+        if os.path.isdir(legacy_dir):
+            import shutil
+            shutil.copy2(out, os.path.join(legacy_dir, "display_preview.png"))
+
     def _berechne_ladepreis(self):
         """Dynamischer Ladepreis basierend auf PV-Überschuss (ct/kWh)."""
         zaehler_w = self._float_safe(self.S_NETZLEISTUNG)
