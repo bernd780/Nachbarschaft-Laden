@@ -1,6 +1,6 @@
 ﻿name: "Nachbarschaft-Laden"
 description: "EV-Lademanagement: Ladepreis-Visualisierung, Session-Tracking und E-Paper Display für den Nachbarschaft-Laden."
-version: "1.0.1"
+version: "1.0.2"
 slug: "nachbarschaft_laden"
 init: false
 homeassistant_api: true

@@ -36,15 +36,26 @@ Der aktuelle Ladepreis, der Tagesverlauf und die PV-Prognose für die nächsten 
 Ein Waveshare 7,5"-Display am Eingang zeigt immer den aktuellen Ladepreis, die PV-Prognose als Smiley-Skala und den laufenden Ladevorgang an – auch ohne Smartphone oder Browser.
 
 <p align="center">
-  <img src="docs/mockup_epaper.png" width="360" alt="E-Paper-Display Vorschau"/>
+  <img src="docs/foto_epaper.jpg" width="360" alt="E-Paper-Display in Betrieb"/>
 </p>
 
+<p align="center">
+  <img src="docs/mockup_epaper.png" width="240" alt="E-Paper-Display Vorschau (generiert)"/>
+</p>
+
+Das Display zeigt auf einen Blick alles, was Nachbarn am Ladepunkt wissen müssen:
+
+**Oben:** Der aktuelle Ladepreis in ct/kWh – groß und gut lesbar, auch aus etwas Entfernung.
+
+**Mitte:** Die PV-Überschuss-Prognose als Smiley-Skala für die nächsten drei Tage, jeweils mit dem erwarteten Ertrag in kWh:
 - **😄 Sehr glücklich** = voller PV-Überschuss, günstigster Preis
 - **🙂 Glücklich** = guter Überschuss
 - **😐 Neutral** = gemischte Bedingungen
 - **😞 Traurig** = wenig PV, hoher Netzanteil
 
-Das Display aktualisiert sich alle 60 Sekunden automatisch. Es läuft auf einem ESP32 via ESPHome und benötigt keinen eigenen Server.
+**Unten:** Uhrzeit und Datum, ein QR-Code direkt zur Weboberfläche mit dem Preisverlauf und dem Ladeprotokoll sowie das Projektlogo.
+
+Das Display aktualisiert sich alle 60 Sekunden automatisch (alle 5 Sekunden partiell). Es läuft auf einem ESP32 via ESPHome, zieht das Bild direkt von Home Assistant und benötigt keinen eigenen Server.
 
 ---
 

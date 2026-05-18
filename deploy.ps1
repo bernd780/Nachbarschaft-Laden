@@ -75,6 +75,7 @@ if ($target -in "all", "www") {
     Deploy "www\rechner.html"                 "$HA_WWW/rechner.html"
     Deploy "www\display_preview_viewer.html"  "$HA_WWW/display_preview_viewer.html"
     Deploy "www\display.html"                 "$HA_WWW/display.html"
+    Deploy "www\robots.txt"                   "$HA_WWW/robots.txt"
 }
 
 Write-Host "`nFertig." -ForegroundColor Green
