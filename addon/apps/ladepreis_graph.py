@@ -332,7 +332,7 @@ class LadepreisGraph(hass.Hass):
             cx = col_w * i + col_w // 2
             self.draw_smiley(draw, cx, cy_sm, radius, surplus)
 
-        output_path = "/homeassistant/www/display_combined.png"
+        output_path = os.path.join(self.WWW_DIR, "display_combined.png")
         tmp_path    = output_path + ".tmp"
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         img_gray = img.convert("L")
