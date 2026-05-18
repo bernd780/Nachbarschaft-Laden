@@ -266,7 +266,7 @@ class LadepreisGraph(hass.Hass):
             self.draw_smiley(draw, cx, cy_sm, radius, surplus)
 
         # 1-bit PNG atomar speichern (invertiert, für E-Paper)
-        output_path = "/homeassistant/www/display_combined.png"
+        output_path = "/homeassistant/www/nachbarschaft-laden/display_combined.png"
         tmp_path    = output_path + ".tmp"
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         img_gray = img.convert("L")
