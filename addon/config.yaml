@@ -64,7 +64,10 @@ options:
   sessions_passwort: ""
 
   # RFID-Benutzer (Liste)
-  rfid_benutzer: []
+  rfid_benutzer:
+    - rfid: "BEISPIEL_KARTE"
+      name: "Max Mustermann"
+      payment_helper: "input_number.nl_bezahlt_max_mustermann"
 
 schema:
   sensor_netzleistung: str
