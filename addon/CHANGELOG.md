@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.3
+
+- Startseite: Ersparnis-Rechner-Karte optisch unauffälliger
+- Fix: display_combined.png wird im korrekten Modulpfad gespeichert
+- Beispiel-Benutzer (Max Mustermann) in Konfiguration und sessions.json voreingestellt
+- Fix: ladepreis_max/min dynamisch aus Konfiguration, nicht mehr hardcodiert
+- MIT-Lizenz hinzugefügt
+
 ## 1.0.2
 
 - Sessions-Seite: Passwortschutz-Option

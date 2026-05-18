@@ -1,6 +1,6 @@
 ﻿name: "Nachbarschaft-Laden"
 description: "EV-Lademanagement: Ladepreis-Visualisierung, Session-Tracking und E-Paper Display für den Nachbarschaft-Laden."
-version: "1.0.2"
+version: "1.0.3"
 slug: "nachbarschaft_laden"
 url: "https://github.com/bernd780/Nachbarschaft-Laden"
 init: false
