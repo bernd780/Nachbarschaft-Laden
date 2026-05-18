@@ -1,0 +1,22 @@
+﻿# Secrets & Credentials
+deploy.env.ps1
+epaper/secrets.yaml
+
+# Claude Code lokale Einstellungen (enthalten IPs, SSH-Befehle)
+.claude/
+
+# Generierte / temporaere Dateien
+dashboard_full.json
+dashboard_updated.json
+lovelace_restore.json
+index_b64.yaml
+index_b64_p1.yaml
+index_b64_p2.yaml
+sessions_b64.yaml
+*.tmp
+logo_display_tmp.png
+
+# AppDaemon One-Shot-Skripte (nur fuer lokale Einmalausfuehrung)
+appdeamon/inject_sessions_once.py
+appdeamon/remove_session_once.py
+appdeamon/backfill_history_once.py

@@ -1,0 +1,95 @@
+﻿name: "Nachbarschaft-Laden"
+description: "EV-Lademanagement: Ladepreis-Visualisierung, Session-Tracking und E-Paper Display für den Nachbarschaft-Laden."
+version: "1.0.1"
+slug: "nachbarschaft_laden"
+init: false
+homeassistant_api: true
+hassio_api: true
+
+map:
+  - homeassistant_config:rw
+
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+
+options:
+  # Preisberechnung – Eingangssensoren
+  sensor_netzleistung: "sensor.leistung_stromzaehler"
+  sensor_wallbox_leistung: "sensor.go_echarger_XXXXXX_nrg_12"
+  sensor_batterie_leistung: "sensor.summe_battery_leistung"
+
+  # Preisberechnung – Konstanten (alle in ct/kWh bzw. kW)
+  preis_einspeiseverguetung_ct: 8.0
+  preis_marge_ct: 6.0
+  preis_netzbezug_ct: 30.0
+  preis_zielleistung_kw: 11.0
+
+  # PV-Prognose (kWh-Ertrag pro Tag)
+  sensor_pv_morgen: "sensor.morgenpv"
+  sensor_pv_uebermorgen: "sensor.uebermorgenpv"
+  sensor_pv_in3tagen: "sensor.pvin3tagen"
+  sensor_pv_erzeugung_heute: "sensor.pv_erzeugung_heute"
+
+  # Fahrzeug & Ladestation
+  sensor_fahrzeug_akku: "sensor.mein_fahrzeug_battery"
+  sensor_ladegeraet_status: "sensor.go_echarger_XXXXXX_car"
+  sensor_zaehlerstand_kwh: "sensor.go_echarger_XXXXXX_eto"
+  sensor_kosten_integral: "sensor.go_echarger_kosten_integral_2"
+  sensor_rfid_karte: "select.go_echarger_XXXXXX_trx"
+
+  # evcc-Sensoren (optional – nur wenn evcc installiert ist)
+  sensor_session_energie: ""
+  sensor_session_dauer: ""
+  sensor_session_soc: ""
+
+  # Standardwerte für Überschussberechnung
+  hausverbrauch_kwh: 10.0
+  ladeziel_soc: 80
+
+  # Optional: HA-Entity überschreibt den Standardwert (leer lassen wenn nicht benötigt)
+  helper_hausverbrauch: ""
+  helper_ladeziel_soc: ""
+
+  # Ausgabe & Darstellung
+  basis_url: "https://nachbarschaft-laden.de"
+  qr_code_url: "https://nachbarschaft-laden.de/local/nachbarschaft-laden/index.html"
+  web_unterverzeichnis: "nachbarschaft-laden"
+
+  # RFID-Benutzer (Liste)
+  rfid_benutzer: []
+
+schema:
+  sensor_netzleistung: str
+  sensor_wallbox_leistung: str
+  sensor_batterie_leistung: str
+  preis_einspeiseverguetung_ct: float
+  preis_marge_ct: float
+  preis_netzbezug_ct: float
+  preis_zielleistung_kw: float
+  sensor_pv_morgen: str
+  sensor_pv_uebermorgen: str
+  sensor_pv_in3tagen: str
+  sensor_pv_erzeugung_heute: str
+  sensor_fahrzeug_akku: str
+  sensor_ladegeraet_status: str
+  sensor_zaehlerstand_kwh: str
+  sensor_kosten_integral: str
+  sensor_rfid_karte: str
+  sensor_session_energie: str
+  sensor_session_dauer: str
+  sensor_session_soc: str
+  hausverbrauch_kwh: float
+  ladeziel_soc: int
+  helper_hausverbrauch: str
+  helper_ladeziel_soc: str
+  basis_url: str
+  qr_code_url: str
+  web_unterverzeichnis: str
+  rfid_benutzer:
+    - rfid: str
+      name: str
+      payment_helper: str

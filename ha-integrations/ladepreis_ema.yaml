@@ -1,0 +1,58 @@
+# Nachbarschaft-Laden – EMA-Ladepreissensoren
+
+template:
+  - trigger:
+      - platform: state
+        entity_id: sensor.sensor_expgldurchschnitt_ema_asymalpha2
+    sensor:
+      - name: "expgldurchschnitt_ema_asymalpha"
+        unique_id: "expgldurchschnitt_ema_asymalpha_yaml"
+        unit_of_measurement: "ct/kWh"
+        state_class: measurement
+        state: >
+          {% set v = states('sensor.sensor_expgldurchschnitt_ema_asymalpha2') | float(none) %}
+          {% if v is none %}
+            36
+          {% elif v >= 35 %}
+            36
+          {% else %}
+            {{ v }}
+          {% endif %}
+
+  - trigger:
+      - platform: state
+        entity_id: sensor.dynamischer_ladepreis
+    sensor:
+      - name: "ladepreis_ema"
+        unique_id: "ladepreis_ema"
+        unit_of_measurement: "ct/kWh"
+        state_class: measurement
+        device_class: monetary
+        state: >
+          {% set aktuell = states('sensor.dynamischer_ladepreis') | float(36) %}
+          {% set ema     = states('sensor.ladepreis_ema') | float(aktuell) %}
+
+          {% if aktuell >= 36 %}
+            {# Kein PV / Maximalpreis: sofort auf 36, kein Smoothing nötig #}
+            {{ 36.0 }}
+          {% elif aktuell > ema %}
+            {# Preis steigt: schnell folgen #}
+            {% set alpha = 0.3 %}
+            {% set neu = (alpha * aktuell + (1 - alpha) * ema) | round(2) %}
+            {# Verbotszone 35–36 überspringen #}
+            {% if neu > 35 and neu < 36 %}
+              {{ 36.0 }}
+            {% else %}
+              {{ neu }}
+            {% endif %}
+          {% else %}
+            {# Preis fällt: langsam folgen #}
+            {% set alpha = 0.05 %}
+            {% set neu = (alpha * aktuell + (1 - alpha) * ema) | round(2) %}
+            {# Verbotszone 35–36 überspringen #}
+            {% if neu > 35 and neu < 36 %}
+              {{ 35.0 }}
+            {% else %}
+              {{ neu }}
+            {% endif %}
+          {% endif %}

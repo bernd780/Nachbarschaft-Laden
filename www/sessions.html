@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Ladesessions – Nachbarschaft-Laden</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script>(function(){
+  const t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
+  const _cfg = '1ff727d329c253b00d5194ac3faf636d55dfcd14e0da612bd561372021c5ad6f';
+  const supplied = new URLSearchParams(location.search).get('key');
+  if (supplied) {
+    crypto.subtle.digest('SHA-256', new TextEncoder().encode(supplied))
+      .then(b => { if ([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')===_cfg) { sessionStorage.setItem('nl_access','1'); location.replace(location.pathname); } });
+  }
+  if (!sessionStorage.getItem('nl_access')) {
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.innerHTML = `
+        <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);font-family:'DM Sans',sans-serif;padding:1.5rem;">
+          <div style="text-align:center;max-width:340px;width:100%;">
+            <div style="font-size:2.5rem;margin-bottom:1rem;">🔒</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--green);margin-bottom:.5rem;">Nachbarschaft-Laden</div>
+            <p style="color:var(--muted);font-size:.88rem;margin-bottom:1.75rem;line-height:1.5;">Bitte gib deinen Zugangscode ein.</p>
+            <div style="display:flex;gap:.6rem;">
+              <input id="key-input" type="password" placeholder="Zugangscode"
+                style="flex:1;padding:.7rem 1rem;border:1.5px solid var(--border);border-radius:10px;font-size:1rem;font-family:'DM Sans',sans-serif;background:var(--card);color:var(--ink);outline:none;"
+                onkeydown="if(event.key==='Enter')unlock()">
+              <button onclick="unlock()"
+                style="padding:.7rem 1.1rem;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;">
+                →
+              </button>
+            </div>
+            <div id="key-error" style="color:#c62828;font-size:.82rem;margin-top:.6rem;min-height:1.2em;"></div>
+          </div>
+        </div>`;
+      document.getElementById('key-input').focus();
+    });
+  }
+})();
+function unlock() {
+  const _cfg = '1ff727d329c253b00d5194ac3faf636d55dfcd14e0da612bd561372021c5ad6f';
+  const val = document.getElementById('key-input').value.trim();
+  crypto.subtle.digest('SHA-256', new TextEncoder().encode(val)).then(b => {
+    const hex = [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+    if (hex === _cfg) {
+      sessionStorage.setItem('nl_access', '1');
+      location.replace(location.pathname);
+    } else {
+      document.getElementById('key-error').textContent = 'Falscher Code – bitte nochmal versuchen.';
+      document.getElementById('key-input').select();
+    }
+  });
+}</script>
+<style>
+  :root {
+    --green:#2d6a4f; --green2:#40916c; --green3:#74c69d; --green4:#d8f3dc;
+    --amber:#e07b00; --amber2:#ffd166;
+    --red:#c62828; --red2:#ffb3b3;
+    --ink:#1a1a1a; --muted:#5a6a5e; --bg:#f4f7f5; --card:#fff; --border:#d0ddd4; --radius:18px;
+  }
+  [data-theme="dark"] {
+    --green:#74c69d; --green2:#52b788; --green3:#2d6a4f; --green4:#0d2318;
+    --amber:#ffd166; --amber2:#c87000;
+    --red:#ff9a9a; --red2:#3d1010;
+    --ink:#ddeee4; --muted:#7a9a84;
+    --bg:#111a15; --card:#1b2c20; --border:#2a4030;
+  }
+  [data-theme="dark"] .filter-bar select,
+  [data-theme="dark"] .filter-bar input { background: #1b2c20; color: var(--ink); }
+  [data-theme="dark"] tbody tr:hover { background: rgba(255,255,255,.04); }
+  [data-theme="dark"] .chart-box { background: #1b2c20; }
+  [data-theme="dark"] .chart-close { color: var(--muted); }
+  .badge-offen     { background:#fef9ec; color:var(--amber); border:1px solid var(--amber2); border-radius:6px; padding:.15rem .5rem; font-size:.75rem; font-weight:600; }
+  .badge-beglichen { background:var(--green4); color:var(--green2); border:1px solid var(--green3); border-radius:6px; padding:.15rem .5rem; font-size:.75rem; font-weight:600; }
+  [data-theme="dark"] .badge-offen { background:#2a1e00; color:#ffd166; border-color:#c87000; }
+  [data-theme="dark"] .chart-close:hover { color: var(--ink); }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { overflow-x: hidden; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); max-width: 100%; }
+
+  header { background: var(--green); color: #fff; padding: 2rem 1.5rem 1.5rem; }
+  .header-inner { max-width: 900px; margin: 0 auto; }
+  header h1 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; margin-bottom: .4rem; }
+  header p  { font-size: .9rem; opacity: .8; }
+  header a  { color: var(--green3); text-decoration: none; font-size: .85rem; }
+
+  main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; display: grid; gap: 1.25rem; }
+  main > * { min-width: 0; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+  .card-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--green); margin-bottom: 1rem; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: .75rem; }
+  .stat-box { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: .9rem 1rem; }
+  .stat-label { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: .3rem; }
+  .stat-val { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--green); line-height: 1; }
+  .stat-val.amber { color: var(--amber); }
+  .stat-sub { font-size: .72rem; color: var(--muted); margin-top: .2rem; }
+
+  .filter-bar { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
+  .filter-bar select, .filter-bar input {
+    padding: .45rem .75rem; border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: .85rem; background: #fff; color: var(--ink);
+  }
+  .filter-bar select:focus, .filter-bar input:focus { outline: 2px solid var(--green3); }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+  thead th { text-align: left; font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: .5rem .75rem; border-bottom: 2px solid var(--border); white-space: nowrap; }
+  tbody td { padding: .6rem .75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:hover { background: var(--bg); }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .vehicle-pill { display: inline-block; padding: .2rem .6rem; border-radius: 50px; font-size: .75rem; font-weight: 600; background: var(--green4); color: var(--green); }
+
+  /* Preis-Zelle klickbar */
+  .price-ct {
+    cursor: pointer;
+    color: var(--green);
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+  }
+  .price-ct:hover { color: var(--green2); }
+  .price-ct.no-chart { cursor: default; text-decoration: none; color: inherit; }
+
+  .empty { text-align: center; padding: 3rem; color: var(--muted); font-size: .9rem; }
+  footer { text-align: center; font-size: .72rem; color: var(--muted); padding: .5rem 0 2rem; }
+
+  @media(max-width:600px) {
+    .col-dauer { display: none; }
+    thead th { padding: .4rem .5rem; font-size: .65rem; }
+    tbody td { padding: .5rem .5rem; font-size: .8rem; }
+    .filter-bar select { flex: 1; min-width: 0; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .theme-toggle { position: absolute; top: 1rem; right: 1.25rem; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); color: #fff; border-radius: 50%; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+  .theme-toggle:hover { background: rgba(255,255,255,.25); }
+
+  /* Modal */
+  #chart-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  #chart-modal.open { display: flex; }
+  .chart-box {
+    background: #fff;
+    border-radius: 18px;
+    padding: 1.5rem;
+    max-width: 500px;
+    width: 92%;
+    box-shadow: 0 8px 40px rgba(0,0,0,.2);
+  }
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+  .chart-header strong {
+    font-family: 'DM Serif Display', serif;
+    color: var(--green);
+    font-size: 1.1rem;
+  }
+  .chart-header small { display: block; font-size: .75rem; color: var(--muted); margin-top: .2rem; }
+  .chart-close {
+    background: none; border: none; font-size: 1.6rem; cursor: pointer;
+    color: var(--muted); line-height: 1; padding: 0 .2rem;
+  }
+  .chart-close:hover { color: var(--ink); }
+  #chart-svg-wrap { width: 100%; }
+  #chart-svg-wrap svg { width: 100%; height: auto; display: block; }
+  .chart-avg {
+    margin-top: .75rem;
+    font-size: .8rem;
+    color: var(--muted);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header style="position:relative;">
+  <div class="header-inner">
+    <h1>Ladesessions</h1>
+    <p>Übersicht aller erfassten Ladevorgänge · <a href="index.html">← Zurück zur Startseite</a></p>
+  </div>
+  <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Dark/Light Mode">🌙</button>
+</header>
+
+<main>
+
+  <!-- Statistiken -->
+  <div class="card">
+    <div class="card-title">Gesamtübersicht</div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">Sessions</div>
+        <div class="stat-val" id="stat-count">–</div>
+        <div class="stat-sub">erfasste Ladevorgänge</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Energie gesamt</div>
+        <div class="stat-val" id="stat-energy">–</div>
+        <div class="stat-sub">kWh geladen</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Kosten gesamt</div>
+        <div class="stat-val amber" id="stat-cost">–</div>
+        <div class="stat-sub">Euro</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Ø Preis</div>
+        <div class="stat-val" id="stat-avg-price">–</div>
+        <div class="stat-sub">ct/kWh</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Ø pro Session</div>
+        <div class="stat-val" id="stat-avg-kwh">–</div>
+        <div class="stat-sub">kWh</div>
+      </div>
+    </div>
+    <div id="offener-betrag-box" style="display:none; margin-top:1.25rem;">
+      <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.75rem;">Offener Betrag</div>
+      <div id="offener-betrag-inhalt"></div>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="card">
+    <div class="filter-bar">
+      <select id="filter-vehicle">
+        <option value="">Alle Benutzer</option>
+      </select>
+      <select id="filter-period">
+        <option value="all">Gesamter Zeitraum</option>
+        <option value="30">Letzte 30 Tage</option>
+        <option value="7">Letzte 7 Tage</option>
+      </select>
+      <input type="text" id="filter-search" placeholder="Suchen…" style="flex:1;min-width:120px;">
+    </div>
+  </div>
+
+  <!-- Tabelle -->
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Uhrzeit</th>
+            <th>Benutzer</th>
+            <th>Energie</th>
+            <th>Kosten</th>
+            <th title="Klick für Preisverlauf">ct/kWh ↗</th>
+            <th class="col-dauer">Dauer</th>
+          </tr>
+        </thead>
+        <tbody id="sessions-body">
+          <tr><td colspan="7" class="empty">Wird geladen…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p style="max-width:640px;margin:0 auto 0.6rem;line-height:1.6;">
+    ⚡ Die angezeigte Energiemenge wird vom integrierten Zähler des go-eChargers auf der Netzseite erfasst – vor dem fahrzeugeigenen Ladegerät (OBC). Der go-eCharger misst dabei sehr präzise und liefert eine zuverlässige Grundlage für die Kostenabrechnung.
+    Durch Umwandlungsverluste im OBC kann das Fahrzeugdisplay typischerweise <strong>5–10 %</strong> weniger anzeigen – das ist physikalisch bedingt und kein Fehler der Messung.
+    <a href="https://www.adac.de/rund-ums-fahrzeug/elektromobilitaet/laden/ladeverluste-elektroauto-studie/" target="_blank" rel="noopener" style="color:inherit;opacity:.6;white-space:nowrap;">[Quelle: ADAC]</a>
+    &thinsp;·&thinsp;
+    <a href="https://go-e.com/de-at/magazin/wallbox-mit-mid" target="_blank" rel="noopener" style="color:inherit;opacity:.6;white-space:nowrap;">[go-e: Wallbox-Zähler]</a>
+  </p>
+  Nachbarschaft-Laden · Ladesessions
+</footer>
+
+<!-- Preisverlauf-Modal -->
+<div id="chart-modal" role="dialog" aria-modal="true" aria-labelledby="chart-title">
+  <div class="chart-box">
+    <div class="chart-header">
+      <div>
+        <strong id="chart-title">Preisverlauf</strong>
+        <small id="chart-subtitle"></small>
+      </div>
+      <button class="chart-close" onclick="closeChart()" aria-label="Schließen">×</button>
+    </div>
+    <div id="chart-svg-wrap"></div>
+    <div class="chart-avg" id="chart-avg"></div>
+  </div>
+</div>
+
+<script>
+function toggleTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') !== 'dark';
+  localStorage.setItem('theme', dark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  document.getElementById('theme-btn').textContent = dark ? '☀️' : '🌙';
+}
+(function(){
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('theme-btn').textContent = dark ? '☀️' : '🌙';
+  });
+})();
+
+const SESSIONS_URL  = 'https://nachbarschaft-laden.de/local/nachbarschaft-laden/sessions.json';
+const BALANCES_URL  = 'https://nachbarschaft-laden.de/local/nachbarschaft-laden/balances.json';
+
+let allSessions = [];
+let lastSorted  = [];
+let allBalances = {};
+
+/* ── Hilfsfunktionen ── */
+function fmt_date(iso) {
+  return new Date(iso).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
+}
+function fmt_time(iso) {
+  return new Date(iso).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+}
+function fmt_duration(s) {
+  if (!s) return '–';
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}h ${m}min` : `${m} min`;
+}
+
+/* ── Preisverlauf-Chart (SVG) ── */
+function buildPriceSvg(samples, sessionPriceKwh) {
+  if (!samples || samples.length < 2) return null;
+
+  const W = 460, H = 130;
+  const PAD = { top: 12, right: 12, bottom: 22, left: 38 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top  - PAD.bottom;
+
+  const times  = samples.map(s => new Date(s.t).getTime());
+  const values = samples.map(s => s.v);
+  const tMin = Math.min(...times), tMax = Math.max(...times);
+  const vRaw = [Math.min(...values), Math.max(...values)];
+  const vMin = Math.floor(vRaw[0] - 1);
+  const vMax = Math.ceil(vRaw[1]  + 1);
+  const vSpan = vMax - vMin || 1;
+  const tSpan = tMax - tMin || 1;
+
+  const px = t => PAD.left + (t - tMin) / tSpan * cW;
+  const py = v => PAD.top  + (1 - (v - vMin) / vSpan) * cH;
+
+  const pts = samples.map(s => `${px(new Date(s.t).getTime()).toFixed(1)},${py(s.v).toFixed(1)}`).join(' ');
+  const avg = sessionPriceKwh != null ? sessionPriceKwh : values.reduce((a, b) => a + b, 0) / values.length;
+  const avgY = py(avg).toFixed(1);
+
+  // Y-Achsen-Labels (3 Stufen)
+  const yLabels = [vMin, Math.round((vMin + vMax) / 2), vMax].map(v => ({
+    v,
+    y: py(v).toFixed(1)
+  }));
+
+  // X-Zeitlabels
+  const tFmt = t => new Date(t).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+  const xLabels = [
+    { t: tMin, x: PAD.left },
+    { t: tMax, x: PAD.left + cW }
+  ];
+
+  // Füllbereich unter der Linie
+  const firstPt = `${px(times[0]).toFixed(1)},${py(values[0]).toFixed(1)}`;
+  const lastPt  = `${px(times[times.length-1]).toFixed(1)},${py(values[values.length-1]).toFixed(1)}`;
+  const fillPts = `${firstPt} ${pts} ${lastPt} ${(PAD.left + cW).toFixed(1)},${(PAD.top + cH).toFixed(1)} ${PAD.left.toFixed(1)},${(PAD.top + cH).toFixed(1)}`;
+
+
+  const yAxisLines = yLabels.map(l =>
+    `<line x1="${PAD.left}" y1="${l.y}" x2="${PAD.left + cW}" y2="${l.y}" stroke="#e8f0ea" stroke-width="1"/>`
+  ).join('');
+  const yAxisLabels = yLabels.map(l =>
+    `<text x="${PAD.left - 5}" y="${l.y}" dy="4" text-anchor="end" font-size="10" fill="#5a6a5e">${l.v}</text>`
+  ).join('');
+  const xAxisLabels = xLabels.map(l =>
+    `<text x="${l.x}" y="${PAD.top + cH + 16}" text-anchor="middle" font-size="10" fill="#5a6a5e">${tFmt(l.t)}</text>`
+  ).join('');
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gfill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2d6a4f" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#2d6a4f" stop-opacity="0.02"/>
+    </linearGradient>
+  </defs>
+  <!-- Hintergrund-Gitter -->
+  <rect x="${PAD.left}" y="${PAD.top}" width="${cW}" height="${cH}" fill="#f9fbf9" rx="4"/>
+  ${yAxisLines}
+  <!-- Durchschnittslinie -->
+  <line x1="${PAD.left}" y1="${avgY}" x2="${PAD.left + cW}" y2="${avgY}"
+        stroke="#e07b00" stroke-width="1.2" stroke-dasharray="4,3" opacity=".7"/>
+  <!-- Füllbereich -->
+  <polygon points="${fillPts}" fill="url(#gfill)"/>
+  <!-- Linie -->
+  <polyline points="${pts}" fill="none" stroke="#2d6a4f" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Achsen -->
+  <line x1="${PAD.left}" y1="${PAD.top}" x2="${PAD.left}" y2="${PAD.top + cH}" stroke="#d0ddd4" stroke-width="1"/>
+  <line x1="${PAD.left}" y1="${PAD.top + cH}" x2="${PAD.left + cW}" y2="${PAD.top + cH}" stroke="#d0ddd4" stroke-width="1"/>
+  ${yAxisLabels}
+  ${xAxisLabels}
+</svg>`;
+}
+
+/* ── Chart-Modal öffnen/schließen ── */
+function openChart(s) {
+  const modal = document.getElementById('chart-modal');
+  document.getElementById('chart-title').textContent =
+    `Preisverlauf · ${fmt_date(s.start)}`;
+  document.getElementById('chart-subtitle').textContent =
+    `${fmt_time(s.start)} – ${fmt_time(s.end)} · ${s.energy_kwh.toFixed(2)} kWh`;
+
+  const svg = buildPriceSvg(s.price_samples, s.price_kwh != null ? s.price_kwh * 100 : null);
+  const wrap = document.getElementById('chart-svg-wrap');
+  if (svg) {
+    wrap.innerHTML = svg;
+    const avgLabel = s.price_kwh != null
+      ? (s.price_kwh * 100).toFixed(1)
+      : (s.price_samples.reduce((a, b) => a + b.v, 0) / s.price_samples.length).toFixed(1);
+    document.getElementById('chart-avg').innerHTML =
+      `Ø <strong>${avgLabel} ct/kWh</strong> · ` +
+      `<span style="color:#e07b00">— gestrichelt</span> = Durchschnitt`;
+  } else {
+    wrap.innerHTML = '<p style="color:#5a6a5e;text-align:center;padding:1.5rem 0;font-size:.85rem;">Keine Verlaufsdaten vorhanden<br><small>(nur in neuen Sessions gespeichert)</small></p>';
+    document.getElementById('chart-avg').textContent = '';
+  }
+
+  modal.classList.add('open');
+}
+
+function closeChart() {
+  document.getElementById('chart-modal').classList.remove('open');
+}
+
+document.getElementById('chart-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('chart-modal')) closeChart();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeChart(); });
+
+/* ── Tabelle rendern ── */
+function render(sessions) {
+  const tbody = document.getElementById('sessions-body');
+  if (!sessions.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Keine Sessions gefunden</td></tr>';
+    return;
+  }
+
+  const sorted = [...sessions].reverse();
+  lastSorted = sorted;
+  tbody.innerHTML = sorted.map((s, i) => {
+    const hasChart = s.price_samples && s.price_samples.length >= 2;
+    const priceLabel = s.price_kwh != null
+      ? `${(s.price_kwh * 100).toFixed(1)} ct`
+      : '–';
+    const priceCell = s.price_kwh != null
+      ? `<span class="price-ct${hasChart ? '' : ' no-chart'}"
+              ${hasChart ? `onclick="openChart(lastSorted[${i}])"` : ''}
+              title="${hasChart ? 'Preisverlauf anzeigen' : ''}">
+           ${priceLabel}
+         </span>`
+      : '–';
+
+    return `<tr>
+      <td>${fmt_date(s.end)}</td>
+      <td>${fmt_time(s.start)} – ${fmt_time(s.end)}</td>
+      <td><span class="vehicle-pill">${s.user || s.rfid || '–'}</span></td>
+      <td><strong>${s.energy_kwh.toFixed(2)}</strong> kWh</td>
+      <td>${s.price_eur != null ? s.price_eur.toFixed(2) + ' €' : '–'}</td>
+      <td>${priceCell}</td>
+      <td class="col-dauer">${fmt_duration(s.duration_s)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Statistiken ── */
+function update_stats(sessions) {
+  const count  = sessions.length;
+  const energy = sessions.reduce((a, s) => a + (s.energy_kwh || 0), 0);
+  const cost   = sessions.filter(s => s.price_eur != null).reduce((a, s) => a + s.price_eur, 0);
+  const prices = sessions.filter(s => s.price_kwh != null).map(s => s.price_kwh);
+  const avgP   = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : null;
+
+  document.getElementById('stat-count').textContent     = count;
+  document.getElementById('stat-energy').textContent    = energy.toFixed(1);
+  document.getElementById('stat-cost').textContent      = cost.toFixed(2) + ' €';
+  document.getElementById('stat-avg-price').textContent = avgP != null ? (avgP * 100).toFixed(1) + ' ct' : '–';
+  document.getElementById('stat-avg-kwh').textContent   = count ? (energy / count).toFixed(1) : '–';
+
+  update_offener_betrag(sessions);
+}
+
+function fmt_eur(v) { return v.toFixed(2).replace('.', ',') + ' €'; }
+
+const WITZ_ITEMS = [
+  { emoji: '☕', preis: 2.80, singular: 'Tasse Kaffee beim Bäcker',         plural: 'Tassen Kaffee beim Bäcker' },
+  { emoji: '🍺', preis: 15.0, singular: 'Kiste Bier',                       plural: 'Kisten Bier' },
+  { emoji: '🍕', preis: 11.0, singular: 'Pizza beim Italiener',             plural: 'Pizzen beim Italiener' },
+  { emoji: '🍔', preis:  9.0, singular: 'Burger',                           plural: 'Burger' },
+  { emoji: '🍷', preis:  8.0, singular: 'Flasche Rotwein',                  plural: 'Flaschen Rotwein' },
+  { emoji: '🥂', preis:  7.0, singular: 'Flasche Weißwein',                 plural: 'Flaschen Weißwein' },
+  { emoji: '🧀', preis:  4.5, singular: 'Stück Münsterkäse',                plural: 'Stück Münsterkäse' },
+  { emoji: '🍞', preis:  2.5, singular: 'Päckchen Pumpernickel',            plural: 'Päckchen Pumpernickel' },
+  { emoji: '🥩', preis:  6.0, singular: 'Packung Westfälischer Schinken',   plural: 'Packungen Westfälischer Schinken' },
+  { emoji: '🥃', preis: 12.0, singular: 'Flasche Westfälischer Doppelkorn', plural: 'Flaschen Westfälischer Doppelkorn' },
+  { emoji: '🍩', preis:  2.5, singular: 'Tüte Schmalzkuchen vom Markt',     plural: 'Tüten Schmalzkuchen vom Markt' },
+  { emoji: '🔔', preis:  5.0, singular: 'Fahrradklingel (du bist in Münster!)', plural: 'Fahrradklingeln (du bist in Münster!)' },
+  { emoji: '🌭', preis:  3.0, singular: 'Currywurst am Imbiss',             plural: 'Currywürste am Imbiss' },
+  { emoji: '🥖', preis:  3.5, singular: 'Stuten (Münsterländer Weißbrot)',  plural: 'Stuten (Münsterländer Weißbrot)' },
+  { emoji: '🐷', preis:  4.0, singular: 'Portion Mett auf dem Markt',       plural: 'Portionen Mett auf dem Markt' },
+];
+
+function witz_umrechnung(offen) {
+  if (offen < 0.5) return '';
+  const item = WITZ_ITEMS[Math.floor(Math.random() * WITZ_ITEMS.length)];
+  const anzahl = offen / item.preis;
+  const label  = anzahl < 1.5 ? item.singular : item.plural;
+  const anzahlText = anzahl < 1 ? 'fast eine' : (Number.isInteger(Math.round(anzahl * 2) / 2) ? (Math.round(anzahl * 2) / 2).toString().replace('.', ',') : Math.round(anzahl).toString());
+  return `<div style="margin-top:.75rem;padding:.65rem .85rem;background:var(--green4);border:1px solid var(--green3);
+      border-radius:10px;font-size:.82rem;color:var(--muted);line-height:1.5;">
+    ${item.emoji} Das entspricht ungefähr <strong style="color:var(--ink);">${anzahlText} ${label}</strong>.
+  </div>`;
+}
+
+function offener_betrag_row(user, offen) {
+  const badge = offen < 0.01
+    ? `<span class="badge-beglichen">✓ beglichen</span>`
+    : `<span class="badge-offen">${fmt_eur(offen)} offen</span>`;
+  return `<div style="padding:.65rem .85rem;background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:.5rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
+      <div style="font-weight:500;font-size:.9rem;">${user}</div>
+      ${badge}
+    </div>
+    ${witz_umrechnung(offen)}
+  </div>`;
+}
+
+function update_offener_betrag(sessions) {
+  const box    = document.getElementById('offener-betrag-box');
+  const inhalt = document.getElementById('offener-betrag-inhalt');
+  if (!Object.keys(allBalances).length) { box.style.display = 'none'; return; }
+
+  const vehicle = document.getElementById('filter-vehicle').value;
+  if (!vehicle) { box.style.display = 'none'; return; }
+
+  const offen = allBalances[vehicle] ?? null;
+  if (offen === null) { box.style.display = 'none'; return; }
+
+  inhalt.innerHTML = offener_betrag_row(vehicle, offen);
+  box.style.display = 'block';
+}
+
+/* ── Filter ── */
+function apply_filters() {
+  const vehicle = document.getElementById('filter-vehicle').value;
+  const period  = +document.getElementById('filter-period').value || 0;
+  const search  = document.getElementById('filter-search').value.toLowerCase();
+  const cutoff  = period ? Date.now() - period * 86400000 : 0;
+
+  const filtered = allSessions.filter(s => {
+    if (vehicle && (s.user || s.rfid) !== vehicle) return false;
+    if (cutoff && new Date(s.end).getTime() < cutoff) return false;
+    if (search && !JSON.stringify(s).toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  render(filtered);
+  update_stats(filtered);
+}
+
+/* ── Laden ── */
+async function load() {
+  try {
+    const ts = Date.now();
+    const [r, rb] = await Promise.all([
+      fetch(SESSIONS_URL + '?_=' + ts),
+      fetch(BALANCES_URL + '?_=' + ts).catch(() => null)
+    ]);
+    if (!r.ok) throw new Error(`HTTP ${r.status} – Datei nicht erreichbar`);
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e) { throw new Error('Ungültiges JSON: ' + text.substring(0, 80)); }
+    allSessions = data;
+
+    if (rb && rb.ok) {
+      try { allBalances = await rb.json(); } catch(e) { allBalances = {}; }
+    }
+
+    const vehicles = [...new Set(allSessions.map(s => s.user || s.rfid).filter(Boolean))];
+    const sel = document.getElementById('filter-vehicle');
+    vehicles.forEach(v => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v;
+      sel.appendChild(o);
+    });
+
+    apply_filters();
+  } catch(e) {
+    document.getElementById('sessions-body').innerHTML =
+      `<tr><td colspan="7" class="empty">
+        ⚠️ Fehler beim Laden der Sessions<br>
+        <small style="color:#c62828">${e.message}</small><br><br>
+        <small>Prüfe ob <code>sessions.json</code> unter<br>
+        <code>/homeassistant/www/nachbarschaft-laden/</code><br>
+        vorhanden ist.</small>
+      </td></tr>`;
+  }
+}
+
+['filter-vehicle','filter-period','filter-search'].forEach(id =>
+  document.getElementById(id).addEventListener('change', apply_filters)
+);
+document.getElementById('filter-search').addEventListener('input', apply_filters);
+
+load();
+</script>
+</body>
+</html>

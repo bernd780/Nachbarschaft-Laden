@@ -1,0 +1,263 @@
+esphome:
+  name: display
+  friendly_name: Display
+  on_boot:
+    priority: 300
+    then:
+      - delay: 2s
+      - script.execute: manage_run_and_sleep
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "30"
+
+logger:
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Display Fallback Hotspot"
+    password: !secret ap_password
+
+http_request:
+  verify_ssl: false
+  timeout: 10s
+  buffer_size_rx: 4096
+
+spi:
+  - id: spi_bus
+    clk_pin: GPIO13
+    mosi_pin: GPIO14
+
+globals:
+  - id: display_page
+    type: int
+    restore_value: true
+    initial_value: '0'
+  - id: initial_sensor_sync_pending
+    type: bool
+    restore_value: false
+    initial_value: 'true'
+
+time:
+  - platform: homeassistant
+    id: ha_time
+
+sensor:
+  # Vom Nachbarschaft-Laden-Add-on publizierte Entities (werden automatisch erstellt)
+  - platform: homeassistant
+    id: sensor_ladepreis_mittelwert
+    entity_id: sensor.nl_ladepreis_aktuell
+    internal: true
+  - platform: homeassistant
+    id: sensor_hausverbrauch
+    entity_id: sensor.nl_hausverbrauch_kwh
+    internal: true
+  - platform: homeassistant
+    id: sensor_akkuziel
+    entity_id: sensor.nl_ladeziel_soc
+    internal: true
+  - platform: homeassistant
+    id: sensor_soc
+    entity_id: sensor.nl_fahrzeug_soc
+    internal: true
+  # PV-Prognose-Sensoren: Entity-IDs müssen sensor_pv_morgen/uebermorgen/in3tagen
+  # aus der Add-on-Konfiguration entsprechen
+  - platform: homeassistant
+    id: sensor_morgenpv
+    entity_id: !secret epaper_sensor_pv_morgen
+    internal: true
+  - platform: homeassistant
+    id: sensor_uebermorgenpv
+    entity_id: !secret epaper_sensor_pv_uebermorgen
+    internal: true
+  - platform: homeassistant
+    id: sensor_pvin3tagen
+    entity_id: !secret epaper_sensor_pv_in3tagen
+    internal: true
+
+image:
+  - file: "images/logo_display.PNG"
+    id: img_images_logo_png_400x200
+    type: BINARY
+    resize: 460x145
+    dither: FLOYDSTEINBERG
+
+online_image:
+  - url: !secret epaper_display_image_url
+    id: img_combined
+    format: PNG
+    type: BINARY
+    update_interval: 60s
+    on_error:
+      - logger.log: "Fehler beim Laden des kombinierten Bildes – behalte letztes Bild"
+
+qr_code:
+  - id: qr_website
+    value: !secret epaper_qr_url
+    ecc: MEDIUM
+
+font:
+  - file:
+      type: gfonts
+      family: "Ubuntu"
+      weight: 400
+      italic: true
+    id: font_ubuntu_400_20_italic
+    size: 20
+    glyphsets: [GF_Latin_Kernel, GF_Latin_Beyond]
+    ignore_missing_glyphs: true
+  - file:
+      type: gfonts
+      family: "Roboto"
+      weight: 400
+      italic: false
+    id: font_roboto_400_14
+    size: 14
+    glyphsets: [GF_Latin_Kernel, GF_Latin_Beyond]
+    ignore_missing_glyphs: true
+  - file:
+      type: gfonts
+      family: "Roboto"
+      weight: 400
+      italic: false
+    id: font_roboto_400_16
+    size: 16
+    glyphsets: [GF_Latin_Kernel, GF_Latin_Beyond]
+    ignore_missing_glyphs: true
+  - file: "fonts/DejaVuSans.ttf"
+    id: font_roboto_400_20
+    size: 20
+    ignore_missing_glyphs: true
+  - file: "fonts/DejaVuSans-Bold.ttf"
+    id: font_dejavu_bold_22
+    size: 22
+    glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:-+/()ÄäÖöÜüß"
+    ignore_missing_glyphs: true
+  - file: "fonts/DejaVuSans-Bold.ttf"
+    id: font_roboto_700_28
+    size: 28
+    ignore_missing_glyphs: true
+  - file: "fonts/DejaVuSans-Bold.ttf"
+    id: font_roboto_700_120
+    size: 180
+    ignore_missing_glyphs: true
+  - file: "fonts/DejaVuSans.ttf"
+    id: font_roboto_400_40
+    size: 40
+    ignore_missing_glyphs: true
+
+script:
+  - id: manage_run_and_sleep
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return !(id(ha_time).now().is_valid() && api_is_connected());'
+          then:
+            - logger.log: "Waiting for sync..."
+            - wait_until:
+                condition:
+                  lambda: 'return id(ha_time).now().is_valid() && api_is_connected();'
+                timeout: 120s
+            - logger.log: "Sync complete or timeout reached, continuing..."
+      - if:
+          condition:
+            lambda: 'return id(initial_sensor_sync_pending);'
+          then:
+            - logger.log: "Waiting 5s for initial sensor updates..."
+            - delay: 5s
+            - lambda: 'id(initial_sensor_sync_pending) = false;'
+      # Display aktualisiert sich selbst: partial alle 5s, full alle 60s (full_update_every: 12)
+
+display:
+  - platform: waveshare_epaper
+    id: epaper_display
+    cs_pin: GPIO15
+    dc_pin: GPIO27
+    busy_pin:
+      number: GPIO25
+      inverted: True
+    reset_pin: GPIO26
+    reset_duration: 2ms
+    model: 7.50inV2p
+    rotation: 90
+    update_interval: 5s
+    full_update_every: 60
+    lambda: |-
+      const auto COLOR_WHITE  = Color(0,   0,   0);
+      const auto COLOR_BLACK  = Color(255, 255, 255);
+      auto color_off = COLOR_WHITE;
+      auto color_on  = COLOR_BLACK;
+
+      int currentPage = id(display_page);
+
+      if (currentPage == 0) {
+        it.fill(COLOR_WHITE);
+
+        // ── Aktueller Ladepreis (y=0–296) ──
+        // Gleiche visuelle Abstände: 4×29px (Cap-Height 180px-Font ≈ 131px)
+        it.print(240, 28, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, "Aktueller Ladepreis");
+        {
+          char buf[32];
+          sprintf(buf, "%.1f", id(sensor_ladepreis_mittelwert).state);
+          it.print(240, 53, id(font_roboto_700_120), color_on, TextAlign::TOP_CENTER, buf);
+          it.print(240, 240, id(font_roboto_400_40), color_on, TextAlign::TOP_CENTER, "ct/kWh");
+        }
+        it.filled_rectangle(0, 296, 480, 2, COLOR_BLACK);
+
+        // ── PV-Überschuss (y=298–568, Ursprungsproportionen) ──
+        // Titel(+6) → Labels(+30) → Bild(+28, 160px) → kWh(+8) → Ende
+        int cx0 = 80, cx1 = 240, cx2 = 400;
+
+        it.print(240, 304, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "PV-Überschuss Prognose");
+
+        // Tages-Labels oberhalb der Smileys
+        it.print(cx0, 334, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "Morgen");
+        it.print(cx1, 334, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "Übermorgen");
+        it.print(cx2, 334, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "In 3 Tagen");
+
+        // Smiley-Bild (460x160px) – zentriert auf 480px: x=(480-460)/2=10
+        it.image(10, 362, id(img_combined), color_on, color_off);
+        // Bild endet bei y=362+160=522
+
+        // kWh-Werte unterhalb der Smileys
+        float haus     = id(sensor_hausverbrauch).state;
+        float ziel     = id(sensor_akkuziel).state;
+        float soc      = id(sensor_soc).state;
+        float auto_kwh = (ziel - soc > 0) ? (ziel - soc) * 0.75f / 3.0f : 0.0f;
+        float s_m = id(sensor_morgenpv).state      - haus - auto_kwh;
+        float s_u = id(sensor_uebermorgenpv).state - haus - auto_kwh;
+        float s_3 = id(sensor_pvin3tagen).state    - haus - auto_kwh;
+
+        {
+          char buf[16];
+          sprintf(buf, "%+.0f kWh", s_m); it.print(cx0, 530, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, buf);
+          sprintf(buf, "%+.0f kWh", s_u); it.print(cx1, 530, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, buf);
+          sprintf(buf, "%+.0f kWh", s_3); it.print(cx2, 530, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, buf);
+        }
+        it.filled_rectangle(0, 568, 480, 2, COLOR_BLACK);
+
+        // ── Uhrzeit + QR + Logo (y=570–800, 230px) ──
+        // Logo zuerst zeichnen, damit QR-Code und Uhrzeit im Vordergrund liegen
+        it.image(10, 655, id(img_images_logo_png_400x200), color_off, color_on);
+
+        {
+          auto now = id(ha_time).now();
+          it.strftime(130, 588, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, "%H:%M", now);
+          it.strftime(130, 622, id(font_roboto_400_20), color_on, TextAlign::TOP_CENTER, "%d.%m.%Y", now);
+        }
+        it.qr_code(310, 586, id(qr_website), color_on, 3);
+      }
