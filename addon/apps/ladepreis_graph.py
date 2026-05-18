@@ -467,9 +467,13 @@ class LadepreisGraph(hass.Hass):
             except Exception as e:
                 self.log(f"Ladevorgang-Fehler: {e}")
 
+            preis_max = round(self.PREIS_NETZBEZUG + self.PREIS_MARGE, 2)
+            preis_min = round(self.PREIS_EINSPEISUNG + self.PREIS_MARGE, 2)
             data = {
                 "generated": end_dt.isoformat(),
                 "ladepreis_aktuell":    aktuell,
+                "ladepreis_max":        preis_max,
+                "ladepreis_min":        preis_min,
                 "ladepreis_peak_avg":   peak_avg,
                 "ladepreis_vortag_avg": vortag_avg,
                 "guenstigste_stunde":   guenstigste_stunde,
