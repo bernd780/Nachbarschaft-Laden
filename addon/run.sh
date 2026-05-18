@@ -73,6 +73,14 @@ QR_CODE_URL=$(jq -r '.qr_code_url'                          "$OPTS")
 WEB_UNTERVERZEICHNIS=$(jq -r '.web_unterverzeichnis'        "$OPTS")
 WWW="/homeassistant/www/$WEB_UNTERVERZEICHNIS"
 
+# Sessions-Passwort → SHA-256-Hash (leer = kein Schutz → "disabled")
+_PW=$(jq -r '.sessions_passwort // ""' "$OPTS")
+if [ -n "$_PW" ]; then
+  SESSIONS_HASH=$(printf '%s' "$_PW" | sha256sum | cut -d' ' -f1)
+else
+  SESSIONS_HASH="disabled"
+fi
+
 # ── Apps-Konfiguration generieren ─────────────────────────────────────────────
 cat > "$APPS_DIR/apps.yaml" <<EOF
 ladepreis_graph:
@@ -138,7 +146,10 @@ cp /apps/*.py "$APPS_DIR/"
 mkdir -p "$WWW"
 if ls /www/*.html 1>/dev/null 2>&1; then
   for _f in /www/*.html; do
-    sed "s|https://nachbarschaft-laden.de|${BASIS_URL}|g" "$_f" > "$WWW/$(basename "$_f")"
+    sed \
+      "s|https://nachbarschaft-laden.de|${BASIS_URL}|g; \
+       s|__SESSIONS_PASSWORT_HASH__|${SESSIONS_HASH}|g" \
+      "$_f" > "$WWW/$(basename "$_f")"
   done
 fi
 

@@ -9,9 +9,10 @@
 <script>(function(){
   const t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
   document.documentElement.setAttribute('data-theme',t);
-  const _cfg = '1ff727d329c253b00d5194ac3faf636d55dfcd14e0da612bd561372021c5ad6f';
+  const _cfg = '__SESSIONS_PASSWORT_HASH__';
+  if (_cfg === 'disabled') { sessionStorage.setItem('nl_access','1'); }
   const supplied = new URLSearchParams(location.search).get('key');
-  if (supplied) {
+  if (supplied && _cfg !== 'disabled') {
     crypto.subtle.digest('SHA-256', new TextEncoder().encode(supplied))
       .then(b => { if ([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')===_cfg) { sessionStorage.setItem('nl_access','1'); location.replace(location.pathname); } });
   }
@@ -40,7 +41,7 @@
   }
 })();
 function unlock() {
-  const _cfg = '1ff727d329c253b00d5194ac3faf636d55dfcd14e0da612bd561372021c5ad6f';
+  const _cfg = '__SESSIONS_PASSWORT_HASH__';
   const val = document.getElementById('key-input').value.trim();
   crypto.subtle.digest('SHA-256', new TextEncoder().encode(val)).then(b => {
     const hex = [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');

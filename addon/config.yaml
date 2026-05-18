@@ -59,6 +59,9 @@ options:
   qr_code_url: "https://nachbarschaft-laden.de/local/nachbarschaft-laden/index.html"
   web_unterverzeichnis: "nachbarschaft-laden"
 
+  # Passwortschutz für die Sessions-Seite (leer lassen = kein Schutz)
+  sessions_passwort: ""
+
   # RFID-Benutzer (Liste)
   rfid_benutzer: []
 
@@ -89,6 +92,7 @@ schema:
   basis_url: str
   qr_code_url: str
   web_unterverzeichnis: str
+  sessions_passwort: str
   rfid_benutzer:
     - rfid: str
       name: str
