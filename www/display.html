@@ -115,7 +115,7 @@
     <div class="display-frame">
       <div class="display-label">Vorschau · 480 × 800 px</div>
       <img id="display-img"
-           src="https://nachbarschaft-laden.de/local/nachbarschaft-laden/display_preview.png"
+           src="display_preview.png"
            alt="E-Paper Display Vorschau"
            class="display-img">
       <div class="display-meta">Waveshare 7,5" e-Paper · schwarz/weiß</div>
@@ -174,7 +174,7 @@ const label = document.getElementById('last-refresh');
 let count = 300;
 
 function refreshImg() {
-  img.src = 'https://nachbarschaft-laden.de/local/nachbarschaft-laden/display_preview.png?t=' + Date.now();
+  img.src = 'display_preview.png?t=' + Date.now();
   count = 300;
 }
 
