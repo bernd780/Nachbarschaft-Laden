@@ -25,28 +25,32 @@ if (-not $target) { $target = "all" }
 # â”€â”€ Add-on deployen (GitHub â†’ HA Supervisor) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # Das Add-on wird aus dem GitHub-Repo bernd780/Nachbarschaft-Laden gebaut.
 # Zuerst git push, dann dieses Skript aufrufen.
-if ($target -in "all", "addon") {
-    Write-Host "`nDeploy Add-on (via GitHub + HA Supervisor)" -ForegroundColor Green
+if ($target -in “all”, “addon”) {
+    Write-Host “`nDeploy Add-on (lokale Dateien → HA)” -ForegroundColor Green
 
-    # 1. Supervisor Store neu laden (git pull von GitHub)
-    Write-Host "  Supervisor Store reload..." -ForegroundColor Cyan
-    $storeResult = & ssh "${HA_USER}@${HA_HOST}" "curl -sf -X POST -H 'Authorization: Bearer \$SUPERVISOR_TOKEN' http://supervisor/store/reload"
-    if ($LASTEXITCODE -ne 0) { Write-Warning "store/reload fehlgeschlagen: $storeResult" }
+    # Add-on-Konfiguration und Changelog ins lokale Add-on-Verzeichnis kopieren
+    Deploy “addon\config.yaml”    “$ADDON_DIR/config.yaml”
+    Deploy “addon\CHANGELOG.md”   “$ADDON_DIR/CHANGELOG.md”
+    Deploy “addon\run.sh”         “$ADDON_DIR/run.sh”
 
-    # 2. PrÃ¼fen ob Update oder Rebuild nÃ¶tig
-    $info = & ssh "${HA_USER}@${HA_HOST}" "ha apps info 41bf84da_nachbarschaft_laden 2>/dev/null"
+    # Supervisor informieren und Add-on neu starten
+    Write-Host “  Supervisor Store reload...” -ForegroundColor Cyan
+    $storeResult = & ssh “${HA_USER}@${HA_HOST}” “curl -sf -X POST -H 'Authorization: Bearer \$SUPERVISOR_TOKEN' http://supervisor/store/reload”
+    if ($LASTEXITCODE -ne 0) { Write-Warning “store/reload fehlgeschlagen: $storeResult” }
+
+    $info = & ssh “${HA_USER}@${HA_HOST}” “ha apps info local_nachbarschaftladen 2>/dev/null”
     $version = ($info | Select-String 'version:' | Select-Object -First 1).Line.Split(':')[1].Trim()
     $latest  = ($info | Select-String 'version_latest:' | Select-Object -First 1).Line.Split(':')[1].Trim()
-    Write-Host "  Installiert: $version  |  VerfÃ¼gbar: $latest" -ForegroundColor Cyan
+    Write-Host “  Installiert: $version  |  Verfügbar: $latest” -ForegroundColor Cyan
 
     if ($version -ne $latest) {
-        Write-Host "  Starte Update auf $latest ..." -ForegroundColor Cyan
-        RunSsh "ha apps update 41bf84da_nachbarschaft_laden 2>&1"
+        Write-Host “  Starte Update auf $latest ...” -ForegroundColor Cyan
+        RunSsh “ha apps update local_nachbarschaftladen 2>&1”
     } else {
-        Write-Host "  Gleiche Version â€“ fÃ¼hre Rebuild durch ..." -ForegroundColor Cyan
-        RunSsh "ha apps rebuild 41bf84da_nachbarschaft_laden 2>&1"
+        Write-Host “  Gleiche Version – führe Rebuild durch ...” -ForegroundColor Cyan
+        RunSsh “ha apps rebuild local_nachbarschaftladen 2>&1”
     }
-    Write-Host "  Add-on aktualisiert. Logs: ha apps logs 41bf84da_nachbarschaft_laden" -ForegroundColor Cyan
+    Write-Host “  Add-on aktualisiert. Logs: ha apps logs local_nachbarschaftladen” -ForegroundColor Cyan
 }
 
 # â”€â”€ AppDaemon Apps hot-deploy (neues Add-on, kein Docker-Rebuild nÃ¶tig) â”€â”€â”€â”€â”€â”€
