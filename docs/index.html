@@ -56,10 +56,11 @@
   .therm-zone { font-size: .8rem; font-weight: 600; transition: color .6s; }
   .therm-trend { font-size: 1.1rem; color: var(--muted); transition: color .3s; }
   [data-theme="dark"] .therm-track { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.12); }
-  .therm-mini { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; padding-left: 4px; }
-  .therm-mini canvas { display: block; border-radius: 6px; }
-  .therm-mini-link { font-size: .68rem; font-weight: 600; color: var(--green); text-decoration: none; opacity: .8; }
-  .therm-mini-link:hover { opacity: 1; text-decoration: underline; }
+  .therm-verlauf-row { display: flex; align-items: center; gap: .6rem; margin-top: .1rem; padding-top: .65rem; border-top: 1px solid var(--green3); }
+  .therm-verlauf-lbl { font-size: .68rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .therm-verlauf-wrap { flex: 1; height: 34px; position: relative; }
+  .therm-mini-link { font-size: .72rem; font-weight: 600; color: var(--green); text-decoration: none; white-space: nowrap; opacity: .75; flex-shrink: 0; }
+  .therm-mini-link:hover { opacity: 1; }
   .sparkline-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
   .sparkline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
   .sparkline-label { font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
@@ -342,10 +343,13 @@
           <div class="therm-zone skeleton" id="therm-zone">–</div>
           <div class="therm-trend" id="therm-trend">→</div>
         </div>
-        <div class="therm-mini">
-          <canvas id="therm-mini-canvas" style="width:72px;height:52px;"></canvas>
-          <a class="therm-mini-link" href="#" onclick="openVerlauf();return false;">Verlauf ↗</a>
+      </div>
+      <div class="therm-verlauf-row">
+        <span class="therm-verlauf-lbl">Letzte 3h</span>
+        <div class="therm-verlauf-wrap">
+          <canvas id="therm-mini-canvas" style="width:100%;height:100%;"></canvas>
         </div>
+        <a class="therm-mini-link" href="#" onclick="openVerlauf();return false;">Verlauf ↗</a>
       </div>
       <div class="preis-deckel">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -730,10 +734,10 @@ const miniChart = new Chart(document.getElementById('therm-mini-canvas'), {
     borderWidth: 1.5, pointRadius: 0, fill: true, tension: 0.4
   }]},
   options: {
-    responsive: false, maintainAspectRatio: false, animation: false,
+    responsive: true, maintainAspectRatio: false, animation: false,
     plugins: { legend: { display: false }, tooltip: { enabled: false } },
     scales: { x: { display: false }, y: { display: false } },
-    layout: { padding: 2 }
+    layout: { padding: 1 }
   }
 });
 
