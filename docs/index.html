@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Nachbarschaft-Laden</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --green:  #2d6a4f; --green2: #40916c; --green3: #74c69d; --green4: #d8f3dc;
@@ -565,7 +563,7 @@
   document.documentElement.setAttribute('data-theme', t);
 })();
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="./qrcode.min.js"></script>
 <script>
 new QRCode(document.getElementById('qrcode'), {
   text: './index.html',
@@ -574,7 +572,7 @@ new QRCode(document.getElementById('qrcode'), {
   correctLevel: QRCode.CorrectLevel.M
 });
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="./chart.umd.js"></script>
 <script>
 function toggleTheme() {
   const dark = document.documentElement.getAttribute('data-theme') !== 'dark';
