@@ -935,7 +935,7 @@ async function loadAll() {
       const labels = d.verlauf_lang.map(p => chartLabel(p.t));
       chart.data.labels = labels;
       chart.data.datasets[0].data = d.verlauf_lang.map(p => p.v);
-      chart.data.datasets[1].data = labels.map(() => 14);
+      chart.data.datasets[1].data = labels.map(() => PREIS_MIN);
       chart.data.datasets[2].data = labels.map(() => PREIS_MAX);
       chart.update('none');
     }
