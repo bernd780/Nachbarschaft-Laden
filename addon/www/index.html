@@ -50,6 +50,13 @@
   .preis-deckel { display: inline-flex; align-items: center; gap: .4rem; margin-top: .65rem; padding: .3rem .75rem; border-radius: 50px; background: rgba(45,106,79,.12); border: 1px solid rgba(45,106,79,.25); font-size: .76rem; font-weight: 600; color: var(--green); width: fit-content; }
   .preis-sekundaer { margin-top: .9rem; padding-top: .75rem; border-top: 1px solid var(--green3); font-size: .78rem; color: var(--muted); display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
   .preis-sekundaer-val { font-weight: 600; color: var(--amber); }
+  .preis-body-row { display: flex; align-items: flex-start; gap: .9rem; }
+  .preis-body-row > div:first-child { flex: 1; min-width: 0; }
+  .thermo-wrap { display: flex; flex-direction: column; align-items: center; gap: .25rem; padding-top: .2rem; flex-shrink: 0; }
+  .thermo-lbl { font-size: .66rem; color: var(--muted); font-weight: 600; line-height: 1; white-space: nowrap; }
+  .thermo-bar { width: 13px; height: 72px; border-radius: 7px; background: linear-gradient(to top, #40916c 0%, #d9a520 55%, #c62828 100%); position: relative; overflow: hidden; box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.13); }
+  .thermo-overlay { position: absolute; top: 0; left: 0; right: 0; height: 100%; background: var(--green4); transition: height .5s ease; }
+  [data-theme="dark"] .thermo-overlay { background: #0d2318; }
   .sparkline-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
   .sparkline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
   .sparkline-label { font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
@@ -315,13 +322,24 @@
         <div class="preis-label">Jetzt</div>
         <div class="status-badge badge-mid skeleton" id="preis-badge">Wird geladen</div>
       </div>
-      <div class="preis-num-row">
-        <div class="preis-value skeleton" id="preis-aktuell">00.0</div>
-        <div class="preis-unit">ct/kWh</div>
-      </div>
-      <div class="preis-deckel">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Nie mehr als <span id="preis-max-deckel">36</span> ct/kWh
+      <div class="preis-body-row">
+        <div>
+          <div class="preis-num-row">
+            <div class="preis-value skeleton" id="preis-aktuell">00.0</div>
+            <div class="preis-unit">ct/kWh</div>
+          </div>
+          <div class="preis-deckel">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Nie mehr als <span id="preis-max-deckel">36</span> ct/kWh
+          </div>
+        </div>
+        <div class="thermo-wrap">
+          <span class="thermo-lbl" id="thermo-max-lbl">– ct</span>
+          <div class="thermo-bar">
+            <div class="thermo-overlay" id="thermo-overlay"></div>
+          </div>
+          <span class="thermo-lbl" id="thermo-min-lbl">– ct</span>
+        </div>
       </div>
       <div class="preis-sekundaer">
         Ø Spitzenlast 13–19 Uhr
@@ -914,12 +932,18 @@ async function loadAll() {
       document.getElementById('preis-max-deckel').textContent = PREIS_MAX;
       document.getElementById('thresh-max').textContent = PREIS_MAX;
       document.getElementById('thresh-min').textContent = PREIS_MIN;
+      document.getElementById('thermo-max-lbl').textContent = PREIS_MAX + ' ct';
+      document.getElementById('thermo-min-lbl').textContent = PREIS_MIN + ' ct';
     }
 
     // Aktueller Preis
     const ct = d.ladepreis_aktuell;
     const pEl = document.getElementById('preis-aktuell');
     pEl.textContent = ct != null ? ct.toFixed(1) : '–'; unskel(pEl);
+    if (ct != null) {
+      const pct = Math.max(0, Math.min(1, (ct - PREIS_MIN) / (PREIS_MAX - PREIS_MIN)));
+      document.getElementById('thermo-overlay').style.height = (1 - pct) * 100 + '%';
+    }
     const badge = document.getElementById('preis-badge');
     const [cls, txt] = badgeInfo(ct);
     badge.className = 'status-badge ' + cls; badge.textContent = txt;
