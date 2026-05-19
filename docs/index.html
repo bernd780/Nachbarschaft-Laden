@@ -61,7 +61,7 @@
   .pv-label  { font-size: .75rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .pv-smiley { font-size: 2.4rem; line-height: 1; }
   .pv-kwh    { font-family: 'DM Serif Display', serif; font-size: 1.4rem; color: var(--green); }
-  .pv-kwh.neg { color: var(--red); } .pv-kwh.mid { color: var(--amber); }
+  .pv-kwh.neg { color: var(--red); } .pv-kwh.mid { color: var(--amber); } .pv-kwh.low { color: var(--muted); }
 
   /* PV-Erzeugung heute – Sonnen-Arc */
   .pv-arc-wrap { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.25rem; }
@@ -71,7 +71,7 @@
 
   /* Beste Ladezeit */
   .beste-zeit-box { background: linear-gradient(135deg, #eef7f2, #f4f9f6); border: 1.5px solid var(--green3); border-radius: 14px; padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1rem; }
-  .beste-zeit-box.amber { background: linear-gradient(135deg, #fef9ec, #fffdf5); border-color: var(--amber2); }
+  .beste-zeit-box.info  { background: var(--bg); border: 1px solid var(--border); }
   .beste-zeit-icon { font-size: 2rem; flex-shrink: 0; }
   .beste-zeit-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
   .beste-zeit-val { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--green); line-height: 1.2; }
@@ -184,7 +184,7 @@
   [data-theme="dark"] .preis-sekundaer     { border-top-color: var(--green3); }
   [data-theme="dark"] .skeleton            { background: linear-gradient(90deg,#1e3025 25%,#273d2e 50%,#1e3025 75%); background-size:200% 100%; animation: shimmer 1.4s infinite; }
   [data-theme="dark"] .beste-zeit-box      { background: linear-gradient(135deg,#0d2318,#111a15); border-color: var(--green3); }
-  [data-theme="dark"] .beste-zeit-box.amber{ background: linear-gradient(135deg,#2d2000,#1a1500); border-color: var(--amber2); }
+  [data-theme="dark"] .beste-zeit-box.info { background: var(--bg); border-color: var(--border); }
   [data-theme="dark"] a.nav-card.primary   { background: linear-gradient(135deg,#1b4332,var(--green2)); }
   [data-theme="dark"] a.nav-card.secondary { background: var(--card); color: var(--ink); }
   [data-theme="dark"] .lade-card           { border-color: var(--green3); }
@@ -371,7 +371,9 @@
 
   <!-- Günstigste Ladezeit – immer sichtbar -->
   <div class="beste-zeit-box">
-    <div class="beste-zeit-icon">⚡</div>
+    <div class="beste-zeit-icon" style="color:var(--green);display:flex;align-items:center;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+    </div>
     <div>
       <div class="beste-zeit-label">Günstigste Stunde heute (13–19 Uhr)</div>
       <div class="beste-zeit-val skeleton" id="beste-zeit-val">–</div>
@@ -401,11 +403,11 @@
           </div>
         </div>
 
-        <div class="beste-zeit-box amber">
+        <div class="beste-zeit-box info">
           <div class="beste-zeit-icon">📅</div>
           <div>
             <div class="beste-zeit-label">Ø Hauptzeit gestern (13–19 Uhr)</div>
-            <div class="beste-zeit-val amber skeleton" id="vortag-avg-val">–</div>
+            <div class="beste-zeit-val skeleton" id="vortag-avg-val">–</div>
             <div class="beste-zeit-sub" id="vortag-avg-sub"></div>
           </div>
         </div>
@@ -960,7 +962,7 @@ async function loadAll() {
       const el = document.getElementById('pv-' + i);
       const v = Math.max(0, s);
       el.textContent = '+' + v.toFixed(0) + ' kWh';
-      el.className = 'pv-kwh' + (v < 10 ? ' mid' : ''); unskel(el);
+      el.className = 'pv-kwh' + (v < 15 ? ' low' : ''); unskel(el);
     });
 
     // PV-Erzeugung heute (Sonnen-Arc)
