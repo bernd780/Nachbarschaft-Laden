@@ -83,6 +83,16 @@
   .thresh-legend { display: flex; gap: 1.2rem; margin-top: .75rem; flex-wrap: wrap; }
   .thresh-item  { display: flex; align-items: center; gap: .4rem; font-size: .76rem; color: var(--muted); }
 
+  /* Kompakte Nav-Links */
+  .nav-links-row { display: flex; gap: .75rem; flex-wrap: wrap; }
+  .nav-links-row a { display: inline-flex; align-items: center; gap: .5rem; flex: 1; min-width: 140px; color: var(--ink); font-size: .88rem; font-weight: 500; text-decoration: none; padding: .75rem 1.1rem; border-radius: 12px; border: 1px solid var(--border); background: var(--card); box-shadow: 0 1px 4px rgba(0,0,0,.04); transition: background .15s, box-shadow .15s; }
+  .nav-links-row a:hover { background: var(--bg); box-shadow: 0 3px 8px rgba(0,0,0,.09); }
+  .nav-links-row .nl-icon { font-size: 1.25rem; flex-shrink: 0; }
+  .nav-links-row .nl-text { display: flex; flex-direction: column; }
+  .nav-links-row .nl-title { font-weight: 600; color: var(--ink); line-height: 1.2; }
+  .nav-links-row .nl-sub   { font-size: .75rem; color: var(--muted); margin-top: .1rem; }
+  [data-theme="dark"] .nav-links-row a { background: var(--card); color: var(--ink); }
+
   /* Accordion */
   .accordion-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,.04); overflow: hidden; }
   .accordion-btn { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.75rem; background: none; border: none; cursor: pointer; font-family: inherit; gap: .5rem; transition: background .15s; }
@@ -318,15 +328,6 @@
       </div>
     </div>
 
-    <div class="sparkline-section">
-      <div class="sparkline-header">
-        <div class="sparkline-label">Preisverlauf letzte 6h</div>
-        <div class="sparkline-range" id="sparkline-range"></div>
-      </div>
-      <div class="sparkline-wrap">
-        <canvas id="sparklineChart" style="width:100%;height:100%;"></canvas>
-      </div>
-    </div>
   </div>
 
   <!-- Ladevorgang (nur sichtbar wenn aktiv/angesteckt) -->
@@ -368,24 +369,35 @@
     </div>
   </div>
 
-  <!-- Accordion: Preisverlauf & Ladezeiten -->
+  <!-- Günstigste Ladezeit – immer sichtbar -->
+  <div class="beste-zeit-box">
+    <div class="beste-zeit-icon">⚡</div>
+    <div>
+      <div class="beste-zeit-label">Günstigste Stunde heute (13–19 Uhr)</div>
+      <div class="beste-zeit-val skeleton" id="beste-zeit-val">–</div>
+      <div class="beste-zeit-sub" id="beste-zeit-sub"></div>
+    </div>
+  </div>
+
+  <!-- Accordion: Preisverlauf & Details -->
   <div class="accordion-wrap">
     <button class="accordion-btn" onclick="toggleAccordion(this)" aria-expanded="false">
       <div class="accordion-ttl">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Preisverlauf &amp; Ladezeiten
+        Preisverlauf &amp; Details
       </div>
       <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
     <div class="accordion-body">
       <div class="accordion-inner">
 
-        <div class="beste-zeit-box">
-          <div class="beste-zeit-icon">⚡</div>
-          <div>
-            <div class="beste-zeit-label">Günstigste Stunde heute (13–19 Uhr)</div>
-            <div class="beste-zeit-val skeleton" id="beste-zeit-val">–</div>
-            <div class="beste-zeit-sub" id="beste-zeit-sub"></div>
+        <div>
+          <div class="sparkline-header">
+            <div class="sparkline-label">Preisverlauf letzte 6h</div>
+            <div class="sparkline-range" id="sparkline-range"></div>
+          </div>
+          <div class="sparkline-wrap">
+            <canvas id="sparklineChart" style="width:100%;height:100%;"></canvas>
           </div>
         </div>
 
@@ -420,22 +432,20 @@
   </div>
 
   <!-- Navigation: Rechner + Sessions -->
-  <div class="nav-grid">
-    <a href="rechner.html" class="nav-card secondary">
-      <div class="nav-icon">💰</div>
-      <div>
-        <div class="nav-title">Ersparnis-Rechner</div>
-        <div class="nav-sub">Wie viel sparst du mit Nachbarschaft-Laden?</div>
-      </div>
-      <svg class="nav-arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.75"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  <div class="nav-links-row">
+    <a href="sessions.html">
+      <span class="nl-icon">📋</span>
+      <span class="nl-text">
+        <span class="nl-title">Ladesessions</span>
+        <span class="nl-sub">Alle erfassten Ladevorgänge</span>
+      </span>
     </a>
-    <a href="sessions.html" class="nav-card secondary">
-      <div class="nav-icon">📋</div>
-      <div>
-        <div class="nav-title">Ladesessions</div>
-        <div class="nav-sub">Alle erfassten Ladevorgänge</div>
-      </div>
-      <svg class="nav-arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    <a href="rechner.html">
+      <span class="nl-icon">💰</span>
+      <span class="nl-text">
+        <span class="nl-title">Ersparnis-Rechner</span>
+        <span class="nl-sub">Wie viel spare ich?</span>
+      </span>
     </a>
   </div>
 
@@ -671,7 +681,7 @@ function toggleAccordion(btn) {
   body.classList.toggle('open', willOpen);
   btn.classList.toggle('open', willOpen);
   btn.setAttribute('aria-expanded', willOpen);
-  if (willOpen) setTimeout(() => chart.resize(), 50);
+  if (willOpen) setTimeout(() => { chart.resize(); sparkline.resize(); }, 50);
 }
 
 const sparkline = new Chart(document.getElementById('sparklineChart'), {
