@@ -54,7 +54,7 @@
   .sparkline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
   .sparkline-label { font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
   .sparkline-range { font-size: .72rem; color: var(--muted); }
-  .sparkline-wrap { height: 72px; }
+  .sparkline-wrap { height: 96px; }
 
   /* PV */
   .pv-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
@@ -690,14 +690,39 @@ function toggleAccordion(btn) {
 
 const sparkline = new Chart(document.getElementById('sparklineChart'), {
   type: 'line',
-  data: { labels: [], datasets: [{
-    data: [], borderColor: '#2d6a4f', backgroundColor: 'rgba(45,106,79,.13)',
-    borderWidth: 1.5, pointRadius: 0, fill: true, tension: 0.4
-  }]},
+  data: { labels: [], datasets: [
+    { data: [], borderColor: '#2d6a4f', backgroundColor: 'rgba(45,106,79,.12)',
+      borderWidth: 1.5, fill: true, tension: 0.4,
+      pointRadius: ctx => {
+        const vals = ctx.dataset.data; const n = vals.length; if (!n) return 0;
+        const i = ctx.dataIndex;
+        if (i === n - 1) return 4.5;
+        const mn = Math.min(...vals), mx = Math.max(...vals);
+        return (vals[i] === mn || vals[i] === mx) ? 3.5 : 0;
+      },
+      pointBackgroundColor: ctx => {
+        const vals = ctx.dataset.data; const n = vals.length; if (!n) return '#2d6a4f';
+        const i = ctx.dataIndex;
+        if (i === n - 1) return '#2d6a4f';
+        return vals[i] === Math.min(...vals) ? '#40916c' : '#c62828';
+      },
+      pointBorderColor: 'rgba(255,255,255,.85)', pointBorderWidth: 1.5, pointHoverRadius: 5 },
+    { data: [], borderColor: 'rgba(64,145,108,.5)', backgroundColor: 'transparent',
+      borderWidth: 1, borderDash: [5,4], pointRadius: 0, fill: false, tension: 0, spanGaps: true },
+    { data: [], borderColor: 'rgba(198,40,40,.4)', backgroundColor: 'transparent',
+      borderWidth: 1, borderDash: [5,4], pointRadius: 0, fill: false, tension: 0, spanGaps: true }
+  ]},
   options: {
     responsive: true, maintainAspectRatio: false, animation: false,
-    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-    scales: { x: { display: false }, y: { display: false } }
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { display: false },
+      tooltip: { filter: item => item.datasetIndex === 0,
+        callbacks: { label: c => c.parsed.y.toFixed(1) + ' ct/kWh' } } },
+    scales: {
+      x: { display: false },
+      y: { display: true, ticks: { font:{size:10}, color:'#7a9a84', maxTicksLimit:4, callback: v=>v+' ct' },
+        grid: { color:'rgba(0,0,0,.05)' } }
+    }
   }
 });
 
@@ -909,6 +934,8 @@ async function loadAll() {
         new Date(p.t).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})
       );
       sparkline.data.datasets[0].data = d.verlauf.map(p => p.v);
+      sparkline.data.datasets[1].data = d.verlauf.map(() => PREIS_MIN);
+      sparkline.data.datasets[2].data = d.verlauf.map(() => PREIS_MAX);
       sparkline.update('none');
       const vals = d.verlauf.map(p => p.v);
       const spMin = Math.min(...vals), spMax = Math.max(...vals);
