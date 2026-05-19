@@ -66,6 +66,9 @@ class LadeSession(hass.Hass):
         self._end_timer      = None
 
         os.makedirs(self.WWW_DIR, exist_ok=True)
+        if not os.path.exists(self.SESSION_FILE):
+            with open(self.SESSION_FILE, "w") as f:
+                json.dump([], f)
 
         if self._restore_state():
             self.log(

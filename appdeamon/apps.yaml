@@ -1,6 +1,0 @@
-ladepreis_graph:
-  module: ladepreis_graph
-  class: LadepreisGraph
-ladeSession:
-  module: ladeSession
-  class: LadeSession

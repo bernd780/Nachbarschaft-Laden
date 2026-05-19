@@ -1,7 +1,10 @@
-#!/usr/bin/with-contenv bashio
+#!/usr/bin/with-contenv /bin/sh
 set -e
 
+log() { echo "[$(date '+%H:%M:%S')] $*"; }
+
 OPTIONS="/data/options.json"
+BACKUP_FILE="/homeassistant/nachbarschaft_laden_konfiguration.json"
 AD_CONF="/config_ad"
 APPS_DIR="/homeassistant/.addon_nachbarschaft_laden/apps"
 
@@ -31,8 +34,23 @@ logs:
     log_level: INFO
 EOF
 
-# ── Optionen auslesen ─────────────────────────────────────────────────────────
+# ── Konfiguration sichern / wiederherstellen ──────────────────────────────────
 OPTS="$OPTIONS"
+
+# Frische Installation erkennen: Platzhalter-Sensor-ID im Feld sensor_ladegeraet_status
+_SENSOR=$(jq -r '.sensor_ladegeraet_status // ""' "$OPTIONS")
+if echo "$_SENSOR" | grep -q "XXXXXX" && [ -f "$BACKUP_FILE" ]; then
+  log "Neue Installation erkannt – stelle Konfiguration aus Backup wieder her ..."
+  OPTS="$BACKUP_FILE"
+fi
+
+# Aktuelle (oder wiederhergestellte) Konfiguration sichern
+if [ "$OPTS" != "$BACKUP_FILE" ]; then
+  cp "$OPTS" "$BACKUP_FILE"
+  log "Konfiguration gesichert: $BACKUP_FILE"
+fi
+
+# ── Optionen auslesen ─────────────────────────────────────────────────────────
 
 # Preisberechnung
 SENSOR_NETZLEISTUNG=$(jq -r '.sensor_netzleistung'          "$OPTS")
@@ -144,14 +162,20 @@ EOF
 cp /apps/*.py "$APPS_DIR/"
 
 mkdir -p "$WWW"
-if ls /www/*.html 1>/dev/null 2>&1; then
-  for _f in /www/*.html; do
-    sed \
-      "s|https://nachbarschaft-laden.de|${BASIS_URL}|g; \
-       s|__SESSIONS_PASSWORT_HASH__|${SESSIONS_HASH}|g" \
-      "$_f" > "$WWW/$(basename "$_f")"
-  done
-fi
+for _f in /www/*; do
+  [ -f "$_f" ] || continue
+  case "$_f" in
+    *.html)
+      sed \
+        "s|https://nachbarschaft-laden.de|${BASIS_URL}|g; \
+         s|__SESSIONS_PASSWORT_HASH__|${SESSIONS_HASH}|g" \
+        "$_f" > "$WWW/$(basename "$_f")"
+      ;;
+    *)
+      cp "$_f" "$WWW/$(basename "$_f")"
+      ;;
+  esac
+done
 
 # ── Zahlungs-Helper in Home Assistant anlegen ─────────────────────────────────
 # Legt für jeden konfigurierten RFID-Nutzer automatisch einen input_number-Helper
@@ -167,7 +191,7 @@ ha_create_helper() {
     -H "$auth" "${url}/states/input_number.${object_id}" 2>/dev/null)
 
   if [ "$status" = "200" ]; then
-    bashio::log.info "Zahlungs-Helper input_number.${object_id} bereits vorhanden"
+    log "Zahlungs-Helper input_number.${object_id} bereits vorhanden"
     return
   fi
 
@@ -179,9 +203,9 @@ ha_create_helper() {
        -H "$auth" -H "Content-Type: application/json" \
        -d "$body" \
        "${url}/config/input_number/config" > /dev/null 2>&1; then
-    bashio::log.info "Zahlungs-Helper input_number.${object_id} angelegt"
+    log "Zahlungs-Helper input_number.${object_id} angelegt"
   else
-    bashio::log.warning "Zahlungs-Helper input_number.${object_id} konnte nicht angelegt werden"
+    log "Zahlungs-Helper input_number.${object_id} konnte nicht angelegt werden"
   fi
 }
 
@@ -189,7 +213,7 @@ ha_create_helper() {
 RFID_MIT_HELPER=$(jq '[.rfid_benutzer // [] | .[] | select((.payment_helper // "") != "")] | length' "$OPTS")
 
 if [ "$RFID_MIT_HELPER" -gt 0 ]; then
-  bashio::log.info "Warte auf Home Assistant API ..."
+  log "Warte auf Home Assistant API ..."
   until curl -sf -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" \
        "http://supervisor/core/api/" > /dev/null 2>&1; do
     sleep 5
@@ -204,5 +228,5 @@ if [ "$RFID_MIT_HELPER" -gt 0 ]; then
     done
 fi
 
-bashio::log.info "Starte AppDaemon ..."
+log "Starte AppDaemon ..."
 exec appdaemon -c "$AD_CONF"

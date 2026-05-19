@@ -283,7 +283,7 @@ You have a solar PV system, a wallbox — and neighbors who'd love to charge at 
 
 #### Install the add-on
 
-1. Copy the `addon/` folder to the HA host, e.g. to `/addons/nachbarschaftladen/`
+1. Copy the `addon/` folder to the HA host, e.g. to `/addons/nachbarschaft-laden/`
 2. In HA: **Settings → Add-ons → Add-on Store → ⋮ → Reload local add-ons**
 3. Find "Nachbarschaft-Laden" under "Local add-ons" → **Install → Start**
 
