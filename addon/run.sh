@@ -42,7 +42,17 @@ _SENSOR=$(jq -r '.sensor_ladegeraet_status // ""' "$OPTIONS")
 if echo "$_SENSOR" | grep -q "XXXXXX" && [ -f "$BACKUP_FILE" ]; then
   log "Neue Installation erkannt – stelle Konfiguration aus Backup wieder her ..."
   cp "$BACKUP_FILE" "$OPTIONS"
-  log "HA-Konfiguration aktualisiert (Backup → options.json)"
+  # Supervisor-Store aktualisieren, damit HA-UI korrekte Werte zeigt
+  _api_body=$(jq -c '{options: .}' "$BACKUP_FILE")
+  if curl -sf -X POST \
+       -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" \
+       -H "Content-Type: application/json" \
+       -d "$_api_body" \
+       "http://supervisor/addons/self/options" > /dev/null 2>&1; then
+    log "Supervisor-Store aktualisiert – HA-UI nach Seitenneuladen korrekt"
+  else
+    log "Warnung: Supervisor-API nicht erreichbar – HA-UI zeigt ggf. noch Platzhalter"
+  fi
 fi
 
 # Aktuelle (oder wiederhergestellte) Konfiguration sichern
