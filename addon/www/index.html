@@ -950,8 +950,9 @@ async function loadAll() {
       const s = d.pv[k];
       document.getElementById('sm-' + i).textContent = smiley(s);
       const el = document.getElementById('pv-' + i);
-      el.textContent = (s >= 0 ? '+' : '') + s.toFixed(0) + ' kWh';
-      el.className = 'pv-kwh' + (s < 0 ? ' neg' : s < 10 ? ' mid' : ''); unskel(el);
+      const v = Math.max(0, s);
+      el.textContent = '+' + v.toFixed(0) + ' kWh';
+      el.className = 'pv-kwh' + (v < 10 ? ' mid' : ''); unskel(el);
     });
 
     // PV-Erzeugung heute (Sonnen-Arc)

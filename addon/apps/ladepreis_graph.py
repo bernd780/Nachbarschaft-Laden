@@ -220,7 +220,7 @@ class LadepreisGraph(hass.Hass):
         img.paste(smiley_img, (10, 362))
 
         for cx, surplus in [(cx0, surplus_m), (cx1, surplus_u), (cx2, surplus_3)]:
-            ct(cx, 530, f"{surplus:+.0f} kWh", True, 28)
+            ct(cx, 530, f"+{max(0.0, surplus):.0f} kWh", True, 28)
         draw.rectangle([(0, 568), (W, 570)], fill=FG)
 
         LOGO_W, LOGO_H = 460, 145
@@ -486,9 +486,9 @@ class LadepreisGraph(hass.Hass):
                 "verlauf":              verlauf,
                 "verlauf_lang":         verlauf_lang,
                 "pv": {
-                    "morgen":      round(surplus_m, 1),
-                    "uebermorgen": round(surplus_u, 1),
-                    "in3tagen":    round(surplus_3, 1),
+                    "morgen":      round(max(0.0, surplus_m), 1),
+                    "uebermorgen": round(max(0.0, surplus_u), 1),
+                    "in3tagen":    round(max(0.0, surplus_3), 1),
                     "erzeugung_prozent": pv_erzeugung_prozent,
                 },
                 "ladevorgang": ladevorgang,
