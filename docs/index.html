@@ -56,6 +56,10 @@
   .therm-zone { font-size: .8rem; font-weight: 600; transition: color .6s; }
   .therm-trend { font-size: 1.1rem; color: var(--muted); transition: color .3s; }
   [data-theme="dark"] .therm-track { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.12); }
+  .therm-mini { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; padding-left: 4px; }
+  .therm-mini canvas { display: block; border-radius: 6px; }
+  .therm-mini-link { font-size: .68rem; font-weight: 600; color: var(--green); text-decoration: none; opacity: .8; }
+  .therm-mini-link:hover { opacity: 1; text-decoration: underline; }
   .sparkline-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
   .sparkline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
   .sparkline-label { font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
@@ -337,6 +341,10 @@
           </div>
           <div class="therm-zone skeleton" id="therm-zone">–</div>
           <div class="therm-trend" id="therm-trend">→</div>
+        </div>
+        <div class="therm-mini">
+          <canvas id="therm-mini-canvas" style="width:72px;height:52px;"></canvas>
+          <a class="therm-mini-link" href="#" onclick="openVerlauf();return false;">Verlauf ↗</a>
         </div>
       </div>
       <div class="preis-deckel">
@@ -709,6 +717,26 @@ function toggleAccordion(btn) {
   if (willOpen) setTimeout(() => { chart.resize(); sparkline.resize(); }, 50);
 }
 
+function openVerlauf() {
+  const btn = document.querySelector('.accordion-btn');
+  if (btn && btn.getAttribute('aria-expanded') !== 'true') toggleAccordion(btn);
+  document.querySelector('.accordion-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+const miniChart = new Chart(document.getElementById('therm-mini-canvas'), {
+  type: 'line',
+  data: { labels: [], datasets: [{ data: [],
+    borderColor: '#2d6a4f', backgroundColor: 'rgba(45,106,79,.10)',
+    borderWidth: 1.5, pointRadius: 0, fill: true, tension: 0.4
+  }]},
+  options: {
+    responsive: false, maintainAspectRatio: false, animation: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: { x: { display: false }, y: { display: false } },
+    layout: { padding: 2 }
+  }
+});
+
 const sparkline = new Chart(document.getElementById('sparklineChart'), {
   type: 'line',
   data: { labels: [], datasets: [
@@ -975,6 +1003,10 @@ async function loadAll() {
       sparkline.data.datasets[0].data = d.verlauf.map(p => p.v);
       sparkline.data.datasets[1].data = d.verlauf.map(() => PREIS_MIN);
       sparkline.data.datasets[2].data = d.verlauf.map(() => PREIS_MAX);
+      const last3h = d.verlauf.slice(-12);
+      miniChart.data.labels = last3h.map(p => p.t);
+      miniChart.data.datasets[0].data = last3h.map(p => p.v);
+      miniChart.update('none');
       sparkline.update('none');
       const vals = d.verlauf.map(p => p.v);
       const spMin = Math.min(...vals), spMax = Math.max(...vals);
