@@ -912,6 +912,9 @@ async function loadAll() {
         bSub.textContent = gs.avg_ct <= 18 ? '✅ Sehr günstig – ideal zum Laden!' :
                            gs.avg_ct <= 25 ? '👍 Guter Zeitpunkt zum Laden' :
                            gs.avg_ct <= 32 ? '👌 Moderat' : '⚠ Heute eher teuer';
+      } else {
+        bEl.textContent = 'Noch nicht verfügbar'; unskel(bEl);
+        bSub.textContent = 'Auswertung ab 13 Uhr';
       }
     }
 
