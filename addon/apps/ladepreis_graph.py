@@ -423,13 +423,9 @@ class LadepreisGraph(hass.Hass):
             try:
                 h = datetime.now(_TZ).hour
                 if 4 <= h < 23:
-                    erzeugt  = self._float_safe(self.S_PV_HEUTE)
-                    prognose = (self._float_safe(self.S_PV_PROGNOSE_1)
-                              + self._float_safe(self.S_PV_PROGNOSE_2)
-                              + self._float_safe(self.S_PV_PROGNOSE_3))
-                    if prognose > 0:
-                        pv_erzeugung_prozent = round(
-                            min(max(erzeugt / prognose * 100, 0.0), 100.0), 1)
+                    val = self._float_safe(self.S_PV_HEUTE)
+                    if val is not None:
+                        pv_erzeugung_prozent = round(min(max(val, 0.0), 100.0), 1)
             except Exception:
                 pass
 
