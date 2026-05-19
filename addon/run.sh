@@ -41,7 +41,8 @@ OPTS="$OPTIONS"
 _SENSOR=$(jq -r '.sensor_ladegeraet_status // ""' "$OPTIONS")
 if echo "$_SENSOR" | grep -q "XXXXXX" && [ -f "$BACKUP_FILE" ]; then
   log "Neue Installation erkannt – stelle Konfiguration aus Backup wieder her ..."
-  OPTS="$BACKUP_FILE"
+  cp "$BACKUP_FILE" "$OPTIONS"
+  log "HA-Konfiguration aktualisiert (Backup → options.json)"
 fi
 
 # Aktuelle (oder wiederhergestellte) Konfiguration sichern
