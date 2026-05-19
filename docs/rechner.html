@@ -1,0 +1,345 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Ersparnis-Rechner · Nachbarschaft-Laden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script>(function(){const t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<style>
+  :root {
+    --green:  #2d6a4f; --green2: #40916c; --green3: #74c69d; --green4: #d8f3dc;
+    --amber:  #e07b00; --amber2: #ffd166;
+    --red:    #c62828; --red2:   #ffb3b3;
+    --ink:    #1a1a1a; --muted:  #5a6a5e;
+    --bg:     #f4f7f5; --card:   #ffffff; --border: #d0ddd4; --radius: 18px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+
+  header { background: var(--green); color: #fff; padding: 1.5rem 2rem; position: relative; overflow: hidden; }
+  header::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 50%, rgba(116,198,157,.22) 0%, transparent 65%); pointer-events: none; }
+  .header-inner { max-width: 900px; margin: 0 auto; position: relative; display: flex; align-items: center; gap: 1rem; }
+  .back-link { display: inline-flex; align-items: center; gap: .4rem; color: rgba(255,255,255,.8); text-decoration: none; font-size: .88rem; font-weight: 500; padding: .4rem .75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,.25); transition: background .15s; flex-shrink: 0; }
+  .back-link:hover { background: rgba(255,255,255,.12); color: #fff; }
+  .header-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; }
+  .header-sub { font-size: .85rem; opacity: .75; margin-top: .15rem; }
+
+  main { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 4rem; display: grid; gap: 1.5rem; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem 1.75rem; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+  .card-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--green); margin-bottom: 1.25rem; display: flex; align-items: center; gap: .6rem; }
+
+  /* Rechner */
+  .rechner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+  @media(max-width:620px){ .rechner-grid { grid-template-columns: 1fr; } }
+
+  .slider-wrap { display: flex; flex-direction: column; gap: .4rem; }
+  .slider-label { font-size: .8rem; color: var(--muted); display: flex; justify-content: space-between; }
+  .slider-label span { font-weight: 600; color: var(--ink); }
+  input[type=range] { width: 100%; accent-color: var(--green2); }
+  .slider-bounds { display: flex; justify-content: space-between; font-size: .7rem; color: var(--muted); margin-top: .2rem; }
+
+  .result-stack { display: flex; flex-direction: column; gap: .8rem; }
+  .result-box { border-radius: 14px; padding: 1.25rem; text-align: center; }
+  .result-box.green  { background: var(--green4); border: 1.5px solid var(--green3); }
+  .result-box.amber  { background: #fef9ec; border: 1.5px solid var(--amber2); }
+  .result-box.blue   { background: #e8f4fd; border: 1.5px solid #90cdf4; }
+  .result-box.fun    { background: #f3e8ff; border: 1.5px solid #c084fc; }
+  .result-comment    { font-size: .88rem; color: var(--muted); text-align: center; padding: .6rem .5rem 0; line-height: 1.5; min-height: 2.4rem; }
+  .result-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: .4rem; }
+  .result-val { font-family: 'DM Serif Display', serif; font-size: 2.2rem; color: var(--green); }
+  .result-box.amber .result-val { color: var(--amber); }
+  .result-box.blue  .result-val { color: #1a6fa8; }
+  .result-sub { font-size: .8rem; color: var(--muted); margin-top: .3rem; line-height: 1.4; }
+
+  .hinweis { background: #fff8e1; border: 1.5px solid var(--amber2); border-radius: var(--radius); padding: 1.1rem 1.25rem; font-size: .82rem; color: #7a5800; line-height: 1.6; }
+
+  footer { text-align: center; font-size: .72rem; color: var(--muted); padding: .5rem 0 2rem; }
+  footer a { color: var(--green2); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  [data-theme="dark"] {
+    --green:#74c69d; --green2:#52b788; --green3:#2d6a4f; --green4:#0d2318;
+    --amber:#ffd166; --amber2:#c87000;
+    --red:#ff9a9a; --red2:#3d1010;
+    --ink:#ddeee4; --muted:#7a9a84;
+    --bg:#111a15; --card:#1b2c20; --border:#2a4030;
+  }
+  [data-theme="dark"] .result-box.amber { background: #2a1e00; border-color: var(--amber2); }
+  [data-theme="dark"] .result-box.blue  { background: #0d1e2d; border-color: #2a5a80; }
+  [data-theme="dark"] .result-box.blue .result-val { color: #63b3ed; }
+  [data-theme="dark"] .result-box.fun   { background: #1e0d2d; border-color: #7c3aed; }
+  [data-theme="dark"] .result-box.fun .result-val { color: #c084fc; }
+  [data-theme="dark"] .hinweis { background: #1e1600; border-color: var(--amber2); color: #c9a227; }
+  .theme-toggle { position: absolute; top: 50%; right: 1.25rem; transform: translateY(-50%); background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); color: #fff; border-radius: 50%; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+  .theme-toggle:hover { background: rgba(255,255,255,.25); }
+  @media(max-width:600px) {
+    .header-inner { padding-right: 3rem; }
+    .header-sub { font-size: .78rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Dark/Light Mode">🌙</button>
+  <div class="header-inner">
+    <a href="index.html" class="back-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Zurück
+    </a>
+    <div>
+      <div class="header-title">Ersparnis-Rechner</div>
+      <div class="header-sub">Berechne deine persönliche Ersparnis mit Nachbarschaft-Laden</div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <div class="card">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Deine Parameter
+    </div>
+    <div class="rechner-grid">
+
+      <div style="display:flex;flex-direction:column;gap:1.2rem;">
+        <div class="slider-wrap">
+          <div class="slider-label">Lademenge pro Vorgang <span id="kwh-out">20 kWh</span></div>
+          <input type="range" id="kwh-slider" min="5" max="100" value="20" step="1">
+          <div class="slider-bounds"><span>5 kWh</span><span>100 kWh</span></div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-label">Mein Festtarif <span id="fest-out">32 ct</span></div>
+          <input type="range" id="fest-slider" min="20" max="55" value="32" step="0.5">
+          <div class="slider-bounds"><span>20 ct</span><span>55 ct</span></div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-label">PV-Tarif (Nachbarschaft) <span id="pv-tarif-out">14 ct</span></div>
+          <input type="range" id="pv-tarif-slider" min="14" max="36" value="14" step="0.5">
+          <div class="slider-bounds"><span>14 ct</span><span>36 ct</span></div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-label">Ladevorgänge pro Woche <span id="freq-out">2×</span></div>
+          <input type="range" id="freq-slider" min="1" max="7" value="2" step="1">
+          <div class="slider-bounds"><span>1×</span><span>7×</span></div>
+        </div>
+      </div>
+
+      <div class="result-stack">
+        <div class="result-box green">
+          <div class="result-label">Ersparnis pro Ladevorgang</div>
+          <div class="result-val" id="ersparnis-val">–</div>
+          <div class="result-sub" id="ersparnis-sub"></div>
+        </div>
+        <div class="result-box amber">
+          <div class="result-label">Hochrechnung pro Sommer</div>
+          <div class="result-val" id="ersparnis-jahr">–</div>
+          <div class="result-sub" id="ersparnis-jahr-sub"></div>
+        </div>
+        <div class="result-box blue">
+          <div class="result-label">Gratis-Kilometer durch Ersparnis</div>
+          <div class="result-val" id="ersparnis-km">–</div>
+          <div class="result-sub" id="ersparnis-km-sub"></div>
+        </div>
+        <div class="result-box fun" id="witz-box" style="display:none;">
+          <div class="result-label">Das entspricht ungefähr</div>
+          <div class="result-val" id="witz-val" style="font-size:1.5rem;">–</div>
+          <div class="result-sub" id="witz-sub"></div>
+        </div>
+        <div class="result-comment" id="witz-kommentar"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="hinweis">
+    ⚠️ <strong>Hinweis:</strong> Diese Hochrechnung bildet eine Idealsituation ab. PV-Überschuss ist in der Regel im Sommer verfügbar (ca. 5–6 Monate). Im Winter profitierst du nicht von einem Solarüberschuss.
+  </div>
+
+</main>
+
+<footer>
+  <a href="index.html">← Zurück zur Übersicht</a> · Nachbarschaft-Laden
+</footer>
+
+<script>
+function toggleTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') !== 'dark';
+  localStorage.setItem('theme', dark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  document.getElementById('theme-btn').textContent = dark ? '☀️' : '🌙';
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.getElementById('theme-btn').textContent = dark ? '☀️' : '🌙';
+});
+
+function updateRechner() {
+  const kwh     = +document.getElementById('kwh-slider').value;
+  const fest    = +document.getElementById('fest-slider').value;
+  const pvTarif = +document.getElementById('pv-tarif-slider').value;
+  const freq    = +document.getElementById('freq-slider').value;
+
+  document.getElementById('kwh-out').textContent      = kwh + ' kWh';
+  document.getElementById('fest-out').textContent     = fest.toFixed(1) + ' ct';
+  document.getElementById('pv-tarif-out').textContent = pvTarif.toFixed(1) + ' ct';
+  document.getElementById('freq-out').textContent     = freq + '×';
+
+  const diffCt   = fest - pvTarif;
+  const sparenEu = diffCt / 100 * kwh;
+
+  const valEl = document.getElementById('ersparnis-val');
+  const subEl = document.getElementById('ersparnis-sub');
+  if (diffCt > 0) {
+    valEl.textContent = sparenEu.toFixed(2).replace('.', ',') + ' €';
+    subEl.textContent = kwh + ' kWh × ' + diffCt.toFixed(1) + ' ct Differenz (Fest ' + fest.toFixed(1) + ' vs. PV ' + pvTarif.toFixed(1) + ' ct)';
+  } else {
+    valEl.textContent = 'Kein Vorteil';
+    subEl.textContent = 'PV-Tarif liegt über dem Festtarif';
+  }
+
+  const sparenJahr = sparenEu * freq * 26;
+  const jahrEl    = document.getElementById('ersparnis-jahr');
+  const jahrSubEl = document.getElementById('ersparnis-jahr-sub');
+  if (sparenJahr > 0) {
+    jahrEl.textContent    = sparenJahr.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' €';
+    jahrSubEl.textContent = freq + '× pro Woche × 26 Wochen (Sommer) = ' + (freq * 26) + ' Ladevorgänge';
+  } else {
+    jahrEl.textContent    = '–';
+    jahrSubEl.textContent = '';
+  }
+
+  const kmEl    = document.getElementById('ersparnis-km');
+  const kmSubEl = document.getElementById('ersparnis-km-sub');
+  const kwh_pro_euro = 100 / pvTarif;
+  const extra_kwh    = sparenJahr * kwh_pro_euro;
+  const extra_km     = extra_kwh / 20 * 100;
+  if (sparenJahr > 0) {
+    kmEl.textContent    = Math.round(extra_km).toLocaleString('de-DE') + ' km';
+    kmSubEl.textContent = 'Die ' + sparenJahr.toFixed(2).replace('.', ',') + ' € Ersparnis entsprechen ' + Math.round(extra_kwh) + ' kWh – genug für ' + Math.round(extra_km).toLocaleString('de-DE') + ' km bei 20 kWh/100 km.';
+  } else {
+    kmEl.textContent    = '–';
+    kmSubEl.textContent = '';
+  }
+}
+
+const WITZ_ITEMS = [
+  { emoji: '🍺', preis: 15.0, text: (n) => `${n} Kisten Bier` },
+  { emoji: '☕', preis:  2.8, text: (n) => `${n} Tassen Kaffee beim Bäcker` },
+  { emoji: '🍕', preis: 11.0, text: (n) => `${n} Pizzen beim Italiener` },
+  { emoji: '🍔', preis:  9.0, text: (n) => `${n} Burger` },
+  { emoji: '🍷', preis:  8.0, text: (n) => `${n} Flaschen Rotwein` },
+  { emoji: '🥂', preis:  7.0, text: (n) => `${n} Flaschen Weißwein` },
+  { emoji: '🧀', preis:  4.5, text: (n) => `${n} Stück Münsterkäse` },
+  { emoji: '🍞', preis:  2.5, text: (n) => `${n} Päckchen Pumpernickel` },
+  { emoji: '🥩', preis:  6.0, text: (n) => `${n} Packungen Westfälischen Schinken` },
+  { emoji: '🥃', preis: 12.0, text: (n) => `${n} Flaschen Westfälischen Doppelkorn` },
+  { emoji: '🍩', preis:  2.5, text: (n) => `${n} Tüten Schmalzkuchen vom Markt` },
+  { emoji: '🔔', preis:  5.0, text: (n) => `${n} Fahrradklingeln – du bist in Münster!` },
+  { emoji: '🌭', preis:  3.0, text: (n) => `${n} Currywürste am Imbiss` },
+  { emoji: '🥖', preis:  3.5, text: (n) => `${n} Stuten (Münsterländer Weißbrot)` },
+  { emoji: '🐷', preis:  4.0, text: (n) => `${n} Portionen Mett auf dem Markt` },
+  { emoji: '🚲', preis: 80.0, text: (n) => `${n} Fahrradreparatur beim Münsteraner Radladen` },
+  { emoji: '🎟️', preis: 12.0, text: (n) => `${n} Eintritte ins Allwetterzoo Münster` },
+  { emoji: '🍦', preis:  3.0, text: (n) => `${n} Kugeln Eis am Aasee` },
+];
+
+const KOMMENTARE = [
+  { max:   2, text: '– immerhin ein Kaugummi. 🫧' },
+  { max:  10, text: '– nicht schlecht für ein paar Sonnenstrahlen! ☀️' },
+  { max:  30, text: '– die Sonne zahlt deinen Feierabend-Kaffee. Und noch ein paar mehr. ☕' },
+  { max:  60, text: '– das fühlt sich schon nach einem richtigen Schnäppchen an! 💚' },
+  { max: 100, text: '– dein Auto lädt sich praktisch von selbst. Fast. 🚗⚡' },
+  { max: 200, text: '– Respekt! Damit könnte man einen halben Urlaub finanzieren. 🏖️' },
+  { max: 500, text: '– läuft bei dir. Die Sonne arbeitet Vollzeit für dich. 🌞💸' },
+  { max: Infinity, text: '– bist du sicher, dass du die Regler richtig eingestellt hast? 🤯' },
+];
+
+let witzIndex = 0;
+
+function updateRechner() {
+  const kwh     = +document.getElementById('kwh-slider').value;
+  const fest    = +document.getElementById('fest-slider').value;
+  const pvTarif = +document.getElementById('pv-tarif-slider').value;
+  const freq    = +document.getElementById('freq-slider').value;
+
+  document.getElementById('kwh-out').textContent      = kwh + ' kWh';
+  document.getElementById('fest-out').textContent     = fest.toFixed(1) + ' ct';
+  document.getElementById('pv-tarif-out').textContent = pvTarif.toFixed(1) + ' ct';
+  document.getElementById('freq-out').textContent     = freq + '×';
+
+  const diffCt   = fest - pvTarif;
+  const sparenEu = diffCt / 100 * kwh;
+
+  const valEl = document.getElementById('ersparnis-val');
+  const subEl = document.getElementById('ersparnis-sub');
+  if (diffCt > 0) {
+    valEl.textContent = sparenEu.toFixed(2).replace('.', ',') + ' €';
+    subEl.textContent = kwh + ' kWh × ' + diffCt.toFixed(1) + ' ct Differenz (Fest ' + fest.toFixed(1) + ' vs. PV ' + pvTarif.toFixed(1) + ' ct)';
+  } else {
+    valEl.textContent = 'Kein Vorteil';
+    subEl.textContent = 'PV-Tarif liegt über dem Festtarif';
+  }
+
+  const sparenJahr = sparenEu * freq * 26;
+  const jahrEl    = document.getElementById('ersparnis-jahr');
+  const jahrSubEl = document.getElementById('ersparnis-jahr-sub');
+  if (sparenJahr > 0) {
+    jahrEl.textContent    = sparenJahr.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' €';
+    jahrSubEl.textContent = freq + '× pro Woche × 26 Wochen (Sommer) = ' + (freq * 26) + ' Ladevorgänge';
+  } else {
+    jahrEl.textContent    = '–';
+    jahrSubEl.textContent = '';
+  }
+
+  const kmEl    = document.getElementById('ersparnis-km');
+  const kmSubEl = document.getElementById('ersparnis-km-sub');
+  const kwh_pro_euro = 100 / pvTarif;
+  const extra_kwh    = sparenJahr * kwh_pro_euro;
+  const extra_km     = extra_kwh / 20 * 100;
+  if (sparenJahr > 0) {
+    kmEl.textContent    = Math.round(extra_km).toLocaleString('de-DE') + ' km';
+    kmSubEl.textContent = 'Die ' + sparenJahr.toFixed(2).replace('.', ',') + ' € Ersparnis entsprechen ' + Math.round(extra_kwh) + ' kWh – genug für ' + Math.round(extra_km).toLocaleString('de-DE') + ' km bei 20 kWh/100 km.';
+  } else {
+    kmEl.textContent    = '–';
+    kmSubEl.textContent = '';
+  }
+
+  // Witz-Kachel
+  const witzBox  = document.getElementById('witz-box');
+  const witzVal  = document.getElementById('witz-val');
+  const witzSub  = document.getElementById('witz-sub');
+  const komEl    = document.getElementById('witz-kommentar');
+  if (sparenJahr > 0.5) {
+    const item   = WITZ_ITEMS[witzIndex % WITZ_ITEMS.length];
+    const anzahl = sparenJahr / item.preis;
+    const anzahlFmt = anzahl < 1.5
+      ? 'fast eine'
+      : (Math.round(anzahl * 2) / 2 % 1 === 0
+          ? Math.round(anzahl).toString()
+          : (Math.round(anzahl * 2) / 2).toFixed(1).replace('.', ','));
+    witzVal.textContent = item.emoji + ' ' + anzahlFmt;
+    witzSub.textContent = item.text(anzahlFmt);
+    witzBox.style.display = 'block';
+    const k = KOMMENTARE.find(c => sparenJahr <= c.max);
+    komEl.textContent = k ? k.text : '';
+    witzIndex++;
+  } else {
+    witzBox.style.display = 'none';
+    komEl.textContent = '';
+  }
+}
+
+['kwh-slider', 'fest-slider', 'pv-tarif-slider', 'freq-slider'].forEach(id =>
+  document.getElementById(id).addEventListener('input', updateRechner)
+);
+
+updateRechner();
+</script>
+</body>
+</html>
