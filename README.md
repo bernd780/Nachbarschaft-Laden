@@ -10,6 +10,8 @@
 
 Home Assistant Add-on für die Verwaltung einer nachbarschaftlichen EV-Ladestation. Es berechnet einen dynamischen Ladepreis aus dem aktuellen PV-Überschuss, zeichnet Ladesessions auf und zeigt alles auf einer Webseite und einem E-Paper-Display an.
 
+**[→ Live-Demo mit Beispieldaten ansehen](https://bernd780.github.io/Nachbarschaft-Laden/)**
+
 ---
 
 ## Für wen ist das?
@@ -250,6 +252,8 @@ Das Display lädt alle 60 Sekunden das aktuelle Bild von HA.
 [🇩🇪 Deutsch](#nachbarschaft-laden) · [🇬🇧 English](#nachbarschaft-laden-english)
 
 Home Assistant add-on for managing a shared neighborhood EV charging station. It calculates a dynamic charging price based on current PV surplus, records charging sessions, and displays everything on a web dashboard and an e-paper display.
+
+**[→ Live demo with sample data](https://bernd780.github.io/Nachbarschaft-Laden/)**
 
 ---
 
