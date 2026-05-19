@@ -1,7 +1,7 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-ARG CACHEBUST=2
+ARG CACHEBUST=12
 RUN echo "cachebust=$CACHEBUST"
 
 RUN apk add --no-cache \
@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir \
     qrcode[pil]
 
 COPY run.sh /run.sh
-RUN chmod +x /run.sh
+RUN sed -i 's/\r//' /run.sh && chmod +x /run.sh
 
 COPY apps/ /apps/
 COPY www/  /www/
