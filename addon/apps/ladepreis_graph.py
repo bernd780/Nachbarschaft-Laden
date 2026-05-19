@@ -68,6 +68,7 @@ class LadepreisGraph(hass.Hass):
 
         self.render_combined({})
         self.run_every(self.render_combined, "now+300", 5 * 60)
+        self.listen_state(self.render_combined, self.S_LADEGERAET)
 
     def _get_hausverbrauch(self):
         if self.H_HAUSVERBRAUCH:
