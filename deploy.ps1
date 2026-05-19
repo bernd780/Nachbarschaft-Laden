@@ -23,7 +23,7 @@ if (-not $target) { $target = "addon" }
 # Setzt voraus: git push wurde vorher ausgeführt.
 # Kopiert config.yaml, CHANGELOG.md, run.sh ins lokale Add-on-Verzeichnis,
 # dann store-reload + update/rebuild.
-if ($target -in "addon") {
+if ($target -eq "addon") {
     Write-Host "`nDeploy Add-on (lokale Dateien → HA)" -ForegroundColor Green
 
     Deploy "addon\config.yaml"    "$ADDON_DIR/config.yaml"
@@ -53,7 +53,7 @@ if ($target -in "addon") {
 # /homeassistant/.addon_nachbarschaft_laden/apps ist bind-gemountet.
 # AppDaemon lädt geänderte .py Dateien automatisch neu.
 $HA_ADDON_APPS = "/homeassistant/.addon_nachbarschaft_laden/apps"
-if ($target -in "hotdeploy") {
+if ($target -eq "hotdeploy") {
     Write-Host "`nHot-Deploy Python Apps" -ForegroundColor Green
     Deploy "addon\apps\ladepreis_graph.py" "$HA_ADDON_APPS/ladepreis_graph.py"
     Deploy "addon\apps\ladeSession.py"     "$HA_ADDON_APPS/ladeSession.py"
