@@ -44,6 +44,7 @@ class LadepreisGraph(hass.Hass):
         self.PREIS_MARGE         = float(a.get("preis_marge_ct",               6.0))
         self.PREIS_NETZBEZUG     = float(a.get("preis_netzbezug_ct",           30.0))
         self.PREIS_ZIELLEISTUNG  = float(a.get("preis_zielleistung_kw",        11.0))
+        self.PREIS_TOTZONE_KW    = 0.5
         self.S_PV_MORGEN         = a.get("sensor_pv_morgen",              "sensor.morgenpv")
         self.S_PV_UEBERMORGEN= a.get("sensor_pv_uebermorgen",     "sensor.uebermorgenpv")
         self.S_PV_IN3TAGEN   = a.get("sensor_pv_in3tagen",        "sensor.pvin3tagen")
@@ -295,10 +296,12 @@ class LadepreisGraph(hass.Hass):
         akku_entladung_w = max(akku_w, 0.0)
         ueberschuss_w    = wallbox_w - zaehler_w - akku_entladung_w
         ueberschuss_kw   = max(ueberschuss_w, 0.0) / 1000.0
+        preis_max = self.PREIS_NETZBEZUG + self.PREIS_MARGE
+        if ueberschuss_kw < self.PREIS_TOTZONE_KW:
+            return round(preis_max, 2)
         ueberschuss      = min(ueberschuss_kw / self.PREIS_ZIELLEISTUNG, 1.0)
 
         preis_min = self.PREIS_EINSPEISUNG + self.PREIS_MARGE
-        preis_max = self.PREIS_NETZBEZUG   + self.PREIS_MARGE
         preis     = preis_max - ueberschuss * (preis_max - preis_min)
         return round(max(preis_min, min(preis_max, preis)), 2)
 
