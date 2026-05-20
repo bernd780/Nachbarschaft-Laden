@@ -195,24 +195,103 @@ Die RFID-ID lässt sich ermitteln, indem die Karte ans Ladegerät gehalten und d
 
 ## Preisbildung
 
-Der Ladepreis wird aus dem aktuellen **PV-Überschuss** berechnet:
+### Begriffe & Energieflüsse
+
+| Begriff | Bedeutung |
+|---|---|
+| **PV-Produktion** | Momentane Leistung der Solaranlage in Watt |
+| **Eigenbedarf** | Strom, den das Haus selbst verbraucht (Licht, Heizung, Geräte – ohne Wallbox) |
+| **Netzbezug** | Wenn PV-Produktion < Gesamtverbrauch → Differenz kommt aus dem Netz (positiver Zählerwert) |
+| **Netzeinspeisung** | Wenn PV-Produktion > Gesamtverbrauch → Überschuss fließt ins Netz (negativer Zählerwert, ~8 ct/kWh Vergütung) |
+| **Batterieentladung** | Gespeicherte Energie fließt zurück in Haus und Wallbox |
+| **PV-Überschuss** | Anteil der Wallbox-Leistung, der tatsächlich aus der Sonne kommt |
+
+Vereinfachtes Bild der Energieflüsse:
 
 ```
-PV-Überschuss = Wallbox-Leistung − Netzleistung − Batterieentladung
-Überschussgrad = min(PV-Überschuss / Zielleistung, 1.0)
-
-Preis = Netzbezugspreis + Marge − Überschussgrad × Preiskorridor
+            ┌──────────────┐
+            │  ☀️ PV-Anlage │
+            └──────┬───────┘
+                   │ Produktion
+       ┌───────────┼───────────┐
+       ▼           ▼           ▼
+  🏠 Eigenbedarf  🔋 Batterie  ⚡ Wallbox   🔌 Netz
+       ▲                ▲           │
+       └────────────────┘           │ Netzbezug (teuer) /
+        Batterieentladung           │ Netzeinspeisung (vergütet)
 ```
 
-Mit den Standardwerten:
+### Berechnung des PV-Überschusses
 
-| Situation | Überschuss | Preis |
+Das System hat keinen direkten PV-Produktionssensor. Es errechnet den solaren Anteil der Wallbox-Leistung aus drei messbaren Größen:
+
+```
+PV-Überschuss [W] = Wallbox-Leistung − Netzleistung − Batterieentladung
+```
+
+Wenn das Netz gerade *einspeist* (negativer Zählerwert), subtrahiert die Formel einen negativen Wert – das erhöht den Überschuss, was korrekt ist: mehr PV als verbraucht.
+
+**Beispiele** – Wallbox lädt konstant mit 10 kW:
+
+| Wetterlage | Netz | Batterie | PV-Überschuss | Ladepreis |
+|---|---|---|---|---|
+| Hochsommer, Mittagssonne | −2 kW (Einspeisung) | 0 kW | 12 kW → gekappt auf 11 kW | **14 ct/kWh** |
+| Leicht bewölkt | +2 kW (Bezug) | 0 kW | 8 kW | ~20 ct/kWh |
+| Bewölkt, Batterie hilft | +6 kW (Bezug) | 2 kW | 2 kW | ~32 ct/kWh |
+| Nacht / kein PV | +10 kW (Bezug) | 0 kW | 0 kW | **36 ct/kWh** |
+
+### Preisformel
+
+```
+Überschussgrad = min(PV-Überschuss / Zielleistung, 1.0)    ← 0,0 … 1,0
+
+Preis [ct/kWh] = (Netzbezugspreis + Marge) − Überschussgrad × Preiskorridor
+Preiskorridor  = Netzbezugspreis − Einspeisevergütung
+```
+
+Mit den Standardwerten (Einspeisevergütung 8 ct, Marge 6 ct, Netzbezugspreis 30 ct, Zielleistung 11 kW):
+
+| PV-Überschuss | Überschussgrad | Ladepreis |
 |---|---|---|
-| Volles Netz, kein PV | 0 % | 36 ct/kWh |
-| Halber PV-Überschuss | 50 % | 25 ct/kWh |
-| Voller PV-Überschuss (≥ 11 kW) | 100 % | 14 ct/kWh |
+| 0 kW | 0 % | **36 ct/kWh** |
+| 2,75 kW | 25 % | 30,5 ct/kWh |
+| 5,5 kW | 50 % | **25 ct/kWh** |
+| 8,25 kW | 75 % | 19,5 ct/kWh |
+| ≥ 11 kW | 100 % | **14 ct/kWh** |
 
-Der Preis wird in Echtzeit berechnet und alle 5 Minuten in den Preisverlauf eingetragen.
+### Preiskurve
+
+```mermaid
+xychart-beta
+    title "Ladepreis vs. PV-Überschuss (Standardwerte)"
+    x-axis "PV-Überschuss [kW]" [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    y-axis "Ladepreis [ct/kWh]" 10 --> 40
+    line [36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14]
+```
+
+### Typischer Tagesverlauf
+
+An einem sonnigen Tag sinkt der Preis mit der aufgehenden Sonne und steigt abends wieder:
+
+```mermaid
+xychart-beta
+    title "Beispiel: Ladepreis an einem sonnigen Tag"
+    x-axis "Uhrzeit" ["6h", "8h", "10h", "12h", "14h", "16h", "18h", "20h", "22h"]
+    y-axis "Ladepreis [ct/kWh]" 10 --> 40
+    line [36, 30, 20, 14, 14, 18, 26, 34, 36]
+```
+
+> Das günstigste Ladefenster liegt typischerweise zwischen 10 und 15 Uhr. Die Web-Oberfläche berechnet und zeigt die beste Stunde des Tages automatisch an.
+
+### Warum diese Preislogik?
+
+| Grenze | Rechnung | Begründung |
+|---|---|---|
+| **Untergrenze 14 ct/kWh** | Einspeisevergütung (8 ct) + Marge (6 ct) | Jede kWh hätte für ~8 ct ins Netz eingespeist werden können. Die Marge deckt anteilige Betriebskosten. |
+| **Obergrenze 36 ct/kWh** | Netzbezugspreis (30 ct) + Marge (6 ct) | Lädt der Nachbar aus dem Netz, trägt er den tatsächlichen Strompreis plus eine kleine Marge. |
+| **Dazwischen** | Lineare Interpolation | Je mehr Sonne, desto günstiger – kontinuierlich und fair. |
+
+Der Preis wird alle 5 Minuten neu berechnet und im Preisverlauf gespeichert.
 
 ---
 
@@ -358,24 +437,103 @@ To find the RFID ID, hold the card against the charger and then read the state o
 
 ### Price calculation
 
-The charging price is derived from the current **PV surplus**:
+#### Terms & energy flows
+
+| Term | Meaning |
+|---|---|
+| **PV production** | Current output of the solar panels in watts |
+| **Self-consumption** | Power used by the house itself (lights, appliances, heating — excluding the wallbox) |
+| **Grid import** | When PV production < total consumption → difference drawn from the grid (positive meter reading) |
+| **Grid feed-in** | When PV production > total consumption → surplus flows to the grid (negative meter reading, ~8 ct/kWh tariff) |
+| **Battery discharge** | Stored energy flows back into the house and wallbox |
+| **PV surplus** | The share of wallbox charging power that actually comes from solar energy |
+
+Simplified energy flow:
 
 ```
-PV surplus = wallbox power − grid power − battery discharge
-Surplus ratio = min(PV surplus / target power, 1.0)
-
-Price = grid price + margin − surplus ratio × price corridor
+            ┌──────────────┐
+            │  ☀️ PV system  │
+            └──────┬───────┘
+                   │ production
+       ┌───────────┼───────────┐
+       ▼           ▼           ▼
+  🏠 House load  🔋 Battery  ⚡ Wallbox   🔌 Grid
+       ▲                ▲           │
+       └────────────────┘           │ grid import (expensive) /
+        battery discharge           │ grid feed-in (tariff)
 ```
 
-With default values:
+#### How is the PV surplus measured?
 
-| Situation | Surplus | Price |
+The system has no direct PV production sensor. It derives the solar share of the wallbox charging from three measurable values:
+
+```
+PV surplus [W] = wallbox power − grid power − battery discharge
+```
+
+When the grid is currently *exporting* (negative meter reading), subtracting a negative value increases the surplus — correctly reflecting that more PV is available than needed.
+
+**Examples** — wallbox charging at 10 kW:
+
+| Conditions | Grid | Battery | PV surplus | Price |
+|---|---|---|---|---|
+| Peak summer sunshine | −2 kW (export) | 0 kW | 12 kW → capped at 11 kW | **14 ct/kWh** |
+| Partly cloudy | +2 kW (import) | 0 kW | 8 kW | ~20 ct/kWh |
+| Overcast, battery helping | +6 kW (import) | 2 kW | 2 kW | ~32 ct/kWh |
+| Night / no PV | +10 kW (import) | 0 kW | 0 kW | **36 ct/kWh** |
+
+#### Price formula
+
+```
+Surplus ratio = min(PV surplus / target power, 1.0)    ← 0.0 … 1.0
+
+Price [ct/kWh] = (grid price + margin) − surplus ratio × price corridor
+Price corridor = grid price − feed-in tariff
+```
+
+With default values (feed-in 8 ct, margin 6 ct, grid price 30 ct, target 11 kW):
+
+| PV surplus | Surplus ratio | Charging price |
 |---|---|---|
-| Full grid, no PV | 0 % | 36 ct/kWh |
-| Half PV surplus | 50 % | 25 ct/kWh |
-| Full PV surplus (≥ 11 kW) | 100 % | 14 ct/kWh |
+| 0 kW | 0 % | **36 ct/kWh** |
+| 2.75 kW | 25 % | 30.5 ct/kWh |
+| 5.5 kW | 50 % | **25 ct/kWh** |
+| 8.25 kW | 75 % | 19.5 ct/kWh |
+| ≥ 11 kW | 100 % | **14 ct/kWh** |
 
-The price is calculated in real time and recorded in the price history every 5 minutes.
+#### Price curve
+
+```mermaid
+xychart-beta
+    title "Charging price vs. PV surplus (default values)"
+    x-axis "PV surplus [kW]" [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    y-axis "Charging price [ct/kWh]" 10 --> 40
+    line [36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14]
+```
+
+#### Typical daily price curve
+
+On a sunny day the price drops with the rising sun and climbs again in the evening:
+
+```mermaid
+xychart-beta
+    title "Example: charging price on a sunny day"
+    x-axis "Time of day" ["6h", "8h", "10h", "12h", "14h", "16h", "18h", "20h", "22h"]
+    y-axis "Charging price [ct/kWh]" 10 --> 40
+    line [36, 30, 20, 14, 14, 18, 26, 34, 36]
+```
+
+> The cheapest charging window is typically between 10 am and 3 pm. The web interface automatically calculates and highlights the best hour of the day.
+
+#### Why this pricing logic?
+
+| Bound | Calculation | Rationale |
+|---|---|---|
+| **Lower bound 14 ct/kWh** | Feed-in tariff (8 ct) + margin (6 ct) | Every kWh could have been sold to the grid for ~8 ct. The margin covers operating costs. |
+| **Upper bound 36 ct/kWh** | Grid price (30 ct) + margin (6 ct) | When charging from the grid, the neighbor pays the actual electricity cost plus a small margin. |
+| **In between** | Linear interpolation | More sun → cheaper price — continuous and fair. |
+
+The price is recalculated every 5 minutes and recorded in the price history.
 
 ---
 
