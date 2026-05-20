@@ -297,7 +297,7 @@ Die Akkuladephase verschiebt das günstige Ladefenster um 1–2 Stunden nach hin
 | **Obergrenze 36 ct/kWh** | Netzbezugspreis (30 ct) + Marge (6 ct) | Lädt der Nachbar aus dem Netz, trägt er den tatsächlichen Strompreis plus eine kleine Marge. |
 | **Dazwischen** | Lineare Interpolation | Je mehr Sonne, desto günstiger – kontinuierlich und fair. |
 
-Der Preis wird alle 5 Minuten neu berechnet und im Preisverlauf gespeichert.
+Der Preis wird in Echtzeit aus den aktuellen Sensordaten berechnet und über ein Riemann-Integral für eine möglichst genaue Abrechnung integriert. Für den Preisverlauf auf der Webseite wird alle 5 Minuten ein Momentwert gespeichert – das ist eine reine Darstellungsentscheidung und unabhängig von der Abrechnungsgenauigkeit.
 
 ---
 
@@ -545,7 +545,7 @@ The battery charging phase shifts the cheap charging window by roughly 1–2 hou
 | **Upper bound 36 ct/kWh** | Grid price (30 ct) + margin (6 ct) | When charging from the grid, the neighbor pays the actual electricity cost plus a small margin. |
 | **In between** | Linear interpolation | More sun → cheaper price — continuous and fair. |
 
-The price is recalculated every 5 minutes and recorded in the price history.
+The price is calculated in real time from current sensor data and integrated via a Riemann sum for accurate billing. For the price history shown on the web interface, a snapshot is saved every 5 minutes — this is a display decision and independent of billing accuracy.
 
 ---
 
