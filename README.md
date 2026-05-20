@@ -231,14 +231,14 @@ PV-Überschuss [W] = Wallbox-Leistung − Netzleistung − Batterieentladung
 
 Wenn das Netz gerade *einspeist* (negativer Zählerwert), subtrahiert die Formel einen negativen Wert – das erhöht den Überschuss, was korrekt ist: mehr PV als verbraucht.
 
-**Beispiele** – Wallbox lädt konstant mit 10 kW:
+**Beispiele** – Wallbox lädt mit 11 kW:
 
 | Wetterlage | Netz | Batterie | PV-Überschuss | Ladepreis |
 |---|---|---|---|---|
-| Hochsommer, Mittagssonne | −2 kW (Einspeisung) | 0 kW | 12 kW → gekappt auf 11 kW | **14 ct/kWh** |
-| Leicht bewölkt | +2 kW (Bezug) | 0 kW | 8 kW | ~20 ct/kWh |
-| Bewölkt, Batterie hilft | +6 kW (Bezug) | 2 kW | 2 kW | ~32 ct/kWh |
-| Nacht / kein PV | +10 kW (Bezug) | 0 kW | 0 kW | **36 ct/kWh** |
+| Hochsommer, Mittagssonne | −2 kW (Einspeisung) | 0 kW | 13 kW → gekappt auf 11 kW | **14 ct/kWh** |
+| Leicht bewölkt | +2 kW (Bezug) | 0 kW | 9 kW | ~18 ct/kWh |
+| Bewölkt, Batterie hilft | +6 kW (Bezug) | 2 kW | 3 kW | ~30 ct/kWh |
+| Nacht / kein PV | +11 kW (Bezug) | 0 kW | 0 kW | **36 ct/kWh** |
 
 ### Preisformel
 
@@ -271,17 +271,23 @@ xychart-beta
 
 ### Typischer Tagesverlauf
 
-An einem sonnigen Tag sinkt der Preis mit der aufgehenden Sonne und steigt abends wieder:
+An einem sonnigen Sommertag sinkt der Preis mit der aufgehenden Sonne – aber **nicht sofort**: Solange die Hausbatterie noch lädt, fließt ein Großteil des PV-Stroms dorthin und steht der Wallbox nicht als Überschuss zur Verfügung.
 
 ```mermaid
 xychart-beta
-    title "Beispiel: Ladepreis an einem sonnigen Tag"
-    x-axis "Uhrzeit" ["6h", "8h", "10h", "12h", "14h", "16h", "18h", "20h", "22h"]
+    title "Tagesverlauf an einem sonnigen Sommertag (Wallbox 11 kW)"
+    x-axis "Uhrzeit" ["6h", "7h", "8h", "9h", "10h", "11h", "12h", "13h", "14h", "16h", "18h", "20h"]
     y-axis "Ladepreis [ct/kWh]" 10 --> 40
-    line [36, 30, 20, 14, 14, 18, 26, 34, 36]
+    line [36, 36, 34, 28, 19, 14, 14, 14, 15, 27, 35, 36]
+    line [36, 33, 27, 21, 17, 14, 14, 14, 15, 27, 35, 36]
 ```
 
-> Das günstigste Ladefenster liegt typischerweise zwischen 10 und 15 Uhr. Die Web-Oberfläche berechnet und zeigt die beste Stunde des Tages automatisch an.
+**Obere Linie** – Tatsächlicher Preis: Hausbatterie lädt von ca. 7–10 Uhr (bis zu 3,5 kW), das reduziert den PV-Überschuss für die Wallbox erheblich.  
+**Untere Linie** – Hypothetischer Preis ohne Akkuladung (Batterie bereits voll).
+
+Die Akkuladephase verschiebt das günstige Ladefenster um 1–2 Stunden nach hinten. Ab ~11 Uhr, wenn die Batterie voll ist, kommt die volle PV-Leistung der Wallbox zugute.
+
+> Das günstigste Ladefenster liegt typischerweise zwischen 11 und 15 Uhr. Die Web-Oberfläche berechnet und zeigt die beste Stunde des Tages automatisch an.
 
 ### Warum diese Preislogik?
 
@@ -473,14 +479,14 @@ PV surplus [W] = wallbox power − grid power − battery discharge
 
 When the grid is currently *exporting* (negative meter reading), subtracting a negative value increases the surplus — correctly reflecting that more PV is available than needed.
 
-**Examples** — wallbox charging at 10 kW:
+**Examples** — wallbox charging at 11 kW:
 
 | Conditions | Grid | Battery | PV surplus | Price |
 |---|---|---|---|---|
-| Peak summer sunshine | −2 kW (export) | 0 kW | 12 kW → capped at 11 kW | **14 ct/kWh** |
-| Partly cloudy | +2 kW (import) | 0 kW | 8 kW | ~20 ct/kWh |
-| Overcast, battery helping | +6 kW (import) | 2 kW | 2 kW | ~32 ct/kWh |
-| Night / no PV | +10 kW (import) | 0 kW | 0 kW | **36 ct/kWh** |
+| Peak summer sunshine | −2 kW (export) | 0 kW | 13 kW → capped at 11 kW | **14 ct/kWh** |
+| Partly cloudy | +2 kW (import) | 0 kW | 9 kW | ~18 ct/kWh |
+| Overcast, battery helping | +6 kW (import) | 2 kW | 3 kW | ~30 ct/kWh |
+| Night / no PV | +11 kW (import) | 0 kW | 0 kW | **36 ct/kWh** |
 
 #### Price formula
 
@@ -513,17 +519,23 @@ xychart-beta
 
 #### Typical daily price curve
 
-On a sunny day the price drops with the rising sun and climbs again in the evening:
+On a sunny summer day the price drops as the sun rises — but **not immediately**: as long as the home battery is still charging, a large portion of PV energy flows there and is not available to the wallbox as surplus.
 
 ```mermaid
 xychart-beta
-    title "Example: charging price on a sunny day"
-    x-axis "Time of day" ["6h", "8h", "10h", "12h", "14h", "16h", "18h", "20h", "22h"]
+    title "Daily price curve on a sunny summer day (wallbox 11 kW)"
+    x-axis "Time of day" ["6h", "7h", "8h", "9h", "10h", "11h", "12h", "13h", "14h", "16h", "18h", "20h"]
     y-axis "Charging price [ct/kWh]" 10 --> 40
-    line [36, 30, 20, 14, 14, 18, 26, 34, 36]
+    line [36, 36, 34, 28, 19, 14, 14, 14, 15, 27, 35, 36]
+    line [36, 33, 27, 21, 17, 14, 14, 14, 15, 27, 35, 36]
 ```
 
-> The cheapest charging window is typically between 10 am and 3 pm. The web interface automatically calculates and highlights the best hour of the day.
+**Upper line** – Actual price: home battery charging from approx. 7–10 am (up to 3.5 kW), which significantly reduces the PV surplus available to the wallbox.  
+**Lower line** – Hypothetical price without battery charging (battery already full).
+
+The battery charging phase shifts the cheap charging window by roughly 1–2 hours. From ~11 am onwards, once the battery is full, the full PV output benefits the wallbox.
+
+> The cheapest charging window is typically between 11 am and 3 pm. The web interface automatically calculates and highlights the best hour of the day.
 
 #### Why this pricing logic?
 
