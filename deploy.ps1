@@ -29,6 +29,16 @@ if ($target -eq "addon") {
     Deploy "addon\config.yaml"    "$ADDON_DIR/config.yaml"
     Deploy "addon\CHANGELOG.md"   "$ADDON_DIR/CHANGELOG.md"
     Deploy "addon\run.sh"         "$ADDON_DIR/run.sh"
+    Deploy "addon\Dockerfile"     "$ADDON_DIR/Dockerfile"
+
+    # www/ und apps/ in Addon-Verzeichnis hochladen (werden beim Rebuild ins Image kopiert)
+    RunSsh "mkdir -p $ADDON_DIR/www $ADDON_DIR/apps"
+    Get-ChildItem "addon\www" | ForEach-Object {
+        Deploy "addon\www\$($_.Name)" "$ADDON_DIR/www/$($_.Name)"
+    }
+    Get-ChildItem "addon\apps" -Filter "*.py" | ForEach-Object {
+        Deploy "addon\apps\$($_.Name)" "$ADDON_DIR/apps/$($_.Name)"
+    }
 
     Write-Host "  Supervisor Store reload..." -ForegroundColor Cyan
     $storeResult = & ssh "${HA_USER}@${HA_HOST}" "curl -sf -X POST -H 'Authorization: Bearer \$SUPERVISOR_TOKEN' http://supervisor/store/reload"
