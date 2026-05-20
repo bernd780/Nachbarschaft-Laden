@@ -239,5 +239,31 @@ if [ "$RFID_MIT_HELPER" -gt 0 ]; then
     done
 fi
 
+# ── Passwort-Watcher: HTML neu schreiben wenn sessions_passwort geändert wird ──
+(
+  _known_hash="${SESSIONS_HASH}"
+  while true; do
+    sleep 30
+    _pw=$(jq -r '.sessions_passwort // ""' "$OPTIONS" 2>/dev/null)
+    if [ -n "$_pw" ]; then
+      _cur_hash=$(printf '%s' "$_pw" | sha256sum | cut -d' ' -f1)
+    else
+      _cur_hash="disabled"
+    fi
+    if [ "$_cur_hash" != "$_known_hash" ]; then
+      _known_hash="$_cur_hash"
+      log "Sessions-Passwort geändert – HTML wird aktualisiert ..."
+      for _f in /www/*.html; do
+        [ -f "$_f" ] || continue
+        sed \
+          "s|https://nachbarschaft-laden.de|${BASIS_URL}|g; \
+           s|__SESSIONS_PASSWORT_HASH__|${_cur_hash}|g" \
+          "$_f" > "$WWW/$(basename "$_f")"
+      done
+      log "HTML aktualisiert (neue Hash-Prefix: ${_cur_hash:0:8}...)"
+    fi
+  done
+) &
+
 log "Starte AppDaemon ..."
 exec appdaemon -c "$AD_CONF"
