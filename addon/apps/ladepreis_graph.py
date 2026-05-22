@@ -1,4 +1,4 @@
-﻿import appdaemon.plugins.hass.hassapi as hass
+import appdaemon.plugins.hass.hassapi as hass
 from PIL import Image, ImageDraw, ImageOps
 from datetime import datetime, timedelta, timezone
 import os
@@ -16,7 +16,7 @@ def _local(dt):
 class LadepreisGraph(hass.Hass):
 
     W       = 460
-    H_TOTAL = 160
+    H_TOTAL = 128
 
     SMILEY_MIN = 15
     SMILEY_MID = 32
@@ -329,8 +329,8 @@ class LadepreisGraph(hass.Hass):
         draw = ImageDraw.Draw(img)
 
         col_w  = self.W // 3
-        radius = 69
-        cy_sm  = 80
+        radius = 55
+        cy_sm  = 64
 
         for i, surplus in enumerate([surplus_m, surplus_u, surplus_3]):
             cx = col_w * i + col_w // 2
