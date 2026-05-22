@@ -235,7 +235,7 @@ class LadepreisGraph(hass.Hass):
             new_h = int(logo_h * scale)
             logo_img = logo_img.resize((new_w, new_h), Image.LANCZOS)
             lx = 72 + (LOGO_W - new_w) // 2
-            ly = 680 + (LOGO_H - new_h) // 2
+            ly = 670 + (LOGO_H - new_h) // 2
             img.paste(logo_img, (lx, ly))
             logo_drawn = True
             self.log(f"Logo geladen ({new_w}x{new_h})")
@@ -270,7 +270,7 @@ class LadepreisGraph(hass.Hass):
             qr.add_data(self.QR_CODE_URL)
             qr.make(fit=True)
             qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
-            qr_img = qr_img.resize((120, 120), Image.LANCZOS)
+            qr_img = qr_img.resize((90, 90), Image.LANCZOS)
             img.paste(qr_img, (348, 577))
         except Exception as e:
             self.log(f"QR-Code nicht verfügbar: {e}")
