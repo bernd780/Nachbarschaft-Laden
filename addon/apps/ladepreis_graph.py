@@ -1,4 +1,4 @@
-﻿import appdaemon.plugins.hass.hassapi as hass
+import appdaemon.plugins.hass.hassapi as hass
 from PIL import Image, ImageDraw, ImageOps
 from datetime import datetime, timedelta, timezone
 import os
