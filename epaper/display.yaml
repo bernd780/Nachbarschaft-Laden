@@ -110,33 +110,6 @@ qr_code:
     ecc: MEDIUM
 
 font:
-  - file:
-      type: gfonts
-      family: "Ubuntu"
-      weight: 400
-      italic: true
-    id: font_ubuntu_400_20_italic
-    size: 20
-    glyphsets: [GF_Latin_Kernel, GF_Latin_Beyond]
-    ignore_missing_glyphs: true
-  - file:
-      type: gfonts
-      family: "Roboto"
-      weight: 400
-      italic: false
-    id: font_roboto_400_14
-    size: 14
-    glyphsets: [GF_Latin_Kernel, GF_Latin_Beyond]
-    ignore_missing_glyphs: true
-  - file:
-      type: gfonts
-      family: "Roboto"
-      weight: 400
-      italic: false
-    id: font_roboto_400_16
-    size: 16
-    glyphsets: [GF_Latin_Kernel, GF_Latin_Beyond]
-    ignore_missing_glyphs: true
   - file: "fonts/DejaVuSans.ttf"
     id: font_roboto_400_20
     size: 20
