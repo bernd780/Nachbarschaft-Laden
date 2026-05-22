@@ -16,7 +16,7 @@ def _local(dt):
 class LadepreisGraph(hass.Hass):
 
     W       = 460
-    H_TOTAL = 128
+    H_TOTAL = 136
 
     SMILEY_MIN = 15
     SMILEY_MID = 32
@@ -210,7 +210,7 @@ class LadepreisGraph(hass.Hass):
         ct(240, 28,  "Aktueller Ladepreis",                           True,  28)
         ct(240, 70,  f"{ladepreis:.1f}" if ladepreis is not None else "—",
                                                                        True,  180)
-        ct(240, 240, "ct/kWh",                                        False, 40)
+        ct(240, 258, "ct/kWh",                                        False, 40)
         draw.rectangle([(0, 296), (W, 298)], fill=FG)
 
         cx0, cx1, cx2 = 80, 240, 400
@@ -225,7 +225,7 @@ class LadepreisGraph(hass.Hass):
             ct(cx, 530, f"+{max(0.0, surplus):.0f} kWh", True, 28)
         draw.rectangle([(0, 568), (W, 570)], fill=FG)
 
-        LOGO_W, LOGO_H = 460, 145
+        LOGO_W, LOGO_H = 336, 118
         logo_drawn = False
         try:
             logo_img = Image.open(os.path.join(self.WWW_DIR, "logo_display.png")).convert("RGB")
@@ -234,8 +234,8 @@ class LadepreisGraph(hass.Hass):
             new_w = int(logo_w * scale)
             new_h = int(logo_h * scale)
             logo_img = logo_img.resize((new_w, new_h), Image.LANCZOS)
-            lx = 10 + (LOGO_W - new_w) // 2
-            ly = 655 + (LOGO_H - new_h) // 2
+            lx = 72 + (LOGO_W - new_w) // 2
+            ly = 680 + (LOGO_H - new_h) // 2
             img.paste(logo_img, (lx, ly))
             logo_drawn = True
             self.log(f"Logo geladen ({new_w}x{new_h})")
@@ -266,12 +266,12 @@ class LadepreisGraph(hass.Hass):
         try:
             import qrcode as _qr
             qr = _qr.QRCode(error_correction=_qr.constants.ERROR_CORRECT_M,
-                             box_size=2, border=0)
+                             box_size=4, border=0)
             qr.add_data(self.QR_CODE_URL)
             qr.make(fit=True)
             qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
-            qr_img = qr_img.resize((120, 120), Image.NEAREST)
-            img.paste(qr_img, (310, 578))
+            qr_img = qr_img.resize((120, 120), Image.LANCZOS)
+            img.paste(qr_img, (348, 577))
         except Exception as e:
             self.log(f"QR-Code nicht verfügbar: {e}")
 
@@ -329,8 +329,8 @@ class LadepreisGraph(hass.Hass):
         draw = ImageDraw.Draw(img)
 
         col_w  = self.W // 3
-        radius = 55
-        cy_sm  = 64
+        radius = 62
+        cy_sm  = 68
 
         for i, surplus in enumerate([surplus_m, surplus_u, surplus_3]):
             cx = col_w * i + col_w // 2
