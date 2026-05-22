@@ -196,8 +196,9 @@ display:
         it.print(cx1, 334, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "Übermorgen");
         it.print(cx2, 334, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "In 3 Tagen");
 
-        // Smiley-Bild (460x160px) – zentriert auf 480px: x=(480-460)/2=10
+        // Smiley-Bild (460x128px) – zentriert auf 480px: x=(480-460)/2=10; 128px statt 160px wegen ESP32-RAM
         it.image(10, 362, id(img_combined), color_on, color_off);
+        // Bild endet bei y=362+128=490
 
         // kWh-Werte unterhalb der Smileys
         float haus     = id(sensor_hausverbrauch).state;
