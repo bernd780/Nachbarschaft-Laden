@@ -5,6 +5,9 @@ epaper/secrets.yaml
 # Claude Code lokale Einstellungen (enthalten IPs, SSH-Befehle)
 .claude/
 
+# Rohdaten-Downloads (temporaer, kein Repo-Inhalt)
+docs/_*
+
 # Generierte / temporaere Dateien
 dashboard_full.json
 dashboard_updated.json
