@@ -1,7 +1,7 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-ARG CACHEBUST=12
+ARG CACHEBUST=13
 RUN echo "cachebust=$CACHEBUST"
 
 RUN apk add --no-cache \
