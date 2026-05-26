@@ -220,23 +220,25 @@ ha_create_helper() {
   fi
 }
 
-# Nur warten und Helper anlegen, wenn RFID-Nutzer mit payment_helper konfiguriert sind
+# Zahlungs-Helper im Hintergrund anlegen (blockiert den Start nicht)
 RFID_MIT_HELPER=$(jq '[.rfid_benutzer // [] | .[] | select((.payment_helper // "") != "")] | length' "$OPTS")
 
 if [ "$RFID_MIT_HELPER" -gt 0 ]; then
-  log "Warte auf Home Assistant API ..."
-  until curl -sf -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" \
-       "http://supervisor/core/api/" > /dev/null 2>&1; do
-    sleep 5
-  done
-
-  jq -c '.rfid_benutzer // [] | .[] | select((.payment_helper // "") != "")' "$OPTS" \
-  | while IFS= read -r entry; do
-      name=$(printf '%s' "$entry" | jq -r '.name')
-      helper=$(printf '%s' "$entry" | jq -r '.payment_helper')
-      object_id="${helper#input_number.}"
-      ha_create_helper "$object_id" "NL Bezahlt $name" 0 9999 0.01
+  (
+    log "Warte auf Home Assistant API (Hintergrund) ..."
+    until curl -sf -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" \
+         "http://supervisor/core/api/" > /dev/null 2>&1; do
+      sleep 5
     done
+
+    jq -c '.rfid_benutzer // [] | .[] | select((.payment_helper // "") != "")' "$OPTS" \
+    | while IFS= read -r entry; do
+        name=$(printf '%s' "$entry" | jq -r '.name')
+        helper=$(printf '%s' "$entry" | jq -r '.payment_helper')
+        object_id="${helper#input_number.}"
+        ha_create_helper "$object_id" "NL Bezahlt $name" 0 9999 0.01
+      done
+  ) &
 fi
 
 # ── Passwort-Watcher: HTML neu schreiben wenn sessions_passwort geändert wird ──
