@@ -77,6 +77,12 @@ SENSOR_PV_MORGEN=$(jq -r '.sensor_pv_morgen'                "$OPTS")
 SENSOR_PV_UEBERMORGEN=$(jq -r '.sensor_pv_uebermorgen'      "$OPTS")
 SENSOR_PV_IN3TAGEN=$(jq -r '.sensor_pv_in3tagen'            "$OPTS")
 SENSOR_PV_HEUTE=$(jq -r '.sensor_pv_erzeugung_heute'        "$OPTS")
+SENSOR_PV_REST_HEUTE=$(jq -r '.sensor_pv_rest_heute'        "$OPTS")
+SENSOR_PV_PEAK_ZEIT=$(jq -r '.sensor_pv_peak_zeit_heute'    "$OPTS")
+
+# Kernzeit
+KERNZEIT_START=$(jq -r '.kernzeit_start // 10'              "$OPTS")
+KERNZEIT_ENDE=$(jq -r '.kernzeit_ende  // 17'               "$OPTS")
 
 # Fahrzeug & Ladestation
 SENSOR_FAHRZEUG_AKKU=$(jq -r '.sensor_fahrzeug_akku'        "$OPTS")
@@ -126,6 +132,10 @@ ladepreis_graph:
   sensor_pv_uebermorgen: "$SENSOR_PV_UEBERMORGEN"
   sensor_pv_in3tagen: "$SENSOR_PV_IN3TAGEN"
   sensor_pv_erzeugung_heute: "$SENSOR_PV_HEUTE"
+  sensor_pv_rest_heute: "$SENSOR_PV_REST_HEUTE"
+  sensor_pv_peak_zeit_heute: "$SENSOR_PV_PEAK_ZEIT"
+  kernzeit_start: $KERNZEIT_START
+  kernzeit_ende: $KERNZEIT_ENDE
   sensor_fahrzeug_akku: "$SENSOR_FAHRZEUG_AKKU"
   sensor_ladegeraet_status: "$SENSOR_LADEGERAET"
   sensor_zaehlerstand_kwh: "$SENSOR_ZAEHLER"
