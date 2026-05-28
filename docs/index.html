@@ -434,40 +434,19 @@
   </div>
 
   <!-- Günstigste Ladezeit – immer sichtbar -->
-  <div class="beste-zeit-box" id="beste-zeit-heute-box" onclick="toggleHeuteVoraussichtlich()" role="button" aria-expanded="false" style="cursor:default;">
+  <div class="beste-zeit-box">
     <div class="beste-zeit-icon" style="color:var(--green);display:flex;align-items:center;">
       <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
     </div>
-    <div style="flex:1;">
+    <div>
       <div class="beste-zeit-label" id="beste-zeit-label">Günstigste Stunde heute (10–17 Uhr)</div>
       <div class="beste-zeit-val skeleton" id="beste-zeit-val">–</div>
       <div class="beste-zeit-sub" id="beste-zeit-sub"></div>
     </div>
-    <svg id="heute-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:var(--muted);transition:transform .25s;display:none;"><polyline points="6 9 12 15 18 9"/></svg>
   </div>
-  <!-- Heute-voraussichtlich Detail (aufklappbar, nur wenn Prognose bereits überschritten) -->
-  <div id="heute-voraussichtlich-detail-box" style="display:none;">
-    <div class="beste-zeit-box info" style="border-top:none;border-radius:0 0 14px 14px;margin-top:-4px;padding-top:.9rem;background:var(--bg);flex-direction:column;gap:.75rem;align-items:stretch;">
-      <div style="display:flex;align-items:center;gap:1rem;">
-        <div class="beste-zeit-icon" style="display:flex;align-items:center;color:var(--amber);">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"/></svg>
-        </div>
-        <div>
-          <div class="beste-zeit-label">Günstigste Stunde heute voraussichtlich</div>
-          <div class="beste-zeit-val amber" id="heute-voraussichtlich-val">–</div>
-          <div class="beste-zeit-sub" id="heute-voraussichtlich-sub"></div>
-        </div>
-      </div>
-      <hr style="border:none;border-top:1px solid var(--border);margin:0;">
-      <div style="display:flex;align-items:center;gap:1rem;">
-        <div class="beste-zeit-icon">📅</div>
-        <div>
-          <div class="beste-zeit-label" id="heute-gestern-label">Günstigste Stunde gestern</div>
-          <div class="beste-zeit-val skeleton" id="heute-gestern-val">–</div>
-          <div class="beste-zeit-sub" id="heute-gestern-sub"></div>
-        </div>
-      </div>
-    </div>
+  <!-- Kleiner Hinweis wenn PV-Prognose bereits überschritten -->
+  <div id="heute-voraussichtlich-hint" style="display:none;align-items:center;gap:.35rem;font-size:.78rem;color:var(--muted);padding:.15rem .5rem .35rem;">
+    <span>☀️</span><span id="heute-voraussichtlich-hint-text"></span>
   </div>
 
   <!-- Günstigste Stunde voraussichtlich (klickbar → Gestern aufklappen) -->
@@ -830,17 +809,6 @@ function toggleGesternDetail() {
   if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
-function toggleHeuteVoraussichtlich() {
-  const chev   = document.getElementById('heute-chevron');
-  if (!chev || chev.style.display === 'none') return;
-  const hBox   = document.getElementById('beste-zeit-heute-box');
-  const detail = document.getElementById('heute-voraussichtlich-detail-box');
-  const isOpen = hBox && hBox.getAttribute('aria-expanded') === 'true';
-  if (detail) detail.style.display = isOpen ? 'none' : 'block';
-  if (hBox)   { hBox.setAttribute('aria-expanded', !isOpen); hBox.style.borderRadius = isOpen ? '' : '14px 14px 0 0'; }
-  if (chev)   chev.style.transform = isOpen ? '' : 'rotate(180deg)';
-}
-
 function togglePreisDetails(btn) {
   const details = btn.nextElementSibling;
   const open = !details.classList.contains('open');
@@ -1194,15 +1162,13 @@ async function loadAll() {
       }
     }
 
-    // Voraussichtlich günstigste Stunde + aufklappbares Gestern-Detail
+    // Voraussichtlich günstigste Stunde
     {
       const fBox  = document.getElementById('beste-zeit-forecast-box');
       const fEl   = document.getElementById('beste-zeit-forecast-val');
       const fSub  = document.getElementById('beste-zeit-forecast-sub');
-      const hBox  = document.getElementById('beste-zeit-heute-box');
-      const hChev = document.getElementById('heute-chevron');
-      const hVal  = document.getElementById('heute-voraussichtlich-val');
-      const hSub  = document.getElementById('heute-voraussichtlich-sub');
+      const hint  = document.getElementById('heute-voraussichtlich-hint');
+      const hintT = document.getElementById('heute-voraussichtlich-hint-text');
       if (d.guenstigste_stunde_voraussichtlich) {
         const start    = new Date(d.guenstigste_stunde_voraussichtlich.start);
         const end      = new Date(start.getTime() + 3600000);
@@ -1210,50 +1176,40 @@ async function loadAll() {
         const endStr   = end.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
         const exceeded = new Date().getHours() > start.getHours();
         if (exceeded) {
-          // Prognose bereits überschritten → unter Box 1 einklappen
-          fBox.style.display = 'none';
-          if (hChev) hChev.style.display = '';
-          if (hBox)  hBox.style.cursor = 'pointer';
-          if (hVal)  { hVal.textContent = startStr + ' – ' + endStr + ' Uhr'; unskel(hVal); }
-          if (hSub)  hSub.textContent = '☀️ Spitze bereits überschritten';
+          // Prognose überschritten → kleiner Hinweis
+          fBox.style.display  = 'none';
+          if (hint)  hint.style.display  = 'flex';
+          if (hintT) hintT.textContent = `Prognose: ${startStr}–${endStr} Uhr (bereits überschritten)`;
         } else {
-          // Prognose noch ausstehend → eigene Box zeigen
-          fBox.style.display = 'flex';
-          if (hChev) hChev.style.display = 'none';
-          if (hBox)  { hBox.style.cursor = 'default'; hBox.setAttribute('aria-expanded','false'); hBox.style.borderRadius = ''; }
-          if (hChev) hChev.style.transform = '';
-          document.getElementById('heute-voraussichtlich-detail-box').style.display = 'none';
+          // Prognose noch ausstehend → eigene Box
+          fBox.style.display  = 'flex';
+          if (hint)  hint.style.display  = 'none';
           fEl.textContent = startStr + ' – ' + endStr + ' Uhr'; unskel(fEl);
           fSub.textContent = '☀️ Basierend auf PV-Prognose';
         }
       } else {
         fBox.style.display = 'none';
-        if (hChev) hChev.style.display = 'none';
-        if (hBox)  { hBox.style.cursor = 'default'; hBox.setAttribute('aria-expanded','false'); hBox.style.borderRadius = ''; }
-        if (hChev) hChev.style.transform = '';
+        if (hint) hint.style.display = 'none';
       }
 
-      // Gestern-Detail befüllen (Box-2-Detail + heute-voraussichtlich-Detail)
+      // Gestern-Detail befüllen (für Box-2-Aufklapper)
       const kz = d.kernzeit ? `${d.kernzeit.start}–${d.kernzeit.ende} Uhr` : '10–17 Uhr';
       const gs_g = d.guenstigste_stunde_gestern;
-      [['gestern-expand-label','gestern-expand-val','gestern-expand-sub'],
-       ['heute-gestern-label',  'heute-gestern-val',  'heute-gestern-sub']].forEach(([lblId, valId, subId]) => {
-        const lbl = document.getElementById(lblId);
-        const el  = document.getElementById(valId);
-        const sub = document.getElementById(subId);
-        if (lbl) lbl.textContent = `Günstigste Stunde gestern (${kz})`;
-        if (el) {
-          if (gs_g) {
-            const zeit_g = new Date(gs_g.start).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
-            el.textContent = 'ab ' + zeit_g + ' Uhr – Ø ' + gs_g.avg_ct.toFixed(1) + ' ct/kWh'; unskel(el);
-            if (sub) sub.textContent = gs_g.avg_ct <= 18 ? '✅ Sehr günstig' :
+      const gLabel = document.getElementById('gestern-expand-label');
+      const gEl    = document.getElementById('gestern-expand-val');
+      const gSub   = document.getElementById('gestern-expand-sub');
+      if (gLabel) gLabel.textContent = `Günstigste Stunde gestern (${kz})`;
+      if (gEl) {
+        if (gs_g) {
+          const zeit_g = new Date(gs_g.start).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+          gEl.textContent = 'ab ' + zeit_g + ' Uhr – Ø ' + gs_g.avg_ct.toFixed(1) + ' ct/kWh'; unskel(gEl);
+          if (gSub) gSub.textContent = gs_g.avg_ct <= 18 ? '✅ Sehr günstig' :
                                        gs_g.avg_ct <= 25 ? '👍 Günstig' :
                                        gs_g.avg_ct <= 32 ? '👌 Moderat' : '⚠ Eher teuer';
-          } else {
-            el.textContent = 'Keine Daten von gestern'; unskel(el);
-          }
+        } else {
+          gEl.textContent = 'Keine Daten von gestern'; unskel(gEl);
         }
-      });
+      }
     }
 
     // Detailchart (48h)
