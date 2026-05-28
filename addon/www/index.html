@@ -434,14 +434,25 @@
   </div>
   <!-- Heute-voraussichtlich Detail (aufklappbar, nur wenn Prognose bereits überschritten) -->
   <div id="heute-voraussichtlich-detail-box" style="display:none;">
-    <div class="beste-zeit-box info" style="border-top:none;border-radius:0 0 14px 14px;margin-top:-4px;padding-top:.9rem;background:var(--bg);">
-      <div class="beste-zeit-icon" style="display:flex;align-items:center;color:var(--amber);">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"/></svg>
+    <div class="beste-zeit-box info" style="border-top:none;border-radius:0 0 14px 14px;margin-top:-4px;padding-top:.9rem;background:var(--bg);flex-direction:column;gap:.75rem;align-items:stretch;">
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <div class="beste-zeit-icon" style="display:flex;align-items:center;color:var(--amber);">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"/></svg>
+        </div>
+        <div>
+          <div class="beste-zeit-label">Günstigste Stunde heute voraussichtlich</div>
+          <div class="beste-zeit-val amber" id="heute-voraussichtlich-val">–</div>
+          <div class="beste-zeit-sub" id="heute-voraussichtlich-sub"></div>
+        </div>
       </div>
-      <div>
-        <div class="beste-zeit-label">Günstigste Stunde heute voraussichtlich</div>
-        <div class="beste-zeit-val amber" id="heute-voraussichtlich-val">–</div>
-        <div class="beste-zeit-sub" id="heute-voraussichtlich-sub"></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:0;">
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <div class="beste-zeit-icon">📅</div>
+        <div>
+          <div class="beste-zeit-label" id="heute-gestern-label">Günstigste Stunde gestern</div>
+          <div class="beste-zeit-val skeleton" id="heute-gestern-val">–</div>
+          <div class="beste-zeit-sub" id="heute-gestern-sub"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1209,24 +1220,27 @@ async function loadAll() {
         if (hChev) hChev.style.transform = '';
       }
 
-      // Gestern-Detail befüllen
+      // Gestern-Detail befüllen (Box-2-Detail + heute-voraussichtlich-Detail)
       const kz = d.kernzeit ? `${d.kernzeit.start}–${d.kernzeit.ende} Uhr` : '10–17 Uhr';
-      const gLabel = document.getElementById('gestern-expand-label');
-      const gEl    = document.getElementById('gestern-expand-val');
-      const gSub   = document.getElementById('gestern-expand-sub');
-      if (gLabel) gLabel.textContent = `Günstigste Stunde gestern (${kz})`;
       const gs_g = d.guenstigste_stunde_gestern;
-      if (gEl) {
-        if (gs_g) {
-          const zeit_g = new Date(gs_g.start).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
-          gEl.textContent = 'ab ' + zeit_g + ' Uhr – Ø ' + gs_g.avg_ct.toFixed(1) + ' ct/kWh'; unskel(gEl);
-          if (gSub) gSub.textContent = gs_g.avg_ct <= 18 ? '✅ Sehr günstig' :
+      [['gestern-expand-label','gestern-expand-val','gestern-expand-sub'],
+       ['heute-gestern-label',  'heute-gestern-val',  'heute-gestern-sub']].forEach(([lblId, valId, subId]) => {
+        const lbl = document.getElementById(lblId);
+        const el  = document.getElementById(valId);
+        const sub = document.getElementById(subId);
+        if (lbl) lbl.textContent = `Günstigste Stunde gestern (${kz})`;
+        if (el) {
+          if (gs_g) {
+            const zeit_g = new Date(gs_g.start).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+            el.textContent = 'ab ' + zeit_g + ' Uhr – Ø ' + gs_g.avg_ct.toFixed(1) + ' ct/kWh'; unskel(el);
+            if (sub) sub.textContent = gs_g.avg_ct <= 18 ? '✅ Sehr günstig' :
                                        gs_g.avg_ct <= 25 ? '👍 Günstig' :
                                        gs_g.avg_ct <= 32 ? '👌 Moderat' : '⚠ Eher teuer';
-        } else {
-          gEl.textContent = 'Keine Daten von gestern'; unskel(gEl);
+          } else {
+            el.textContent = 'Keine Daten von gestern'; unskel(el);
+          }
         }
-      }
+      });
     }
 
     // Detailchart (48h)
