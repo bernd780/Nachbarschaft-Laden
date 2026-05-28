@@ -436,6 +436,16 @@
     <span>☀️</span><span id="heute-voraussichtlich-hint-text"></span>
   </div>
 
+  <!-- Günstigste Stunde gestern – direkt sichtbar wenn Prognose überschritten -->
+  <div class="beste-zeit-box info" id="gestern-standalone-box" style="display:none;">
+    <div class="beste-zeit-icon">📅</div>
+    <div>
+      <div class="beste-zeit-label" id="gestern-standalone-label">Günstigste Stunde gestern</div>
+      <div class="beste-zeit-val skeleton" id="gestern-standalone-val">–</div>
+      <div class="beste-zeit-sub" id="gestern-standalone-sub"></div>
+    </div>
+  </div>
+
   <!-- Günstigste Stunde voraussichtlich (klickbar → Gestern aufklappen) -->
   <div class="beste-zeit-box info" id="beste-zeit-forecast-box" style="display:none;cursor:pointer;" onclick="toggleGesternDetail()" role="button" aria-expanded="false">
     <div class="beste-zeit-icon" style="display:flex;align-items:center;color:var(--amber);">
@@ -1156,6 +1166,7 @@ async function loadAll() {
       const fSub  = document.getElementById('beste-zeit-forecast-sub');
       const hint  = document.getElementById('heute-voraussichtlich-hint');
       const hintT = document.getElementById('heute-voraussichtlich-hint-text');
+      const sBox  = document.getElementById('gestern-standalone-box');
       if (d.guenstigste_stunde_voraussichtlich) {
         const start    = new Date(d.guenstigste_stunde_voraussichtlich.start);
         const end      = new Date(start.getTime() + 3600000);
@@ -1163,40 +1174,46 @@ async function loadAll() {
         const endStr   = end.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
         const exceeded = new Date().getHours() > start.getHours();
         if (exceeded) {
-          // Prognose überschritten → kleiner Hinweis
+          // Prognose überschritten → kleiner Hinweis + Gestern direkt zeigen
           fBox.style.display  = 'none';
           if (hint)  hint.style.display  = 'flex';
           if (hintT) hintT.textContent = `Prognose: ${startStr}–${endStr} Uhr (bereits überschritten)`;
+          if (sBox)  sBox.style.display  = 'flex';
         } else {
-          // Prognose noch ausstehend → eigene Box
+          // Prognose noch ausstehend → eigene Box, Gestern hinter Klick
           fBox.style.display  = 'flex';
           if (hint)  hint.style.display  = 'none';
+          if (sBox)  sBox.style.display  = 'none';
           fEl.textContent = startStr + ' – ' + endStr + ' Uhr'; unskel(fEl);
           fSub.textContent = '☀️ Basierend auf PV-Prognose';
         }
       } else {
         fBox.style.display = 'none';
         if (hint) hint.style.display = 'none';
+        if (sBox) sBox.style.display = 'none';
       }
 
-      // Gestern-Detail befüllen (für Box-2-Aufklapper)
+      // Gestern-Detail befüllen (Box-2-Aufklapper + Standalone-Box)
       const kz = d.kernzeit ? `${d.kernzeit.start}–${d.kernzeit.ende} Uhr` : '10–17 Uhr';
       const gs_g = d.guenstigste_stunde_gestern;
-      const gLabel = document.getElementById('gestern-expand-label');
-      const gEl    = document.getElementById('gestern-expand-val');
-      const gSub   = document.getElementById('gestern-expand-sub');
-      if (gLabel) gLabel.textContent = `Günstigste Stunde gestern (${kz})`;
-      if (gEl) {
-        if (gs_g) {
-          const zeit_g = new Date(gs_g.start).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
-          gEl.textContent = 'ab ' + zeit_g + ' Uhr – Ø ' + gs_g.avg_ct.toFixed(1) + ' ct/kWh'; unskel(gEl);
-          if (gSub) gSub.textContent = gs_g.avg_ct <= 18 ? '✅ Sehr günstig' :
+      [['gestern-expand-label','gestern-expand-val','gestern-expand-sub'],
+       ['gestern-standalone-label','gestern-standalone-val','gestern-standalone-sub']].forEach(([lblId,valId,subId]) => {
+        const lbl = document.getElementById(lblId);
+        const el  = document.getElementById(valId);
+        const sub = document.getElementById(subId);
+        if (lbl) lbl.textContent = `Günstigste Stunde gestern (${kz})`;
+        if (el) {
+          if (gs_g) {
+            const zeit_g = new Date(gs_g.start).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+            el.textContent = 'ab ' + zeit_g + ' Uhr – Ø ' + gs_g.avg_ct.toFixed(1) + ' ct/kWh'; unskel(el);
+            if (sub) sub.textContent = gs_g.avg_ct <= 18 ? '✅ Sehr günstig' :
                                        gs_g.avg_ct <= 25 ? '👍 Günstig' :
                                        gs_g.avg_ct <= 32 ? '👌 Moderat' : '⚠ Eher teuer';
-        } else {
-          gEl.textContent = 'Keine Daten von gestern'; unskel(gEl);
+          } else {
+            el.textContent = 'Keine Daten von gestern'; unskel(el);
+          }
         }
-      }
+      });
     }
 
     // Detailchart (48h)
