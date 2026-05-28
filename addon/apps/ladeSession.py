@@ -86,6 +86,11 @@ class LadeSession(hass.Hass):
 
         self.log(f"Überwache: {self.S_LADEGERAET}, RFID: {self.S_RFID}")
 
+        # Ladestatus und Zähler-Lücken beim Start prüfen (verzögert, damit
+        # HASS-Verbindung stabil ist)
+        self.run_in(self._check_charging_at_startup, 5)
+        self.run_in(self._check_gap_on_startup,      12)
+
     def on_car_change(self, entity, attribute, old, new, kwargs):
         self.log(f"Ladegerät-Status: {old} → {new}")
         if new == "Charging" and not self._session_active:
@@ -98,12 +103,15 @@ class LadeSession(hass.Hass):
             self._end_timer = self.run_in(self._session_end_handler, 10)
 
     def _session_start_handler(self):
+        # Zählerstand VOR Session-Start lesen und auf Lücke prüfen
+        eto      = self._float(self.S_ZAEHLER)
+        self._check_gap_before_start(eto)
+
         self._session_active = True
         self._session_start  = datetime.now(timezone.utc).isoformat()
         self._rfid_at_start  = self._get_rfid()
         self._price_samples  = []
 
-        eto      = self._float(self.S_ZAEHLER)
         integral = self._float(self.S_KOSTEN)
         self._eto_start      = eto
         self._integral_start = integral
@@ -193,6 +201,7 @@ class LadeSession(hass.Hass):
             "duration_s":    int(duration) if duration else 0,
             "soc_end":       round(soc, 0) if soc else None,
             "price_samples": self._price_samples,
+            "eto_end":       eto,   # absoluter Zählerstand am Ende (für Lückenerkennung)
         }
 
         self.log(
@@ -215,6 +224,124 @@ class LadeSession(hass.Hass):
         self._eto_start      = 0.0
         self._integral_start = 0.0
         self._clear_state()
+
+    # ── Lücken-Erkennung ────────────────────────────────────────────────────────
+
+    def _check_charging_at_startup(self, kwargs):
+        """Klärt beim Start den tatsächlichen Ladestatus.
+
+        Fälle:
+          Session aktiv (restore) + Fahrzeug lädt nicht mehr → beenden
+          Keine Session aktiv + Fahrzeug lädt bereits → nachträglich starten
+        """
+        state = self.get_state(self.S_LADEGERAET)
+        if self._session_active and state != "Charging":
+            self.log(
+                "Wiederhergestellte Session: Fahrzeug lädt nicht mehr – "
+                "beende Session nach Neustart"
+            )
+            self._session_end_handler({})
+        elif not self._session_active and state == "Charging":
+            self.log(
+                "Fahrzeug lädt bereits beim Start – "
+                "Session wird nachträglich gestartet"
+            )
+            self._session_start_handler()
+
+    def _check_gap_on_startup(self, kwargs):
+        """Prüft beim Start ob seit der letzten erfassten Session
+        Energie am Zähler gelaufen ist, ohne dass eine Session
+        aufgezeichnet wurde (z.B. wegen Add-on-Neustart)."""
+        if self._session_active:
+            return  # läuft bereits, kein Startup-Gap nötig
+        last_eto = self._get_last_eto_end()
+        if last_eto is None:
+            return  # keine Referenz vorhanden
+        current_eto = self._float(self.S_ZAEHLER)
+        if current_eto < last_eto:
+            self.log(
+                f"Zähler-Reset erkannt ({last_eto:.1f} → {current_eto:.1f}) "
+                "– kein Lücken-Eintrag"
+            )
+            return
+        gap = round(current_eto - last_eto, 3)
+        if gap >= 0.1:
+            self._insert_gap(last_eto, current_eto, gap, "startup")
+
+    def _check_gap_before_start(self, new_eto_start):
+        """Prüft ob zwischen dem Ende der letzten Session und
+        dem aktuellen Ladestart Energie unerfasst blieb."""
+        last_eto = self._get_last_eto_end()
+        if last_eto is None:
+            return
+        if new_eto_start < last_eto:
+            self.log(
+                f"Zähler-Reset erkannt ({last_eto:.1f} → {new_eto_start:.1f}) "
+                "– kein Lücken-Eintrag"
+            )
+            return
+        gap = round(new_eto_start - last_eto, 3)
+        if gap >= 0.1:
+            self._insert_gap(last_eto, new_eto_start, gap, "vor_session")
+
+    def _get_last_eto_end(self):
+        """Liefert den letzten bekannten absoluten Zählerstand aus
+        sessions.json (aus regulären Sessions oder Lücken-Einträgen)."""
+        try:
+            if not os.path.exists(self.SESSION_FILE):
+                return None
+            with open(self.SESSION_FILE) as f:
+                sessions = json.load(f)
+            for s in reversed(sessions):
+                if s.get("eto_end") is not None:
+                    return float(s["eto_end"])
+                if s.get("eto_gap_end") is not None:
+                    return float(s["eto_gap_end"])
+        except Exception as e:
+            self.log(f"_get_last_eto_end fehlgeschlagen: {e}", level="WARNING")
+        return None
+
+    def _insert_gap(self, eto_start, eto_end, gap_kwh, reason="unknown"):
+        """Fügt einen Lücken-Eintrag in sessions.json ein.
+        Duplikate (gleicher Zählerbereich) werden übersprungen."""
+        # Duplikat-Prüfung
+        try:
+            if os.path.exists(self.SESSION_FILE):
+                with open(self.SESSION_FILE) as f:
+                    sessions = json.load(f)
+                for s in sessions:
+                    if (s.get("type") == "lucke"
+                            and abs(s.get("eto_gap_start", 0) - eto_start) < 0.05
+                            and abs(s.get("eto_gap_end",   0) - eto_end)   < 0.05):
+                        self.log("Lücken-Eintrag bereits vorhanden – übersprungen")
+                        return
+        except Exception:
+            pass
+
+        now = datetime.now(timezone.utc).isoformat()
+        gap_entry = {
+            "id":            "lucke-" + now,
+            "type":          "lucke",
+            "start":         now,
+            "end":           now,
+            "energy_kwh":    gap_kwh,
+            "eto_gap_start": round(eto_start, 3),
+            "eto_gap_end":   round(eto_end,   3),
+            "user":          "–",
+            "rfid":          "",
+            "price_eur":     None,
+            "price_kwh":     None,
+            "duration_s":    0,
+            "price_samples": [],
+            "note":          "Nicht erfasst – Zähler-Lücke erkannt",
+        }
+        self._save_session(gap_entry)
+        self.log(
+            f"Lücken-Eintrag: {gap_kwh:.3f} kWh "
+            f"(Zähler {eto_start:.1f} → {eto_end:.1f}, Grund: {reason})"
+        )
+
+    # ── Ende Lücken-Erkennung ────────────────────────────────────────────────
 
     def _get_rfid(self):
         try:

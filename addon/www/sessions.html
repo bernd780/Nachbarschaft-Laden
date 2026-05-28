@@ -140,6 +140,23 @@ function unlock() {
   .theme-toggle { position: absolute; top: 1rem; right: 1.25rem; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); color: #fff; border-radius: 50%; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
   .theme-toggle:hover { background: rgba(255,255,255,.25); }
 
+  /* Lücken-Einträge */
+  .gap-row td { background: #fef9ec !important; }
+  [data-theme="dark"] .gap-row td { background: #261c00 !important; }
+  .gap-row:hover td { filter: brightness(.97); }
+  .badge-lucke { background:#fef9ec; color:var(--amber); border:1px solid var(--amber2); border-radius:6px; padding:.15rem .55rem; font-size:.75rem; font-weight:600; white-space:nowrap; }
+  [data-theme="dark"] .badge-lucke { background:#261c00; color:#ffd166; border-color:#c87000; }
+  .badge-lucke-done { background:var(--green4); color:var(--green2); border:1px solid var(--green3); border-radius:6px; padding:.15rem .55rem; font-size:.75rem; font-weight:600; cursor:pointer; white-space:nowrap; }
+  [data-theme="dark"] .badge-lucke-done { background:#0d2318; color:#74c69d; border-color:#2d6a4f; }
+  .gap-calc-btn { background:none; border:1px solid var(--amber); color:var(--amber); border-radius:6px; padding:.22rem .7rem; font-size:.78rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap; }
+  .gap-calc-btn:hover { background:var(--amber); color:#fff; }
+  /* Lücken-Modal */
+  #gap-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; align-items:center; justify-content:center; }
+  #gap-modal.open { display:flex; }
+  #gap-modal select, #gap-modal input { appearance:auto; -webkit-appearance:auto; }
+  [data-theme="dark"] #gap-modal select,
+  [data-theme="dark"] #gap-modal input { background:#1b2c20; color:var(--ink); border-color:var(--border); }
+
   /* Modal */
   #chart-modal {
     display: none;
@@ -228,6 +245,11 @@ function unlock() {
         <div class="stat-val" id="stat-avg-kwh">–</div>
         <div class="stat-sub">kWh</div>
       </div>
+      <div class="stat-box" id="stat-gaps-box" style="display:none;">
+        <div class="stat-label">⚠ Lücken</div>
+        <div class="stat-val amber" id="stat-gaps-kwh">–</div>
+        <div class="stat-sub" id="stat-gaps-sub">kWh nicht erfasst</div>
+      </div>
     </div>
     <div id="offener-betrag-box" style="display:none; margin-top:1.25rem;">
       <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.75rem;">Offener Betrag</div>
@@ -300,6 +322,60 @@ function unlock() {
   </div>
 </div>
 
+<!-- Lücken-Nachberechnung Modal -->
+<div id="gap-modal" role="dialog" aria-modal="true" aria-labelledby="gap-modal-title">
+  <div class="chart-box" style="max-width:420px;width:92%;">
+    <div class="chart-header">
+      <div>
+        <strong id="gap-modal-title">⚠️ Session nachberechnen</strong>
+        <small id="gap-modal-subtitle" style="display:block;"></small>
+      </div>
+      <button class="chart-close" onclick="closeGapCalc()" aria-label="Schließen">×</button>
+    </div>
+    <div style="display:grid;gap:.85rem;padding-top:.15rem;">
+      <!-- Energie-Info -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;">
+        <div style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.25rem;">Zähler-Lücke</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--green);" id="gap-energy-display">–</div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:.2rem;" id="gap-zaehler-info"></div>
+      </div>
+      <!-- Benutzer -->
+      <label style="display:grid;gap:.3rem;">
+        <span style="font-size:.8rem;font-weight:600;color:var(--muted);">Benutzer</span>
+        <select id="gap-user-select" style="padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.9rem;background:var(--card);color:var(--ink);">
+          <option value="–">– Unbekannt –</option>
+        </select>
+      </label>
+      <!-- Preis -->
+      <label style="display:grid;gap:.3rem;">
+        <span style="font-size:.8rem;font-weight:600;color:var(--muted);">Preis je kWh</span>
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <input id="gap-price-ct" type="number" min="1" max="99" step="0.1" placeholder="z.B. 22"
+            style="flex:1;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.9rem;background:var(--card);color:var(--ink);"
+            oninput="updateGapCost()">
+          <span style="font-size:.9rem;color:var(--muted);white-space:nowrap;">ct/kWh</span>
+        </div>
+      </label>
+      <!-- Kosten-Vorschau -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:.85rem;color:var(--muted);">Geschätzte Kosten</span>
+        <span style="font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--amber);" id="gap-cost-display">–</span>
+      </div>
+      <!-- Buttons -->
+      <div style="display:flex;gap:.6rem;padding-top:.1rem;">
+        <button onclick="closeGapCalc()"
+          style="flex:1;padding:.65rem;border:1px solid var(--border);border-radius:10px;background:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.9rem;cursor:pointer;">
+          Abbrechen
+        </button>
+        <button onclick="saveGapCalc()"
+          style="flex:2;padding:.65rem;background:var(--green);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;">
+          Speichern
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 function toggleTheme() {
   const dark = document.documentElement.getAttribute('data-theme') !== 'dark';
@@ -320,6 +396,108 @@ const BALANCES_URL  = 'https://nachbarschaft-laden.de/local/nachbarschaft-laden/
 let allSessions = [];
 let lastSorted  = [];
 let allBalances = {};
+let gapOverrides = {};
+let currentGapId  = null;
+let currentGapKwh = 0;
+
+/* ── Gap-Override-Persistenz (localStorage) ── */
+function loadGapOverrides() {
+  try { gapOverrides = JSON.parse(localStorage.getItem('nl_gap_overrides') || '{}'); }
+  catch(e) { gapOverrides = {}; }
+}
+function saveGapOverrides() {
+  localStorage.setItem('nl_gap_overrides', JSON.stringify(gapOverrides));
+}
+
+/* ── Gap-Zeile rendern ── */
+function renderGapRow(s, i) {
+  const ov = gapOverrides[s.id];
+  const zaehlerHint = s.eto_gap_start != null
+    ? `Zähler ${(+s.eto_gap_start).toFixed(1)} → ${(+s.eto_gap_end).toFixed(1)} kWh`
+    : '';
+  if (ov) {
+    // bereits manuell berechnet
+    const ctLabel = ov.price_kwh != null ? (ov.price_kwh * 100).toFixed(1) + ' ct' : '–';
+    return `<tr class="gap-row">
+      <td>${fmt_date(s.end)}</td>
+      <td style="font-size:.8rem;color:var(--muted);">Lücke erkannt</td>
+      <td><span class="vehicle-pill">${ov.user !== '–' ? ov.user : '–'}</span></td>
+      <td><strong>${(+s.energy_kwh).toFixed(2)}</strong> kWh</td>
+      <td>${ov.price_eur != null ? (+ov.price_eur).toFixed(2) + ' €' : '–'}</td>
+      <td><span class="badge-lucke-done" onclick="openGapCalc(lastSorted[${i}])" title="Berechnung ändern">✓ ${ctLabel}</span></td>
+      <td class="col-dauer" style="color:var(--muted);font-size:.78rem;">Lücke</td>
+    </tr>`;
+  }
+  return `<tr class="gap-row">
+    <td>${fmt_date(s.end)}</td>
+    <td style="font-size:.8rem;color:var(--muted);" title="${zaehlerHint}">Lücke erkannt</td>
+    <td><span class="badge-lucke">⚠ Nicht erfasst</span></td>
+    <td><strong>${(+s.energy_kwh).toFixed(2)}</strong> kWh</td>
+    <td style="color:var(--muted);">–</td>
+    <td><button class="gap-calc-btn" onclick="openGapCalc(lastSorted[${i}])">Berechnen</button></td>
+    <td class="col-dauer" style="color:var(--muted);font-size:.78rem;">Lücke</td>
+  </tr>`;
+}
+
+/* ── Gap-Modal öffnen/schließen ── */
+function openGapCalc(s) {
+  loadGapOverrides();
+  currentGapId  = s.id;
+  currentGapKwh = +s.energy_kwh;
+
+  document.getElementById('gap-modal-subtitle').textContent =
+    `Erkannt am ${fmt_date(s.end)} · ${(+s.energy_kwh).toFixed(2)} kWh`;
+  document.getElementById('gap-energy-display').textContent =
+    (+s.energy_kwh).toFixed(2) + ' kWh';
+  document.getElementById('gap-zaehler-info').textContent =
+    s.eto_gap_start != null
+      ? `Zähler ${(+s.eto_gap_start).toFixed(1)} → ${(+s.eto_gap_end).toFixed(1)} kWh`
+      : '';
+
+  // Benutzer-Dropdown aus bekannten Sessions befüllen
+  const sel = document.getElementById('gap-user-select');
+  sel.innerHTML = '<option value="–">– Unbekannt –</option>';
+  [...new Set(allSessions.filter(x => !x.type).map(x => x.user || x.rfid).filter(Boolean))]
+    .forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; sel.appendChild(o); });
+
+  // Vorhandene Override vorladen
+  const ov = gapOverrides[currentGapId];
+  sel.value = ov ? (ov.user || '–') : '–';
+  document.getElementById('gap-price-ct').value =
+    ov && ov.price_kwh != null ? (ov.price_kwh * 100).toFixed(1) : '';
+  document.getElementById('gap-price-ct').style.borderColor = '';
+  updateGapCost();
+
+  document.getElementById('gap-modal').classList.add('open');
+}
+
+function closeGapCalc() {
+  document.getElementById('gap-modal').classList.remove('open');
+  currentGapId = null;
+}
+
+function updateGapCost() {
+  const ct = parseFloat(document.getElementById('gap-price-ct').value);
+  const el = document.getElementById('gap-cost-display');
+  el.textContent = !isNaN(ct) && ct > 0 ? (currentGapKwh * ct / 100).toFixed(2) + ' €' : '–';
+}
+
+function saveGapCalc() {
+  if (!currentGapId) return;
+  const ct = parseFloat(document.getElementById('gap-price-ct').value);
+  if (isNaN(ct) || ct <= 0) {
+    document.getElementById('gap-price-ct').style.borderColor = 'var(--red)';
+    return;
+  }
+  document.getElementById('gap-price-ct').style.borderColor = '';
+  const user      = document.getElementById('gap-user-select').value;
+  const price_kwh = ct / 100;
+  const price_eur = Math.round(currentGapKwh * price_kwh * 100) / 100;
+  gapOverrides[currentGapId] = { user, price_kwh, price_eur };
+  saveGapOverrides();
+  closeGapCalc();
+  apply_filters();
+}
 
 /* ── Hilfsfunktionen ── */
 function fmt_date(iso) {
@@ -446,7 +624,12 @@ function closeChart() {
 document.getElementById('chart-modal').addEventListener('click', e => {
   if (e.target === document.getElementById('chart-modal')) closeChart();
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeChart(); });
+document.getElementById('gap-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('gap-modal')) closeGapCalc();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeChart(); closeGapCalc(); }
+});
 
 /* ── Tabelle rendern ── */
 function render(sessions) {
@@ -459,6 +642,7 @@ function render(sessions) {
   const sorted = [...sessions].reverse();
   lastSorted = sorted;
   tbody.innerHTML = sorted.map((s, i) => {
+    if (s.type === 'lucke') return renderGapRow(s, i);
     const hasChart = s.price_samples && s.price_samples.length >= 2;
     const priceLabel = s.price_kwh != null
       ? `${(s.price_kwh * 100).toFixed(1)} ct`
@@ -485,10 +669,13 @@ function render(sessions) {
 
 /* ── Statistiken ── */
 function update_stats(sessions) {
-  const count  = sessions.length;
-  const energy = sessions.reduce((a, s) => a + (s.energy_kwh || 0), 0);
-  const cost   = sessions.filter(s => s.price_eur != null).reduce((a, s) => a + s.price_eur, 0);
-  const prices = sessions.filter(s => s.price_kwh != null).map(s => s.price_kwh);
+  const regular = sessions.filter(s => s.type !== 'lucke');
+  const gaps    = sessions.filter(s => s.type === 'lucke');
+
+  const count  = regular.length;
+  const energy = regular.reduce((a, s) => a + (s.energy_kwh || 0), 0);
+  const cost   = regular.filter(s => s.price_eur != null).reduce((a, s) => a + s.price_eur, 0);
+  const prices = regular.filter(s => s.price_kwh != null).map(s => s.price_kwh);
   const avgP   = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : null;
 
   document.getElementById('stat-count').textContent     = count;
@@ -496,6 +683,19 @@ function update_stats(sessions) {
   document.getElementById('stat-cost').textContent      = cost.toFixed(2) + ' €';
   document.getElementById('stat-avg-price').textContent = avgP != null ? (avgP * 100).toFixed(1) + ' ct' : '–';
   document.getElementById('stat-avg-kwh').textContent   = count ? (energy / count).toFixed(1) : '–';
+
+  // Ungelöste Lücken anzeigen
+  const unresolved = gaps.filter(s => !gapOverrides[s.id]);
+  const gapBox = document.getElementById('stat-gaps-box');
+  if (unresolved.length > 0) {
+    const gapKwh = unresolved.reduce((a, s) => a + (+s.energy_kwh || 0), 0);
+    document.getElementById('stat-gaps-kwh').textContent = gapKwh.toFixed(1);
+    document.getElementById('stat-gaps-sub').textContent =
+      `kWh in ${unresolved.length} Lücke${unresolved.length > 1 ? 'n' : ''}`;
+    gapBox.style.display = '';
+  } else {
+    gapBox.style.display = 'none';
+  }
 
   update_offener_betrag(sessions);
 }
@@ -568,6 +768,13 @@ function apply_filters() {
   const cutoff  = period ? Date.now() - period * 86400000 : 0;
 
   const filtered = allSessions.filter(s => {
+    if (s.type === 'lucke') {
+      // Lücken-Einträge: immer zeigen, außer sie wurden einem anderen Benutzer zugeordnet
+      const ov = gapOverrides[s.id];
+      if (vehicle && ov && ov.user && ov.user !== '–' && ov.user !== vehicle) return false;
+      if (cutoff && new Date(s.end).getTime() < cutoff) return false;
+      return true;
+    }
     if (vehicle && (s.user || s.rfid) !== vehicle) return false;
     if (cutoff && new Date(s.end).getTime() < cutoff) return false;
     if (search && !JSON.stringify(s).toLowerCase().includes(search)) return false;
@@ -580,6 +787,7 @@ function apply_filters() {
 
 /* ── Laden ── */
 async function load() {
+  loadGapOverrides();
   try {
     const ts = Date.now();
     const [r, rb] = await Promise.all([
