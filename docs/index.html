@@ -1094,7 +1094,8 @@ async function loadAll() {
       const fill = document.getElementById('therm-fill');
       fill.style.height = (1 - pct) * 100 + '%';
       const zoneEl = document.getElementById('therm-zone');
-      zoneEl.textContent = zoneLabels[cls] || 'mittel'; zoneEl.style.color = interpColor; unskel(zoneEl);
+      const zoneTxt = cls === 'badge-mid' ? '' : (zoneLabels[cls] || '');
+      zoneEl.textContent = zoneTxt; zoneEl.style.color = interpColor; zoneEl.style.display = zoneTxt ? '' : 'none'; unskel(zoneEl);
       pEl.style.color = interpColor;
       const trendEl = document.getElementById('therm-trend');
       if (prevPreis !== null && ct > prevPreis)      { trendEl.textContent = '↑'; trendEl.style.color = '#E24B4A'; }
