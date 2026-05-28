@@ -11,7 +11,7 @@
   :root {
     --green:  #2d6a4f; --green2: #40916c; --green3: #74c69d; --green4: #d8f3dc;
     --amber:  #e07b00; --amber2: #ffd166;
-    --red:    #bf360c; --red2:   #ffe0b2;
+    --red:    #e64a19; --red2:   #ffe0b2;
     --ink:    #1a1a1a; --muted:  #5a6a5e;
     --bg:     #f4f7f5; --card:   #ffffff; --border: #d0ddd4; --radius: 18px;
   }
@@ -508,7 +508,7 @@
           <div id="chart-wrap"><canvas id="verlaufChart" style="width:100%;height:100%;"></canvas></div>
           <div class="thresh-legend">
             <div class="thresh-item"><div style="width:22px;border-top:2px dashed #40916c;"></div>Günstig (<span id="thresh-min">14</span> ct)</div>
-            <div class="thresh-item"><div style="width:22px;border-top:2px dashed #bf360c;"></div>Normal (<span id="thresh-max">36</span> ct)</div>
+            <div class="thresh-item"><div style="width:22px;border-top:2px dashed #e64a19;"></div>Normal (<span id="thresh-max">36</span> ct)</div>
           </div>
         </div>
 
@@ -851,12 +851,12 @@ const sparkline = new Chart(document.getElementById('sparklineChart'), {
         const vals = ctx.dataset.data; const n = vals.length; if (!n) return '#2d6a4f';
         const i = ctx.dataIndex;
         if (i === n - 1) return '#2d6a4f';
-        return vals[i] === Math.min(...vals) ? '#40916c' : '#bf360c';
+        return vals[i] === Math.min(...vals) ? '#40916c' : '#e64a19';
       },
       pointBorderColor: 'rgba(255,255,255,.85)', pointBorderWidth: 1.5, pointHoverRadius: 5 },
     { data: [], borderColor: 'rgba(64,145,108,.5)', backgroundColor: 'transparent',
       borderWidth: 1, borderDash: [5,4], pointRadius: 0, fill: false, tension: 0, spanGaps: true },
-    { data: [], borderColor: 'rgba(191,54,12,.4)', backgroundColor: 'transparent',
+    { data: [], borderColor: 'rgba(230,74,25,.4)', backgroundColor: 'transparent',
       borderWidth: 1, borderDash: [5,4], pointRadius: 0, fill: false, tension: 0, spanGaps: true }
   ]},
   options: {
@@ -891,7 +891,7 @@ const chart = new Chart(document.getElementById('verlaufChart'), {
       borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, fill: true, tension: 0.35 },
     { label: '── Günstig (14 ct)', data: [], borderColor: '#40916c', backgroundColor: 'transparent',
       borderWidth: 2, borderDash: [8,5], pointRadius: 0, pointHoverRadius: 0, fill: false, tension: 0, spanGaps: true },
-    { label: '── Normal', data: [], borderColor: '#bf360c', backgroundColor: 'transparent',
+    { label: '── Normal', data: [], borderColor: '#e64a19', backgroundColor: 'transparent',
       borderWidth: 2, borderDash: [8,5], pointRadius: 0, pointHoverRadius: 0, fill: false, tension: 0, spanGaps: true }
   ]},
   options: {
@@ -1131,7 +1131,7 @@ async function loadAll() {
       const miniColors = {
         'badge-low':  { border: '#2d6a4f', bg: 'rgba(45,106,79,.18)' },
         'badge-mid':  { border: '#c58a00', bg: 'rgba(197,138,0,.14)' },
-        'badge-high': { border: '#bf360c', bg: 'rgba(191,54,12,.14)' },
+        'badge-high': { border: '#e64a19', bg: 'rgba(230,74,25,.14)' },
       };
       const mc = miniColors[miniCls] || miniColors['badge-mid'];
       miniChart.data.datasets[0].borderColor     = mc.border;
