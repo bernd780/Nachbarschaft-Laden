@@ -49,13 +49,14 @@
   .preis-sekundaer { margin-top: .9rem; padding-top: .75rem; border-top: 1px solid var(--green3); font-size: .78rem; color: var(--muted); display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
   .preis-sekundaer-val { font-weight: 600; color: var(--amber); }
   .therm-wrap { display: flex; align-items: flex-end; gap: 10px; margin: .5rem 0 .65rem; }
-  .therm-track { width: 22px; height: 120px; border-radius: 11px; background: rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.08); position: relative; overflow: hidden; flex-shrink: 0; }
-  .therm-fill { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 11px; height: 0; transition: height .8s cubic-bezier(0.4,0,0.2,1), background-color .8s ease; }
+  .therm-track { width: 22px; height: 120px; border-radius: 11px; background: linear-gradient(to top, #1D9E75 0%, #EF9F27 50%, #E24B4A 100%); border: 1px solid rgba(0,0,0,.08); position: relative; overflow: hidden; flex-shrink: 0; }
+  .therm-fill { position: absolute; top: 0; left: 0; right: 0; height: 100%; background: var(--card); transition: height .8s cubic-bezier(0.4,0,0.2,1); }
   .therm-scale { display: flex; flex-direction: column; justify-content: space-between; height: 120px; font-size: .68rem; color: var(--muted); }
   .therm-price-block { display: flex; flex-direction: column; gap: .1rem; }
   .therm-zone { font-size: .8rem; font-weight: 600; transition: color .6s; }
   .therm-trend { font-size: 1.1rem; color: var(--muted); transition: color .3s; }
-  [data-theme="dark"] .therm-track { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.12); }
+  [data-theme="dark"] .therm-track { background: linear-gradient(to top, #1D9E75 0%, #EF9F27 50%, #E24B4A 100%); border-color: rgba(255,255,255,.12); }
+  [data-theme="dark"] .therm-fill  { background: #0d2318; }
   .preis-toggle { display: flex; justify-content: center; width: 100%; border: none; background: none; padding: .3rem 0 0; cursor: pointer; color: var(--muted); transition: color .15s; }
   .preis-toggle:hover { color: var(--green); }
   .preis-toggle span { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .75rem; border-radius: 50px; background: rgba(0,0,0,.05); font-size: .7rem; font-weight: 600; letter-spacing: .05em; transition: background .15s; }
@@ -718,6 +719,23 @@ function badgeInfo(ct) {
   return                      ['badge-high', '⚠ Teuer – lieber warten'];
 }
 
+function lerpColor(pct) {
+  const t = Math.max(0, Math.min(1, pct));
+  let r, g, b;
+  if (t <= 0.5) {
+    const u = t * 2;
+    r = Math.round(29  + (239 - 29)  * u);
+    g = Math.round(158 + (159 - 158) * u);
+    b = Math.round(117 + (39  - 117) * u);
+  } else {
+    const u = (t - 0.5) * 2;
+    r = Math.round(239 + (226 - 239) * u);
+    g = Math.round(159 + (75  - 159) * u);
+    b = Math.round(39  + (74  - 39)  * u);
+  }
+  return `rgb(${r},${g},${b})`;
+}
+
 function updateLadeCard(d) {
   const card = document.getElementById('lade-card');
   const lv   = d.ladevorgang;
@@ -1056,15 +1074,14 @@ async function loadAll() {
     const badge = document.getElementById('preis-badge');
     const [cls, txt] = badgeInfo(ct);
     if (ct != null) {
-      const zoneMap = { 'badge-low': { color: '#1D9E75', label: 'günstig' }, 'badge-mid': { color: '#EF9F27', label: 'mittel' }, 'badge-high': { color: '#E24B4A', label: 'teuer' } };
-      const zone = zoneMap[cls] || zoneMap['badge-mid'];
+      const zoneLabels = { 'badge-low': 'günstig', 'badge-mid': 'mittel', 'badge-high': 'teuer' };
       const pct = Math.max(0, Math.min(1, (ct - PREIS_MIN) / (PREIS_MAX - PREIS_MIN)));
+      const interpColor = lerpColor(pct);
       const fill = document.getElementById('therm-fill');
-      fill.style.height = pct * 100 + '%';
-      fill.style.backgroundColor = zone.color;
+      fill.style.height = (1 - pct) * 100 + '%';
       const zoneEl = document.getElementById('therm-zone');
-      zoneEl.textContent = zone.label; zoneEl.style.color = zone.color; unskel(zoneEl);
-      pEl.style.color = zone.color;
+      zoneEl.textContent = zoneLabels[cls] || 'mittel'; zoneEl.style.color = interpColor; unskel(zoneEl);
+      pEl.style.color = interpColor;
       const trendEl = document.getElementById('therm-trend');
       if (prevPreis !== null && ct > prevPreis)      { trendEl.textContent = '↑'; trendEl.style.color = '#E24B4A'; }
       else if (prevPreis !== null && ct < prevPreis) { trendEl.textContent = '↓'; trendEl.style.color = '#1D9E75'; }
