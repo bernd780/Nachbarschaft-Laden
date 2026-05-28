@@ -444,15 +444,27 @@
     </div>
   </div>
 
-  <!-- Günstigste Stunde voraussichtlich -->
-  <div class="beste-zeit-box info" id="beste-zeit-forecast-box" style="display:none;">
+  <!-- Günstigste Stunde voraussichtlich (klickbar → Gestern aufklappen) -->
+  <div class="beste-zeit-box info" id="beste-zeit-forecast-box" style="display:none;cursor:pointer;" onclick="toggleGesternDetail()" role="button" aria-expanded="false">
     <div class="beste-zeit-icon" style="display:flex;align-items:center;color:var(--amber);">
       <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"/></svg>
     </div>
-    <div>
+    <div style="flex:1;">
       <div class="beste-zeit-label">Günstigste Stunde heute voraussichtlich</div>
       <div class="beste-zeit-val amber skeleton" id="beste-zeit-forecast-val">–</div>
       <div class="beste-zeit-sub" id="beste-zeit-forecast-sub">Basierend auf PV-Prognose</div>
+    </div>
+    <svg id="gestern-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:var(--muted);transition:transform .25s;"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <!-- Gestern-Detail (aufklappbar) -->
+  <div id="gestern-detail-box" style="display:none;">
+    <div class="beste-zeit-box info" style="border-top:none;border-radius:0 0 14px 14px;margin-top:-4px;padding-top:.9rem;background:var(--bg);">
+      <div class="beste-zeit-icon">📅</div>
+      <div>
+        <div class="beste-zeit-label" id="gestern-expand-label">Günstigste Stunde gestern</div>
+        <div class="beste-zeit-val skeleton" id="gestern-expand-val">–</div>
+        <div class="beste-zeit-sub" id="gestern-expand-sub"></div>
+      </div>
     </div>
   </div>
 
@@ -478,15 +490,6 @@
           </div>
         </div>
 
-        <div class="beste-zeit-box info">
-          <div class="beste-zeit-icon">📅</div>
-          <div>
-            <div class="beste-zeit-label" id="vortag-avg-label">Ø Hauptzeit gestern (10–17 Uhr)</div>
-            <div class="beste-zeit-val skeleton" id="vortag-avg-val">–</div>
-            <div class="beste-zeit-sub" id="vortag-avg-sub"></div>
-          </div>
-        </div>
-
         <div class="pv-arc-wrap" id="pv-arc-section">
           <div class="pv-arc-header">
             <div class="pv-arc-title">☀️ Heutige Erzeugung vs. Prognose</div>
@@ -497,10 +500,22 @@
         </div>
 
         <div>
+          <div class="sparkline-header" style="margin-bottom:.5rem;">
+            <div class="sparkline-label">Preisverlauf der letzten Tage</div>
+          </div>
           <div id="chart-wrap"><canvas id="verlaufChart" style="width:100%;height:100%;"></canvas></div>
           <div class="thresh-legend">
             <div class="thresh-item"><div style="width:22px;border-top:2px dashed #40916c;"></div>Günstig (<span id="thresh-min">14</span> ct)</div>
             <div class="thresh-item"><div style="width:22px;border-top:2px dashed #c62828;"></div>Teuer (<span id="thresh-max">36</span> ct)</div>
+          </div>
+        </div>
+
+        <div class="beste-zeit-box info">
+          <div class="beste-zeit-icon">📅</div>
+          <div>
+            <div class="beste-zeit-label" id="vortag-avg-label">Ø Hauptzeit gestern (10–17 Uhr)</div>
+            <div class="beste-zeit-val skeleton" id="vortag-avg-val">–</div>
+            <div class="beste-zeit-sub" id="vortag-avg-sub"></div>
           </div>
         </div>
 
@@ -762,6 +777,16 @@ function toggleAccordion(btn) {
   if (willOpen) setTimeout(() => { chart.resize(); sparkline.resize(); }, 50);
 }
 
+function toggleGesternDetail() {
+  const box    = document.getElementById('gestern-detail-box');
+  const fBox   = document.getElementById('beste-zeit-forecast-box');
+  const chev   = document.getElementById('gestern-chevron');
+  const isOpen = box && box.style.display !== 'none';
+  if (box)  box.style.display  = isOpen ? 'none' : 'block';
+  if (fBox) fBox.setAttribute('aria-expanded', !isOpen);
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
 function togglePreisDetails(btn) {
   const details = btn.nextElementSibling;
   const open = !details.classList.contains('open');
@@ -781,12 +806,12 @@ const miniChart = new Chart(document.getElementById('therm-mini-canvas'), {
   type: 'line',
   data: { labels: [], datasets: [{ data: [],
     borderColor: '#2d6a4f', backgroundColor: 'rgba(45,106,79,.10)',
-    borderWidth: 1.5, pointRadius: 0, fill: true, tension: 0.4
+    borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4
   }]},
   options: {
     responsive: true, maintainAspectRatio: false, animation: false,
     plugins: { legend: { display: false }, tooltip: { enabled: false } },
-    scales: { x: { display: false }, y: { display: false } },
+    scales: { x: { display: false }, y: { display: false, min: 10, max: 40 } },
     layout: { padding: 1 }
   }
 });
@@ -1019,6 +1044,9 @@ async function loadAll() {
       document.getElementById('thresh-min').textContent = PREIS_MIN;
       document.getElementById('therm-max-lbl').textContent = PREIS_MAX + ' ct';
       document.getElementById('therm-min-lbl').textContent = PREIS_MIN + ' ct';
+      // Mini-Chart Y-Bereich auf Preisskala fixieren
+      miniChart.options.scales.y.min = PREIS_MIN;
+      miniChart.options.scales.y.max = PREIS_MAX;
     }
 
     // Aktueller Preis
@@ -1061,7 +1089,7 @@ async function loadAll() {
     const mEl = document.getElementById('preis-mittel');
     mEl.textContent = d.ladepreis_peak_avg != null ? d.ladepreis_peak_avg.toFixed(1) : '–'; unskel(mEl);
 
-    // Sparkline (letzte 3h)
+    // Sparkline (letzte 6h) + Mini-Chart (letzte 3h)
     if (d.verlauf && d.verlauf.length) {
       sparkline.data.labels = d.verlauf.map(p =>
         new Date(p.t).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})
@@ -1069,24 +1097,37 @@ async function loadAll() {
       sparkline.data.datasets[0].data = d.verlauf.map(p => p.v);
       sparkline.data.datasets[1].data = d.verlauf.map(() => PREIS_MIN);
       sparkline.data.datasets[2].data = d.verlauf.map(() => PREIS_MAX);
-      const last3h = d.verlauf.slice(-12);
-      miniChart.data.labels = last3h.map(p => p.t);
-      miniChart.data.datasets[0].data = last3h.map(p => p.v);
-      miniChart.update('none');
       sparkline.update('none');
       const vals = d.verlauf.map(p => p.v);
       const spMin = Math.min(...vals), spMax = Math.max(...vals);
       document.getElementById('sparkline-range').textContent =
         spMin.toFixed(1) + ' – ' + spMax.toFixed(1) + ' ct';
 
+      // Mini-Chart: letzte 3h, Y-Bereich fix, Farbe nach Preiszone
+      const last3h = d.verlauf.slice(-12);
+      miniChart.data.labels = last3h.map(p => p.t);
+      miniChart.data.datasets[0].data = last3h.map(p => p.v);
+      const curVal = last3h.length ? last3h[last3h.length - 1].v : null;
+      const [miniCls] = curVal != null ? badgeInfo(curVal) : ['badge-mid'];
+      const miniColors = {
+        'badge-low':  { border: '#2d6a4f', bg: 'rgba(45,106,79,.18)' },
+        'badge-mid':  { border: '#c58a00', bg: 'rgba(197,138,0,.14)' },
+        'badge-high': { border: '#c62828', bg: 'rgba(198,40,40,.14)' },
+      };
+      const mc = miniColors[miniCls] || miniColors['badge-mid'];
+      miniChart.data.datasets[0].borderColor     = mc.border;
+      miniChart.data.datasets[0].backgroundColor = mc.bg;
+      miniChart.update('none');
+    }
+
+    // Günstigste Stunde heute
+    {
       const bLabel = document.getElementById('beste-zeit-label');
       const bEl    = document.getElementById('beste-zeit-val');
       const bSub   = document.getElementById('beste-zeit-sub');
-      const vorHauptzeit = d.vor_hauptzeit;
-      const gs = vorHauptzeit ? d.guenstigste_stunde_gestern : d.guenstigste_stunde;
-      bLabel.textContent = vorHauptzeit
-        ? 'Günstigste Stunde gestern (10–17 Uhr)'
-        : 'Günstigste Stunde heute (10–17 Uhr)';
+      const kz = d.kernzeit ? `${d.kernzeit.start}–${d.kernzeit.ende} Uhr` : '10–17 Uhr';
+      bLabel.textContent = `Günstigste Stunde heute (${kz})`;
+      const gs = d.guenstigste_stunde;
       if (gs) {
         const zeit = new Date(gs.start).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
         bEl.textContent = 'ab ' + zeit + ' Uhr – Ø ' + gs.avg_ct.toFixed(1) + ' ct/kWh'; unskel(bEl);
@@ -1094,11 +1135,14 @@ async function loadAll() {
                            gs.avg_ct <= 25 ? '👍 Guter Zeitpunkt zum Laden' :
                            gs.avg_ct <= 32 ? '👌 Moderat' : '⚠ Eher teuer';
       } else {
-        bEl.textContent = vorHauptzeit ? 'Keine Daten von gestern' : 'Noch nicht verfügbar'; unskel(bEl);
-        bSub.textContent = vorHauptzeit ? '' : 'Auswertung ab 10 Uhr';
+        const kzStart = d.kernzeit?.start ?? 10;
+        bEl.textContent = 'Noch nicht verfügbar'; unskel(bEl);
+        bSub.textContent = `Auswertung ab ${kzStart} Uhr`;
       }
+    }
 
-      // Voraussichtlich günstigste Stunde
+    // Voraussichtlich günstigste Stunde + aufklappbares Gestern-Detail
+    {
       const fBox = document.getElementById('beste-zeit-forecast-box');
       const fEl  = document.getElementById('beste-zeit-forecast-val');
       const fSub = document.getElementById('beste-zeit-forecast-sub');
@@ -1108,14 +1152,31 @@ async function loadAll() {
         const end      = new Date(start.getTime() + 3600000);
         const startStr = start.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
         const endStr   = end.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
-        const nowH     = new Date().getHours();
-        const peakH    = start.getHours();
+        const nowH  = new Date().getHours();
+        const peakH = start.getHours();
         fEl.textContent = startStr + ' – ' + endStr + ' Uhr'; unskel(fEl);
-        fSub.textContent = nowH > peakH
-          ? '☀️ Spitze bereits überschritten'
-          : '☀️ Basierend auf PV-Prognose';
+        fSub.textContent = nowH > peakH ? '☀️ Spitze bereits überschritten' : '☀️ Basierend auf PV-Prognose';
       } else {
         fBox.style.display = 'none';
+      }
+
+      // Gestern-Detail befüllen
+      const kz = d.kernzeit ? `${d.kernzeit.start}–${d.kernzeit.ende} Uhr` : '10–17 Uhr';
+      const gLabel = document.getElementById('gestern-expand-label');
+      const gEl    = document.getElementById('gestern-expand-val');
+      const gSub   = document.getElementById('gestern-expand-sub');
+      if (gLabel) gLabel.textContent = `Günstigste Stunde gestern (${kz})`;
+      const gs_g = d.guenstigste_stunde_gestern;
+      if (gEl) {
+        if (gs_g) {
+          const zeit_g = new Date(gs_g.start).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+          gEl.textContent = 'ab ' + zeit_g + ' Uhr – Ø ' + gs_g.avg_ct.toFixed(1) + ' ct/kWh'; unskel(gEl);
+          if (gSub) gSub.textContent = gs_g.avg_ct <= 18 ? '✅ Sehr günstig' :
+                                       gs_g.avg_ct <= 25 ? '👍 Günstig' :
+                                       gs_g.avg_ct <= 32 ? '👌 Moderat' : '⚠ Eher teuer';
+        } else {
+          gEl.textContent = 'Keine Daten von gestern'; unskel(gEl);
+        }
       }
     }
 
