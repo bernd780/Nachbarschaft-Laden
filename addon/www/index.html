@@ -716,7 +716,7 @@ let prevPreis = null;
 function badgeInfo(ct) {
   if (ct == null) return ['badge-mid', '–'];
   if (ct <= PREIS_MIN) return ['badge-low',  '⚡ Günstig – jetzt laden!'];
-  if (ct <= PREIS_MAX) return ['badge-mid',  '⏱ Moderat'];
+  if (ct <= PREIS_MAX) return ['badge-mid',  ''];
   return                      ['badge-high', '⚠ Teuer – lieber warten'];
 }
 
@@ -1089,7 +1089,7 @@ async function loadAll() {
       else                                           { trendEl.textContent = '→'; trendEl.style.color = ''; }
       prevPreis = ct;
     }
-    badge.className = 'status-badge ' + cls; badge.textContent = txt;
+    badge.className = 'status-badge ' + cls; badge.textContent = txt; badge.style.display = txt ? '' : 'none';
 
     // Kernzeit-Labels und Feature-Sichtbarkeit
     if (d.kernzeit) {
