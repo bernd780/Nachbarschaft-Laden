@@ -391,18 +391,18 @@ class LadepreisGraph(hass.Hass):
 
             cutoff_8h = end_dt - timedelta(hours=self.HOURS)
             raw_8h    = [(t, v) for t, v in raw_points if t >= cutoff_8h]
-            peak_pts  = [(t, v) for t, v in raw_8h if 13 <= _local(t).hour < 19]
+            peak_pts  = [(t, v) for t, v in raw_8h if 10 <= _local(t).hour < 17]
             peak_avg  = round(sum(v for _, v in peak_pts) / len(peak_pts), 1) if peak_pts else None
 
             gestern    = (_local(end_dt) - timedelta(days=1)).date()
             vortag_pts = [(t, v) for t, v in raw_points
-                          if _local(t).date() == gestern and 13 <= _local(t).hour < 19]
+                          if _local(t).date() == gestern and 10 <= _local(t).hour < 17]
             vortag_avg = round(sum(v for _, v in vortag_pts) / len(vortag_pts), 1) if vortag_pts else None
-            self.log(f"Vortag ({gestern}) 13–19h: {len(vortag_pts)} Punkte, avg={vortag_avg}")
+            self.log(f"Vortag ({gestern}) 10–17h: {len(vortag_pts)} Punkte, avg={vortag_avg}")
 
             heute_lokal  = _local(end_dt).date()
             haupt_pts    = [(t, v) for t, v in raw_points
-                            if _local(t).date() == heute_lokal and 13 <= _local(t).hour < 19]
+                            if _local(t).date() == heute_lokal and 10 <= _local(t).hour < 17]
             guenstigste_stunde = None
             if haupt_pts:
                 best_avg, best_start = None, None
