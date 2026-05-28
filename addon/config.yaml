@@ -33,7 +33,8 @@ options:
   sensor_pv_morgen: "sensor.morgenpv"
   sensor_pv_uebermorgen: "sensor.uebermorgenpv"
   sensor_pv_in3tagen: "sensor.pvin3tagen"
-  sensor_pv_erzeugung_heute: "sensor.pv_erzeugung_heute"
+  sensor_pv_erzeugung_heute: "sensor.daily_pv_generation"
+  sensor_pv_rest_heute: "sensor.pv_rest_heute_noch"
 
   # Fahrzeug & Ladestation
   sensor_fahrzeug_akku: "sensor.mein_fahrzeug_battery"
@@ -81,6 +82,7 @@ schema:
   sensor_pv_uebermorgen: str
   sensor_pv_in3tagen: str
   sensor_pv_erzeugung_heute: str
+  sensor_pv_rest_heute: str
   sensor_fahrzeug_akku: str
   sensor_ladegeraet_status: str
   sensor_zaehlerstand_kwh: str

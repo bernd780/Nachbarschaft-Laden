@@ -48,10 +48,8 @@ class LadepreisGraph(hass.Hass):
         self.S_PV_MORGEN         = a.get("sensor_pv_morgen",              "sensor.morgenpv")
         self.S_PV_UEBERMORGEN= a.get("sensor_pv_uebermorgen",     "sensor.uebermorgenpv")
         self.S_PV_IN3TAGEN   = a.get("sensor_pv_in3tagen",        "sensor.pvin3tagen")
-        self.S_PV_HEUTE      = a.get("sensor_pv_erzeugung_heute", "sensor.pv_erzeugung_heute")
-        self.S_PV_PROGNOSE_1 = a.get("sensor_pv_prognose_heute_1", "sensor.energy_production_today")
-        self.S_PV_PROGNOSE_2 = a.get("sensor_pv_prognose_heute_2", "sensor.energy_production_today_2")
-        self.S_PV_PROGNOSE_3 = a.get("sensor_pv_prognose_heute_3", "sensor.energy_production_today_3")
+        self.S_PV_HEUTE_KWH  = a.get("sensor_pv_erzeugung_heute",  "sensor.daily_pv_generation")
+        self.S_PV_REST_HEUTE = a.get("sensor_pv_rest_heute",       "sensor.pv_rest_heute_noch")
         self.S_FAHRZEUG_AKKU = a.get("sensor_fahrzeug_akku",      "sensor.mein_fahrzeug_battery")
         self.S_LADEGERAET    = a.get("sensor_ladegeraet_status",  "sensor.go_echarger_XXXXXX_car")
         self.S_ZAEHLER       = a.get("sensor_zaehlerstand_kwh",   "sensor.go_echarger_XXXXXX_eto")
@@ -427,9 +425,11 @@ class LadepreisGraph(hass.Hass):
             try:
                 h = datetime.now(_TZ).hour
                 if 4 <= h < 23:
-                    val = self._float_safe(self.S_PV_HEUTE)
-                    if val is not None:
-                        pv_erzeugung_prozent = round(min(max(val, 0.0), 100.0), 1)
+                    erzeugt = self._float_safe(self.S_PV_HEUTE_KWH)
+                    rest    = self._float_safe(self.S_PV_REST_HEUTE)
+                    gesamt  = erzeugt + rest
+                    if gesamt > 0.5:
+                        pv_erzeugung_prozent = round(min(erzeugt / gesamt * 100.0, 100.0), 1)
             except Exception:
                 pass
 
