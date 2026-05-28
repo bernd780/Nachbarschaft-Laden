@@ -35,6 +35,7 @@ options:
   sensor_pv_in3tagen: "sensor.pvin3tagen"
   sensor_pv_erzeugung_heute: "sensor.daily_pv_generation"
   sensor_pv_rest_heute: "sensor.pv_rest_heute_noch"
+  sensor_pv_peak_zeit_heute: "sensor.power_highest_peak_time_today_3"
 
   # Fahrzeug & Ladestation
   sensor_fahrzeug_akku: "sensor.mein_fahrzeug_battery"
@@ -83,6 +84,7 @@ schema:
   sensor_pv_in3tagen: str
   sensor_pv_erzeugung_heute: str
   sensor_pv_rest_heute: str
+  sensor_pv_peak_zeit_heute: str
   sensor_fahrzeug_akku: str
   sensor_ladegeraet_status: str
   sensor_zaehlerstand_kwh: str

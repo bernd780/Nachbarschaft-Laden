@@ -48,8 +48,9 @@ class LadepreisGraph(hass.Hass):
         self.S_PV_MORGEN         = a.get("sensor_pv_morgen",              "sensor.morgenpv")
         self.S_PV_UEBERMORGEN= a.get("sensor_pv_uebermorgen",     "sensor.uebermorgenpv")
         self.S_PV_IN3TAGEN   = a.get("sensor_pv_in3tagen",        "sensor.pvin3tagen")
-        self.S_PV_HEUTE_KWH  = a.get("sensor_pv_erzeugung_heute",  "sensor.daily_pv_generation")
-        self.S_PV_REST_HEUTE = a.get("sensor_pv_rest_heute",       "sensor.pv_rest_heute_noch")
+        self.S_PV_HEUTE_KWH  = a.get("sensor_pv_erzeugung_heute",   "sensor.daily_pv_generation")
+        self.S_PV_REST_HEUTE = a.get("sensor_pv_rest_heute",        "sensor.pv_rest_heute_noch")
+        self.S_PV_PEAK_ZEIT  = a.get("sensor_pv_peak_zeit_heute",   "sensor.power_highest_peak_time_today_3")
         self.S_FAHRZEUG_AKKU = a.get("sensor_fahrzeug_akku",      "sensor.mein_fahrzeug_battery")
         self.S_LADEGERAET    = a.get("sensor_ladegeraet_status",  "sensor.go_echarger_XXXXXX_car")
         self.S_ZAEHLER       = a.get("sensor_zaehlerstand_kwh",   "sensor.go_echarger_XXXXXX_eto")
@@ -400,6 +401,23 @@ class LadepreisGraph(hass.Hass):
             vortag_avg = round(sum(v for _, v in vortag_pts) / len(vortag_pts), 1) if vortag_pts else None
             self.log(f"Vortag ({gestern}) 10–17h: {len(vortag_pts)} Punkte, avg={vortag_avg}")
 
+            guenstigste_stunde_gestern = None
+            if vortag_pts:
+                best_avg_g, best_start_g = None, None
+                for t_start, _ in vortag_pts:
+                    t_end = t_start + timedelta(hours=1)
+                    fenster_pts = [(t, v) for t, v in vortag_pts if t_start <= t < t_end]
+                    if len(fenster_pts) >= 4:
+                        avg = sum(v for _, v in fenster_pts) / len(fenster_pts)
+                        if best_avg_g is None or avg < best_avg_g:
+                            best_avg_g   = avg
+                            best_start_g = t_start
+                if best_start_g:
+                    guenstigste_stunde_gestern = {
+                        "start":  _local(best_start_g).isoformat(),
+                        "avg_ct": round(best_avg_g, 1),
+                    }
+
             heute_lokal  = _local(end_dt).date()
             haupt_pts    = [(t, v) for t, v in raw_points
                             if _local(t).date() == heute_lokal and 10 <= _local(t).hour < 17]
@@ -420,6 +438,21 @@ class LadepreisGraph(hass.Hass):
                         "start":  _local(best_start).isoformat(),
                         "avg_ct": round(best_avg, 1),
                     }
+
+            vor_hauptzeit = _local(end_dt).hour < 16
+
+            guenstigste_stunde_voraussichtlich = None
+            try:
+                peak_raw = self.get_state(self.S_PV_PEAK_ZEIT)
+                if peak_raw not in (None, "unknown", "unavailable"):
+                    peak_utc   = datetime.fromisoformat(peak_raw.replace("Z", "+00:00"))
+                    peak_local = _local(peak_utc)
+                    peak_h     = max(10, min(16, peak_local.hour))
+                    ld = _local(end_dt)
+                    peak_start = datetime(ld.year, ld.month, ld.day, peak_h, 0, 0, tzinfo=_TZ)
+                    guenstigste_stunde_voraussichtlich = {"start": peak_start.isoformat()}
+            except Exception as e:
+                self.log(f"Peak-Zeit Fehler: {e}")
 
             pv_erzeugung_prozent = None
             try:
@@ -482,7 +515,10 @@ class LadepreisGraph(hass.Hass):
                 "ladepreis_min":        preis_min,
                 "ladepreis_peak_avg":   peak_avg,
                 "ladepreis_vortag_avg": vortag_avg,
-                "guenstigste_stunde":   guenstigste_stunde,
+                "guenstigste_stunde":              guenstigste_stunde,
+                "guenstigste_stunde_gestern":      guenstigste_stunde_gestern,
+                "guenstigste_stunde_voraussichtlich": guenstigste_stunde_voraussichtlich,
+                "vor_hauptzeit":                   vor_hauptzeit,
                 "verlauf":              verlauf,
                 "verlauf_lang":         verlauf_lang,
                 "pv": {

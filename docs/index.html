@@ -438,9 +438,21 @@
       <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
     </div>
     <div>
-      <div class="beste-zeit-label">Günstigste Stunde heute (10–17 Uhr)</div>
+      <div class="beste-zeit-label" id="beste-zeit-label">Günstigste Stunde heute (10–17 Uhr)</div>
       <div class="beste-zeit-val skeleton" id="beste-zeit-val">–</div>
       <div class="beste-zeit-sub" id="beste-zeit-sub"></div>
+    </div>
+  </div>
+
+  <!-- Günstigste Stunde voraussichtlich -->
+  <div class="beste-zeit-box info" id="beste-zeit-forecast-box" style="display:none;">
+    <div class="beste-zeit-icon" style="display:flex;align-items:center;color:var(--amber);">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"/></svg>
+    </div>
+    <div>
+      <div class="beste-zeit-label">Günstigste Stunde heute voraussichtlich</div>
+      <div class="beste-zeit-val amber skeleton" id="beste-zeit-forecast-val">–</div>
+      <div class="beste-zeit-sub" id="beste-zeit-forecast-sub">Basierend auf PV-Prognose</div>
     </div>
   </div>
 
@@ -1055,18 +1067,43 @@ async function loadAll() {
       document.getElementById('sparkline-range').textContent =
         spMin.toFixed(1) + ' – ' + spMax.toFixed(1) + ' ct';
 
-      const bEl  = document.getElementById('beste-zeit-val');
-      const bSub = document.getElementById('beste-zeit-sub');
-      if (d.guenstigste_stunde) {
-        const gs   = d.guenstigste_stunde;
+      const bLabel = document.getElementById('beste-zeit-label');
+      const bEl    = document.getElementById('beste-zeit-val');
+      const bSub   = document.getElementById('beste-zeit-sub');
+      const vorHauptzeit = d.vor_hauptzeit;
+      const gs = vorHauptzeit ? d.guenstigste_stunde_gestern : d.guenstigste_stunde;
+      bLabel.textContent = vorHauptzeit
+        ? 'Günstigste Stunde gestern (10–17 Uhr)'
+        : 'Günstigste Stunde heute (10–17 Uhr)';
+      if (gs) {
         const zeit = new Date(gs.start).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
         bEl.textContent = 'ab ' + zeit + ' Uhr – Ø ' + gs.avg_ct.toFixed(1) + ' ct/kWh'; unskel(bEl);
         bSub.textContent = gs.avg_ct <= 18 ? '✅ Sehr günstig – ideal zum Laden!' :
                            gs.avg_ct <= 25 ? '👍 Guter Zeitpunkt zum Laden' :
-                           gs.avg_ct <= 32 ? '👌 Moderat' : '⚠ Heute eher teuer';
+                           gs.avg_ct <= 32 ? '👌 Moderat' : '⚠ Eher teuer';
       } else {
-        bEl.textContent = 'Noch nicht verfügbar'; unskel(bEl);
-        bSub.textContent = 'Auswertung ab 13 Uhr';
+        bEl.textContent = vorHauptzeit ? 'Keine Daten von gestern' : 'Noch nicht verfügbar'; unskel(bEl);
+        bSub.textContent = vorHauptzeit ? '' : 'Auswertung ab 10 Uhr';
+      }
+
+      // Voraussichtlich günstigste Stunde
+      const fBox = document.getElementById('beste-zeit-forecast-box');
+      const fEl  = document.getElementById('beste-zeit-forecast-val');
+      const fSub = document.getElementById('beste-zeit-forecast-sub');
+      if (d.guenstigste_stunde_voraussichtlich) {
+        fBox.style.display = 'flex';
+        const start    = new Date(d.guenstigste_stunde_voraussichtlich.start);
+        const end      = new Date(start.getTime() + 3600000);
+        const startStr = start.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+        const endStr   = end.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+        const nowH     = new Date().getHours();
+        const peakH    = start.getHours();
+        fEl.textContent = startStr + ' – ' + endStr + ' Uhr'; unskel(fEl);
+        fSub.textContent = nowH > peakH
+          ? '☀️ Spitze bereits überschritten'
+          : '☀️ Basierend auf PV-Prognose';
+      } else {
+        fBox.style.display = 'none';
       }
     }
 
