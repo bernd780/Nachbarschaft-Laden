@@ -29,7 +29,11 @@ options:
   preis_netzbezug_ct: 30.0
   preis_zielleistung_kw: 11.0
 
-  # PV-Prognose (kWh-Ertrag pro Tag)
+  # Kernzeit (Stunden 0–23; bestimmt Spitzenlast-Auswertung und günstigste Stunde)
+  kernzeit_start: 10
+  kernzeit_ende: 17
+
+  # PV-Sensoren (optional – leerer String "" deaktiviert das jeweilige Feature)
   sensor_pv_morgen: "sensor.morgenpv"
   sensor_pv_uebermorgen: "sensor.uebermorgenpv"
   sensor_pv_in3tagen: "sensor.pvin3tagen"
@@ -79,6 +83,8 @@ schema:
   preis_marge_ct: float
   preis_netzbezug_ct: float
   preis_zielleistung_kw: float
+  kernzeit_start: int
+  kernzeit_ende: int
   sensor_pv_morgen: str
   sensor_pv_uebermorgen: str
   sensor_pv_in3tagen: str

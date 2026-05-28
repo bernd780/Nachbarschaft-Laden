@@ -45,12 +45,15 @@ class LadepreisGraph(hass.Hass):
         self.PREIS_NETZBEZUG     = float(a.get("preis_netzbezug_ct",           30.0))
         self.PREIS_ZIELLEISTUNG  = float(a.get("preis_zielleistung_kw",        11.0))
         self.PREIS_TOTZONE_KW    = 0.5
-        self.S_PV_MORGEN         = a.get("sensor_pv_morgen",              "sensor.morgenpv")
-        self.S_PV_UEBERMORGEN= a.get("sensor_pv_uebermorgen",     "sensor.uebermorgenpv")
-        self.S_PV_IN3TAGEN   = a.get("sensor_pv_in3tagen",        "sensor.pvin3tagen")
-        self.S_PV_HEUTE_KWH  = a.get("sensor_pv_erzeugung_heute",   "sensor.daily_pv_generation")
-        self.S_PV_REST_HEUTE = a.get("sensor_pv_rest_heute",        "sensor.pv_rest_heute_noch")
-        self.S_PV_PEAK_ZEIT  = a.get("sensor_pv_peak_zeit_heute",   "sensor.power_highest_peak_time_today_3")
+        self.KERNZEIT_START  = int(a.get("kernzeit_start", 10))
+        self.KERNZEIT_ENDE   = int(a.get("kernzeit_ende",  17))
+        # PV-Sensoren (optional – leerer String = Feature deaktiviert)
+        self.S_PV_MORGEN     = a.get("sensor_pv_morgen",           "sensor.morgenpv")     or None
+        self.S_PV_UEBERMORGEN= a.get("sensor_pv_uebermorgen",      "sensor.uebermorgenpv") or None
+        self.S_PV_IN3TAGEN   = a.get("sensor_pv_in3tagen",         "sensor.pvin3tagen")   or None
+        self.S_PV_HEUTE_KWH  = a.get("sensor_pv_erzeugung_heute",  "sensor.daily_pv_generation")              or None
+        self.S_PV_REST_HEUTE = a.get("sensor_pv_rest_heute",       "sensor.pv_rest_heute_noch")               or None
+        self.S_PV_PEAK_ZEIT  = a.get("sensor_pv_peak_zeit_heute",  "sensor.power_highest_peak_time_today_3")  or None
         self.S_FAHRZEUG_AKKU = a.get("sensor_fahrzeug_akku",      "sensor.mein_fahrzeug_battery")
         self.S_LADEGERAET    = a.get("sensor_ladegeraet_status",  "sensor.go_echarger_XXXXXX_car")
         self.S_ZAEHLER       = a.get("sensor_zaehlerstand_kwh",   "sensor.go_echarger_XXXXXX_eto")
@@ -313,9 +316,9 @@ class LadepreisGraph(hass.Hass):
         except Exception:
             pass
 
-        pv_m = self._float_safe(self.S_PV_MORGEN)
-        pv_u = self._float_safe(self.S_PV_UEBERMORGEN)
-        pv_3 = self._float_safe(self.S_PV_IN3TAGEN)
+        pv_m = self._float_safe(self.S_PV_MORGEN)     if self.S_PV_MORGEN     else 0.0
+        pv_u = self._float_safe(self.S_PV_UEBERMORGEN) if self.S_PV_UEBERMORGEN else 0.0
+        pv_3 = self._float_safe(self.S_PV_IN3TAGEN)   if self.S_PV_IN3TAGEN   else 0.0
         soc  = self._float_safe(self.S_FAHRZEUG_AKKU)
         haus = self._get_hausverbrauch()
         ziel = self._get_ladeziel()
@@ -392,14 +395,15 @@ class LadepreisGraph(hass.Hass):
 
             cutoff_8h = end_dt - timedelta(hours=self.HOURS)
             raw_8h    = [(t, v) for t, v in raw_points if t >= cutoff_8h]
-            peak_pts  = [(t, v) for t, v in raw_8h if 10 <= _local(t).hour < 17]
+            peak_pts  = [(t, v) for t, v in raw_8h if self.KERNZEIT_START <= _local(t).hour < self.KERNZEIT_ENDE]
             peak_avg  = round(sum(v for _, v in peak_pts) / len(peak_pts), 1) if peak_pts else None
 
             gestern    = (_local(end_dt) - timedelta(days=1)).date()
             vortag_pts = [(t, v) for t, v in raw_points
-                          if _local(t).date() == gestern and 10 <= _local(t).hour < 17]
+                          if _local(t).date() == gestern
+                          and self.KERNZEIT_START <= _local(t).hour < self.KERNZEIT_ENDE]
             vortag_avg = round(sum(v for _, v in vortag_pts) / len(vortag_pts), 1) if vortag_pts else None
-            self.log(f"Vortag ({gestern}) 10–17h: {len(vortag_pts)} Punkte, avg={vortag_avg}")
+            self.log(f"Vortag ({gestern}) {self.KERNZEIT_START}–{self.KERNZEIT_ENDE}h: {len(vortag_pts)} Punkte, avg={vortag_avg}")
 
             guenstigste_stunde_gestern = None
             if vortag_pts:
@@ -420,7 +424,8 @@ class LadepreisGraph(hass.Hass):
 
             heute_lokal  = _local(end_dt).date()
             haupt_pts    = [(t, v) for t, v in raw_points
-                            if _local(t).date() == heute_lokal and 10 <= _local(t).hour < 17]
+                            if _local(t).date() == heute_lokal
+                            and self.KERNZEIT_START <= _local(t).hour < self.KERNZEIT_ENDE]
             guenstigste_stunde = None
             if haupt_pts:
                 best_avg, best_start = None, None
@@ -439,32 +444,34 @@ class LadepreisGraph(hass.Hass):
                         "avg_ct": round(best_avg, 1),
                     }
 
-            vor_hauptzeit = _local(end_dt).hour < 16
+            vor_hauptzeit = _local(end_dt).hour < (self.KERNZEIT_ENDE - 1)
 
             guenstigste_stunde_voraussichtlich = None
-            try:
-                peak_raw = self.get_state(self.S_PV_PEAK_ZEIT)
-                if peak_raw not in (None, "unknown", "unavailable"):
-                    peak_utc   = datetime.fromisoformat(peak_raw.replace("Z", "+00:00"))
-                    peak_local = _local(peak_utc)
-                    peak_h     = max(10, min(16, peak_local.hour))
-                    ld = _local(end_dt)
-                    peak_start = datetime(ld.year, ld.month, ld.day, peak_h, 0, 0, tzinfo=_TZ)
-                    guenstigste_stunde_voraussichtlich = {"start": peak_start.isoformat()}
-            except Exception as e:
-                self.log(f"Peak-Zeit Fehler: {e}")
+            if self.S_PV_PEAK_ZEIT:
+                try:
+                    peak_raw = self.get_state(self.S_PV_PEAK_ZEIT)
+                    if peak_raw not in (None, "unknown", "unavailable"):
+                        peak_utc   = datetime.fromisoformat(peak_raw.replace("Z", "+00:00"))
+                        peak_local = _local(peak_utc)
+                        peak_h     = max(self.KERNZEIT_START, min(self.KERNZEIT_ENDE - 1, peak_local.hour))
+                        ld = _local(end_dt)
+                        peak_start = datetime(ld.year, ld.month, ld.day, peak_h, 0, 0, tzinfo=_TZ)
+                        guenstigste_stunde_voraussichtlich = {"start": peak_start.isoformat()}
+                except Exception as e:
+                    self.log(f"Peak-Zeit Fehler: {e}")
 
             pv_erzeugung_prozent = None
-            try:
-                h = datetime.now(_TZ).hour
-                if 4 <= h < 23:
-                    erzeugt = self._float_safe(self.S_PV_HEUTE_KWH)
-                    rest    = self._float_safe(self.S_PV_REST_HEUTE)
-                    gesamt  = erzeugt + rest
-                    if gesamt > 0.5:
-                        pv_erzeugung_prozent = round(min(erzeugt / gesamt * 100.0, 100.0), 1)
-            except Exception:
-                pass
+            if self.S_PV_HEUTE_KWH and self.S_PV_REST_HEUTE:
+                try:
+                    h = datetime.now(_TZ).hour
+                    if 4 <= h < 23:
+                        erzeugt = self._float_safe(self.S_PV_HEUTE_KWH)
+                        rest    = self._float_safe(self.S_PV_REST_HEUTE)
+                        gesamt  = erzeugt + rest
+                        if gesamt > 0.5:
+                            pv_erzeugung_prozent = round(min(erzeugt / gesamt * 100.0, 100.0), 1)
+                except Exception:
+                    pass
 
             ladevorgang = {"aktiv": False, "verbunden": False,
                            "energie_kwh": None, "dauer_s": None, "soc": None,
@@ -519,6 +526,12 @@ class LadepreisGraph(hass.Hass):
                 "guenstigste_stunde_gestern":      guenstigste_stunde_gestern,
                 "guenstigste_stunde_voraussichtlich": guenstigste_stunde_voraussichtlich,
                 "vor_hauptzeit":                   vor_hauptzeit,
+                "kernzeit": {"start": self.KERNZEIT_START, "ende": self.KERNZEIT_ENDE},
+                "features": {
+                    "pv_forecast": bool(self.S_PV_MORGEN and self.S_PV_UEBERMORGEN and self.S_PV_IN3TAGEN),
+                    "pv_arc":      bool(self.S_PV_HEUTE_KWH and self.S_PV_REST_HEUTE),
+                    "pv_peak":     bool(self.S_PV_PEAK_ZEIT),
+                },
                 "verlauf":              verlauf,
                 "verlauf_lang":         verlauf_lang,
                 "pv": {

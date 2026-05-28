@@ -384,7 +384,7 @@
           Nie mehr als <span id="preis-max-deckel">36</span> ct/kWh
         </div>
         <div class="preis-sekundaer">
-          Ø Spitzenlast 10–17 Uhr
+          Ø Spitzenlast <span id="kernzeit-label-spitzenlast">10–17 Uhr</span>
           <span class="preis-sekundaer-val skeleton" id="preis-mittel">–</span>
           ct/kWh
         </div>
@@ -419,7 +419,7 @@
   </div>
 
   <!-- PV-Überschuss -->
-  <div class="card">
+  <div class="card" id="pv-forecast-card">
     <div class="card-title">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       PV-Überschuss Prognose
@@ -481,13 +481,13 @@
         <div class="beste-zeit-box info">
           <div class="beste-zeit-icon">📅</div>
           <div>
-            <div class="beste-zeit-label">Ø Hauptzeit gestern (10–17 Uhr)</div>
+            <div class="beste-zeit-label" id="vortag-avg-label">Ø Hauptzeit gestern (10–17 Uhr)</div>
             <div class="beste-zeit-val skeleton" id="vortag-avg-val">–</div>
             <div class="beste-zeit-sub" id="vortag-avg-sub"></div>
           </div>
         </div>
 
-        <div class="pv-arc-wrap">
+        <div class="pv-arc-wrap" id="pv-arc-section">
           <div class="pv-arc-header">
             <div class="pv-arc-title">☀️ Heutige Erzeugung vs. Prognose</div>
             <div class="status-badge badge-mid skeleton" id="pv-arc-badge">–</div>
@@ -1044,6 +1044,18 @@ async function loadAll() {
       prevPreis = ct;
     }
     badge.className = 'status-badge ' + cls; badge.textContent = txt;
+
+    // Kernzeit-Labels und Feature-Sichtbarkeit
+    if (d.kernzeit) {
+      const kz = d.kernzeit.start + '–' + d.kernzeit.ende + ' Uhr';
+      document.getElementById('kernzeit-label-spitzenlast').textContent = kz;
+      document.getElementById('vortag-avg-label').textContent = 'Ø Hauptzeit gestern (' + kz + ')';
+    }
+    const ft = d.features || {};
+    const pvCard = document.getElementById('pv-forecast-card');
+    if (pvCard) pvCard.style.display = ft.pv_forecast ? '' : 'none';
+    const pvArc = document.getElementById('pv-arc-section');
+    if (pvArc) pvArc.style.display = ft.pv_arc ? '' : 'none';
 
     // Ø Spitzenlast heute
     const mEl = document.getElementById('preis-mittel');
