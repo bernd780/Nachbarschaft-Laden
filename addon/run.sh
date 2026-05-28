@@ -81,8 +81,8 @@ SENSOR_PV_REST_HEUTE=$(jq -r '.sensor_pv_rest_heute // ""'      "$OPTS")
 SENSOR_PV_PEAK_ZEIT=$(jq -r '.sensor_pv_peak_zeit_heute // ""'  "$OPTS")
 
 # Kernzeit
-KERNZEIT_START=$(jq -r '.kernzeit_start // 10'              "$OPTS")
-KERNZEIT_ENDE=$(jq -r '.kernzeit_ende  // 17'               "$OPTS")
+KERNZEIT_START=$(jq -r '.kernzeit_start // 11'              "$OPTS")
+KERNZEIT_ENDE=$(jq -r '.kernzeit_ende  // 16'               "$OPTS")
 
 # Fahrzeug & Ladestation
 SENSOR_FAHRZEUG_AKKU=$(jq -r '.sensor_fahrzeug_akku'        "$OPTS")

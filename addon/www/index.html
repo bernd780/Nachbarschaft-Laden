@@ -372,7 +372,7 @@
           Nie mehr als <span id="preis-max-deckel">36</span> ct/kWh
         </div>
         <div class="preis-sekundaer">
-          Ø Spitzenlast <span id="kernzeit-label-spitzenlast">10–17 Uhr</span>
+          Ø Spitzenlast <span id="kernzeit-label-spitzenlast">11–16 Uhr</span>
           <span class="preis-sekundaer-val skeleton" id="preis-mittel">–</span>
           ct/kWh
         </div>
@@ -426,7 +426,7 @@
       <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
     </div>
     <div>
-      <div class="beste-zeit-label" id="beste-zeit-label">Günstigste Stunde heute (10–17 Uhr)</div>
+      <div class="beste-zeit-label" id="beste-zeit-label">Günstigste Stunde heute (11–16 Uhr)</div>
       <div class="beste-zeit-val skeleton" id="beste-zeit-val">–</div>
       <div class="beste-zeit-sub" id="beste-zeit-sub"></div>
     </div>
@@ -515,7 +515,7 @@
         <div class="beste-zeit-box info">
           <div class="beste-zeit-icon">📅</div>
           <div>
-            <div class="beste-zeit-label" id="vortag-avg-label">Ø Hauptzeit gestern (10–17 Uhr)</div>
+            <div class="beste-zeit-label" id="vortag-avg-label">Ø Hauptzeit gestern (11–16 Uhr)</div>
             <div class="beste-zeit-val skeleton" id="vortag-avg-val">–</div>
             <div class="beste-zeit-sub" id="vortag-avg-sub"></div>
           </div>
@@ -1144,7 +1144,7 @@ async function loadAll() {
       const bLabel = document.getElementById('beste-zeit-label');
       const bEl    = document.getElementById('beste-zeit-val');
       const bSub   = document.getElementById('beste-zeit-sub');
-      const kz = d.kernzeit ? `${d.kernzeit.start}–${d.kernzeit.ende} Uhr` : '10–17 Uhr';
+      const kz = d.kernzeit ? `${d.kernzeit.start}–${d.kernzeit.ende} Uhr` : '11–16 Uhr';
       bLabel.textContent = `Günstigste Stunde heute (${kz})`;
       const gs = d.guenstigste_stunde;
       if (gs) {
@@ -1154,7 +1154,7 @@ async function loadAll() {
                            gs.avg_ct <= 25 ? '👍 Guter Zeitpunkt zum Laden' :
                            gs.avg_ct <= 32 ? '👌 Moderat' : 'Normal';
       } else {
-        const kzStart = d.kernzeit?.start ?? 10;
+        const kzStart = d.kernzeit?.start ?? 11;
         bEl.textContent = 'Noch nicht verfügbar'; unskel(bEl);
         bSub.textContent = `Auswertung ab ${kzStart} Uhr`;
       }
@@ -1195,7 +1195,7 @@ async function loadAll() {
       }
 
       // Gestern-Detail befüllen (Box-2-Aufklapper + Standalone-Box)
-      const kz = d.kernzeit ? `${d.kernzeit.start}–${d.kernzeit.ende} Uhr` : '10–17 Uhr';
+      const kz = d.kernzeit ? `${d.kernzeit.start}–${d.kernzeit.ende} Uhr` : '11–16 Uhr';
       const gs_g = d.guenstigste_stunde_gestern;
       [['gestern-expand-label','gestern-expand-val','gestern-expand-sub'],
        ['gestern-standalone-label','gestern-standalone-val','gestern-standalone-sub']].forEach(([lblId,valId,subId]) => {

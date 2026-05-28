@@ -30,8 +30,8 @@ options:
   preis_zielleistung_kw: 11.0
 
   # Kernzeit (Stunden 0–23; bestimmt Spitzenlast-Auswertung und günstigste Stunde)
-  kernzeit_start: 10
-  kernzeit_ende: 17
+  kernzeit_start: 11
+  kernzeit_ende: 16
 
   # PV-Sensoren (optional – leerer String "" deaktiviert das jeweilige Feature)
   sensor_pv_morgen: "sensor.morgenpv"
