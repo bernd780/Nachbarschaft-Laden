@@ -11,7 +11,7 @@
   :root {
     --green:  #2d6a4f; --green2: #40916c; --green3: #74c69d; --green4: #d8f3dc;
     --amber:  #e07b00; --amber2: #ffd166;
-    --red:    #c62828; --red2:   #ffb3b3;
+    --red:    #bf360c; --red2:   #ffe0b2;
     --ink:    #1a1a1a; --muted:  #5a6a5e;
     --bg:     #f4f7f5; --card:   #ffffff; --border: #d0ddd4; --radius: 18px;
   }
@@ -196,7 +196,7 @@
   [data-theme="dark"] {
     --green:  #74c69d; --green2: #52b788; --green3: #2d6a4f; --green4: #0d2318;
     --amber:  #ffd166; --amber2: #c87000;
-    --red:    #ff9a9a; --red2:   #3d1010;
+    --red:    #ffb74d; --red2:   #4a1a00;
     --ink:    #ddeee4; --muted:  #7a9a84;
     --bg:     #111a15; --card:   #1b2c20; --border: #2a4030;
   }
@@ -508,7 +508,7 @@
           <div id="chart-wrap"><canvas id="verlaufChart" style="width:100%;height:100%;"></canvas></div>
           <div class="thresh-legend">
             <div class="thresh-item"><div style="width:22px;border-top:2px dashed #40916c;"></div>Günstig (<span id="thresh-min">14</span> ct)</div>
-            <div class="thresh-item"><div style="width:22px;border-top:2px dashed #c62828;"></div>Teuer (<span id="thresh-max">36</span> ct)</div>
+            <div class="thresh-item"><div style="width:22px;border-top:2px dashed #bf360c;"></div>Normal (<span id="thresh-max">36</span> ct)</div>
           </div>
         </div>
 
@@ -717,7 +717,7 @@ function badgeInfo(ct) {
   if (ct == null) return ['badge-mid', '–'];
   if (ct <= PREIS_MIN) return ['badge-low',  '⚡ Günstig – jetzt laden!'];
   if (ct <= PREIS_MAX) return ['badge-mid',  ''];
-  return                      ['badge-high', '⚠ Teuer – lieber warten'];
+  return                      ['badge-high', 'Normal'];
 }
 
 function lerpColor(pct) {
@@ -851,12 +851,12 @@ const sparkline = new Chart(document.getElementById('sparklineChart'), {
         const vals = ctx.dataset.data; const n = vals.length; if (!n) return '#2d6a4f';
         const i = ctx.dataIndex;
         if (i === n - 1) return '#2d6a4f';
-        return vals[i] === Math.min(...vals) ? '#40916c' : '#c62828';
+        return vals[i] === Math.min(...vals) ? '#40916c' : '#bf360c';
       },
       pointBorderColor: 'rgba(255,255,255,.85)', pointBorderWidth: 1.5, pointHoverRadius: 5 },
     { data: [], borderColor: 'rgba(64,145,108,.5)', backgroundColor: 'transparent',
       borderWidth: 1, borderDash: [5,4], pointRadius: 0, fill: false, tension: 0, spanGaps: true },
-    { data: [], borderColor: 'rgba(198,40,40,.4)', backgroundColor: 'transparent',
+    { data: [], borderColor: 'rgba(191,54,12,.4)', backgroundColor: 'transparent',
       borderWidth: 1, borderDash: [5,4], pointRadius: 0, fill: false, tension: 0, spanGaps: true }
   ]},
   options: {
@@ -891,7 +891,7 @@ const chart = new Chart(document.getElementById('verlaufChart'), {
       borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, fill: true, tension: 0.35 },
     { label: '── Günstig (14 ct)', data: [], borderColor: '#40916c', backgroundColor: 'transparent',
       borderWidth: 2, borderDash: [8,5], pointRadius: 0, pointHoverRadius: 0, fill: false, tension: 0, spanGaps: true },
-    { label: '── Teuer', data: [], borderColor: '#c62828', backgroundColor: 'transparent',
+    { label: '── Normal', data: [], borderColor: '#bf360c', backgroundColor: 'transparent',
       borderWidth: 2, borderDash: [8,5], pointRadius: 0, pointHoverRadius: 0, fill: false, tension: 0, spanGaps: true }
   ]},
   options: {
@@ -950,7 +950,7 @@ function renderPvArc(pvProzent) {
   const prodColor  = pvProzent == null  ? trackColor
                    : pvProzent >= 80    ? '#52b788'
                    : pvProzent >= 50    ? '#ffd166'
-                   : '#ffb3b3';
+                   : '#ffcc80';
   const textColor  = pvProzent == null  ? 'var(--muted)'
                    : pvProzent >= 80    ? 'var(--green)'
                    : pvProzent >= 50    ? 'var(--amber)'
@@ -1075,7 +1075,7 @@ async function loadAll() {
     const badge = document.getElementById('preis-badge');
     const [cls, txt] = badgeInfo(ct);
     if (ct != null) {
-      const zoneLabels = { 'badge-low': 'günstig', 'badge-mid': 'mittel', 'badge-high': 'teuer' };
+      const zoneLabels = { 'badge-low': 'günstig', 'badge-mid': 'mittel', 'badge-high': 'normal' };
       const pct = Math.max(0, Math.min(1, (ct - PREIS_MIN) / (PREIS_MAX - PREIS_MIN)));
       const interpColor = lerpColor(pct);
       const fill = document.getElementById('therm-fill');
@@ -1131,7 +1131,7 @@ async function loadAll() {
       const miniColors = {
         'badge-low':  { border: '#2d6a4f', bg: 'rgba(45,106,79,.18)' },
         'badge-mid':  { border: '#c58a00', bg: 'rgba(197,138,0,.14)' },
-        'badge-high': { border: '#c62828', bg: 'rgba(198,40,40,.14)' },
+        'badge-high': { border: '#bf360c', bg: 'rgba(191,54,12,.14)' },
       };
       const mc = miniColors[miniCls] || miniColors['badge-mid'];
       miniChart.data.datasets[0].borderColor     = mc.border;
@@ -1152,7 +1152,7 @@ async function loadAll() {
         bEl.textContent = 'ab ' + zeit + ' Uhr – Ø ' + gs.avg_ct.toFixed(1) + ' ct/kWh'; unskel(bEl);
         bSub.textContent = gs.avg_ct <= 18 ? '✅ Sehr günstig – ideal zum Laden!' :
                            gs.avg_ct <= 25 ? '👍 Guter Zeitpunkt zum Laden' :
-                           gs.avg_ct <= 32 ? '👌 Moderat' : '⚠ Eher teuer';
+                           gs.avg_ct <= 32 ? '👌 Moderat' : 'Normal';
       } else {
         const kzStart = d.kernzeit?.start ?? 10;
         bEl.textContent = 'Noch nicht verfügbar'; unskel(bEl);
@@ -1209,7 +1209,7 @@ async function loadAll() {
             el.textContent = 'ab ' + zeit_g + ' Uhr – Ø ' + gs_g.avg_ct.toFixed(1) + ' ct/kWh'; unskel(el);
             if (sub) sub.textContent = gs_g.avg_ct <= 18 ? '✅ Sehr günstig' :
                                        gs_g.avg_ct <= 25 ? '👍 Günstig' :
-                                       gs_g.avg_ct <= 32 ? '👌 Moderat' : '⚠ Eher teuer';
+                                       gs_g.avg_ct <= 32 ? '👌 Moderat' : 'Normal';
           } else {
             el.textContent = 'Keine Daten von gestern'; unskel(el);
           }
@@ -1236,7 +1236,7 @@ async function loadAll() {
         ? '✅ Gestern war günstig'
         : d.ladepreis_vortag_avg <= 28
         ? '👍 Gestern moderat'
-        : '⚠ Gestern eher teuer';
+        : 'Gestern normal';
     } else {
       vaEl.textContent  = '–';
       vaSub.textContent = 'Noch keine Daten';
