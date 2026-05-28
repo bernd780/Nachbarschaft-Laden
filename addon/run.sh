@@ -77,8 +77,8 @@ SENSOR_PV_MORGEN=$(jq -r '.sensor_pv_morgen'                "$OPTS")
 SENSOR_PV_UEBERMORGEN=$(jq -r '.sensor_pv_uebermorgen'      "$OPTS")
 SENSOR_PV_IN3TAGEN=$(jq -r '.sensor_pv_in3tagen'            "$OPTS")
 SENSOR_PV_HEUTE=$(jq -r '.sensor_pv_erzeugung_heute'        "$OPTS")
-SENSOR_PV_REST_HEUTE=$(jq -r '.sensor_pv_rest_heute'        "$OPTS")
-SENSOR_PV_PEAK_ZEIT=$(jq -r '.sensor_pv_peak_zeit_heute'    "$OPTS")
+SENSOR_PV_REST_HEUTE=$(jq -r '.sensor_pv_rest_heute // ""'      "$OPTS")
+SENSOR_PV_PEAK_ZEIT=$(jq -r '.sensor_pv_peak_zeit_heute // ""'  "$OPTS")
 
 # Kernzeit
 KERNZEIT_START=$(jq -r '.kernzeit_start // 10'              "$OPTS")
