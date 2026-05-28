@@ -29,7 +29,8 @@ class LadepreisGraph(hass.Hass):
 
     DISPLAY_W    = 480
     DISPLAY_H    = 800
-    HISTORY_HOURS = 72
+    HISTORY_HOURS  = 336   # 2 Wochen roh gespeichert
+    DISPLAY_HOURS  = 72    # Fenster das ins data.json / Frontend geht
 
     def initialize(self):
         self.log("LadepreisGraph gestartet (override ok)")
@@ -390,7 +391,9 @@ class LadepreisGraph(hass.Hass):
             verlauf = [{"t": t.isoformat(), "v": round(v, 2)} for t, v in pts_kurz]
             aktuell = round(float(last_raw_val), 1) if last_raw_val is not None else None
 
-            pts_lang, _ = self.smooth_points(raw_points, bucket_minutes=60)
+            cutoff_display = end_dt - timedelta(hours=self.DISPLAY_HOURS)
+            raw_display  = [(t, v) for t, v in raw_points if t >= cutoff_display]
+            pts_lang, _ = self.smooth_points(raw_display, bucket_minutes=60)
             verlauf_lang = [{"t": t.isoformat(), "v": round(v, 2)} for t, v in pts_lang]
 
             cutoff_8h = end_dt - timedelta(hours=self.HOURS)
