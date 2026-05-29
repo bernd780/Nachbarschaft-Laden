@@ -77,7 +77,7 @@ image:
   - file: "/homeassistant/www/nachbarschaft-laden/logo_display.png"
     id: img_images_logo_png_400x200
     type: BINARY
-    resize: 336x118
+    resize: 260x91
     dither: FLOYDSTEINBERG
 
 online_image:
@@ -208,8 +208,8 @@ display:
           it.strftime(240, 540, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, "%H:%M", now);
           it.strftime(240, 578, id(font_roboto_400_20), color_on, TextAlign::TOP_CENTER, "%d.%m.%Y", now);
         }
-        // Logo links: x=0–336, y=644–762
-        it.image(0, 644, id(img_images_logo_png_400x200), color_off, color_on);
-        // QR rechts neben Logo: scale 4 → ~132px breit, x=342, vertikal zentriert mit Logo
-        it.qr_code(342, 637, id(qr_website), color_on, 4);
+        // Logo links: x=0–260, y=649–740 (260×91px)
+        it.image(0, 649, id(img_images_logo_png_400x200), color_off, color_on);
+        // QR rechts neben Logo: scale 4 → ~132px breit, x=268
+        it.qr_code(268, 637, id(qr_website), color_on, 4);
       }

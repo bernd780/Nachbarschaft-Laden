@@ -235,8 +235,8 @@ class LadepreisGraph(hass.Hass):
         ct(240, 540, now.strftime("%H:%M"),    True,  28)
         ct(240, 578, now.strftime("%d.%m.%Y"), False, 20)
 
-        # Logo links: x=0, y=644, 336×118px
-        LOGO_W, LOGO_H = 336, 118
+        # Logo links: x=0, y=649, 260×91px
+        LOGO_W, LOGO_H = 260, 91
         logo_drawn = False
         try:
             logo_img = Image.open(os.path.join(self.WWW_DIR, "logo_display.png")).convert("RGB")
@@ -246,7 +246,7 @@ class LadepreisGraph(hass.Hass):
             new_h = int(logo_h * scale)
             logo_img = logo_img.resize((new_w, new_h), Image.LANCZOS)
             lx = (LOGO_W - new_w) // 2
-            ly = 644 + (LOGO_H - new_h) // 2
+            ly = 649 + (LOGO_H - new_h) // 2
             img.paste(logo_img, (lx, ly))
             logo_drawn = True
             self.log(f"Logo geladen ({new_w}x{new_h})")
@@ -254,23 +254,18 @@ class LadepreisGraph(hass.Hass):
             self.log(f"Logo nicht ladbar: {e}")
 
         if not logo_drawn:
-            lx, ly = 20, 644
-            draw.rectangle([(lx+10, ly+38), (lx+90, ly+88)], fill=FG)
-            draw.polygon([(lx, ly+40), (lx+50, ly), (lx+100, ly+40)], fill=FG)
-            draw.polygon([(lx+7, ly+40), (lx+50, ly+8), (lx+93, ly+40)], fill=(255,255,255))
-            draw.rectangle([(lx+10, ly+38), (lx+90, ly+88)], outline=FG, width=3)
-            draw.rectangle([(lx+15, ly+48), (lx+40, ly+70)], outline=FG, width=2)
-            draw.line([(lx+27, ly+48), (lx+27, ly+70)], fill=FG, width=2)
-            draw.line([(lx+15, ly+59), (lx+40, ly+59)], fill=FG, width=2)
-            draw.rectangle([(lx+55, ly+60), (lx+78, ly+88)], outline=FG, width=2)
-            draw.rectangle([(lx+92, ly+28), (lx+115, ly+88)], outline=FG, width=2)
-            draw.rectangle([(lx+97, ly+34), (lx+110, ly+50)], fill=FG)
-            draw.polygon([(lx+104,ly+54),(lx+98,ly+66),(lx+103,ly+66),
-                          (lx+100,ly+76),(lx+111,ly+62),(lx+106,ly+62)], fill=FG)
-            ct(230, 649, "Nachbarschaft-", True, 26)
-            ct(230, 687, "Laden",          True, 34)
+            lx, ly = 10, 649
+            draw.rectangle([(lx+10, ly+28), (lx+70, ly+68)], fill=FG)
+            draw.polygon([(lx, ly+30), (lx+40, ly), (lx+80, ly+30)], fill=FG)
+            draw.polygon([(lx+6, ly+30), (lx+40, ly+6), (lx+74, ly+30)], fill=(255,255,255))
+            draw.rectangle([(lx+10, ly+28), (lx+70, ly+68)], outline=FG, width=3)
+            draw.rectangle([(lx+13, ly+36), (lx+32, ly+54)], outline=FG, width=2)
+            draw.line([(lx+22, ly+36), (lx+22, ly+54)], fill=FG, width=2)
+            draw.line([(lx+13, ly+45), (lx+32, ly+45)], fill=FG, width=2)
+            ct(180, 654, "Nachbarschaft-", True, 22)
+            ct(180, 680, "Laden",          True, 28)
 
-        # QR rechts neben Logo: x=342, y=637, ~132×132px (scale 4)
+        # QR rechts neben Logo: x=268, y=637, ~132×132px
         try:
             import qrcode as _qr
             qr = _qr.QRCode(error_correction=_qr.constants.ERROR_CORRECT_M,
@@ -279,7 +274,7 @@ class LadepreisGraph(hass.Hass):
             qr.make(fit=True)
             qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
             qr_img = qr_img.resize((132, 132), Image.LANCZOS)
-            img.paste(qr_img, (342, 637))
+            img.paste(qr_img, (268, 637))
         except Exception as e:
             self.log(f"QR-Code nicht verfügbar: {e}")
 
