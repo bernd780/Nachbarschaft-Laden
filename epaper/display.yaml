@@ -220,12 +220,11 @@ display:
         // ── Uhrzeit + QR + Logo (y=570–800) ──
         {
           auto now = id(ha_time).now();
-          it.strftime(130, 576, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, "%H:%M", now);
-          it.strftime(130, 610, id(font_roboto_400_20), color_on, TextAlign::TOP_CENTER, "%d.%m.%Y", now);
+          it.strftime(240, 576, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, "%H:%M", now);
+          it.strftime(240, 616, id(font_roboto_400_20), color_on, TextAlign::TOP_CENTER, "%d.%m.%Y", now);
         }
-        it.qr_code(348, 577, id(qr_website), color_on, 3);
-        // QR size=3 → 33 Module × 3px = 99px hoch → endet y=676
-
-        // Logo (336x118) – zentriert: x=(480-336)/2=72, y=680 → endet y=798
-        it.image(72, 680, id(img_images_logo_png_400x200), color_off, color_on);
+        // Logo links unten: x=0–336, y=681–799
+        it.image(0, 681, id(img_images_logo_png_400x200), color_off, color_on);
+        // QR rechts neben Logo: x=372–471, y=681–780 (36px Abstand → kein Überlapp)
+        it.qr_code(372, 681, id(qr_website), color_on, 3);
       }
