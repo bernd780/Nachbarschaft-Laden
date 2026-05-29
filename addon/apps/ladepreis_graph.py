@@ -210,11 +210,11 @@ class LadepreisGraph(hass.Hass):
         def ct(x, y, text, bold, size):
             draw.text((x, y), text, font=self._load_font(bold, size), fill=FG, anchor="mt")
 
-        # ── Sektion 1: Preis (y=0–267) – 9px Lücken ──
-        ct(240, 9,   "Aktueller Ladepreis",                           True,  28)
-        ct(240, 50,  f"{ladepreis:.1f}" if ladepreis is not None else "—",
+        # ── Sektion 1: Preis (y=0–267) – mehr Abstand Preis↔Einheit ──
+        ct(240, 5,   "Aktueller Ladepreis",                           True,  28)
+        ct(240, 42,  f"{ladepreis:.1f}" if ladepreis is not None else "—",
                                                                        True,  180)
-        ct(240, 214, "ct/kWh",                                        False, 40)
+        ct(240, 217, "ct/kWh",                                        False, 40)
         draw.rectangle([(0, 267), (W, 269)], fill=FG)
 
         # ── Sektion 2: PV-Überschuss (y=267–534) – 10px Lücken ──
@@ -236,7 +236,7 @@ class LadepreisGraph(hass.Hass):
         ct(240, 593, now.strftime("%d.%m.%Y"), False, 20)
 
         # Logo links: x=0, y=649, 260×91px
-        LOGO_W, LOGO_H = 260, 91
+        LOGO_W, LOGO_H = 290, 102
         logo_drawn = False
         try:
             logo_img = Image.open(os.path.join(self.WWW_DIR, "logo_display.png")).convert("RGB")
@@ -246,7 +246,7 @@ class LadepreisGraph(hass.Hass):
             new_h = int(logo_h * scale)
             logo_img = logo_img.resize((new_w, new_h), Image.LANCZOS)
             lx = (LOGO_W - new_w) // 2
-            ly = 686 + (LOGO_H - new_h) // 2
+            ly = 675 + (LOGO_H - new_h) // 2
             img.paste(logo_img, (lx, ly))
             logo_drawn = True
             self.log(f"Logo geladen ({new_w}x{new_h})")
@@ -274,7 +274,7 @@ class LadepreisGraph(hass.Hass):
             qr.make(fit=True)
             qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
             qr_img = qr_img.resize((132, 132), Image.LANCZOS)
-            img.paste(qr_img, (268, 645))
+            img.paste(qr_img, (344, 635))
         except Exception as e:
             self.log(f"QR-Code nicht verfügbar: {e}")
 
