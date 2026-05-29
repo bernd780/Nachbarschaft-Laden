@@ -50,12 +50,24 @@ globals:
     type: bool
     restore_value: false
     initial_value: 'true'
+  - id: night_skip_counter
+    type: int
+    restore_value: false
+    initial_value: '0'
 
 time:
   - platform: homeassistant
     id: ha_time
 
 sensor:
+  - platform: wifi_signal
+    name: "Display WiFi Signal"
+    id: sensor_wifi_signal
+    update_interval: 60s
+  - platform: uptime
+    name: "Display Uptime"
+    id: sensor_uptime
+    update_interval: 60s
   - platform: homeassistant
     id: sensor_ladepreis_mittelwert
     entity_id: sensor.nl_ladepreis_aktuell
@@ -117,6 +129,13 @@ font:
     size: 40
     ignore_missing_glyphs: true
 
+button:
+  - platform: template
+    name: "Display Sofort-Refresh"
+    id: btn_force_refresh
+    on_press:
+      - component.update: epaper_display
+
 script:
   - id: manage_run_and_sleep
     mode: restart
@@ -153,12 +172,25 @@ display:
     model: 7.50inV2p
     rotation: 90
     update_interval: 5s
-    full_update_every: 12
+    full_update_every: 60
     lambda: |-
       const auto COLOR_WHITE  = Color(0,   0,   0);
       const auto COLOR_BLACK  = Color(255, 255, 255);
       auto color_off = COLOR_WHITE;
       auto color_on  = COLOR_BLACK;
+
+      // ── Nachtmodus: 22–6 Uhr nur alle 30 min rendern (360 × 5s) ──
+      auto now_t = id(ha_time).now();
+      if (now_t.is_valid()) {
+        bool is_night = (now_t.hour >= 22 || now_t.hour < 6);
+        if (is_night) {
+          id(night_skip_counter) += 1;
+          if (id(night_skip_counter) < 360) return;
+          id(night_skip_counter) = 0;
+        } else {
+          id(night_skip_counter) = 0;
+        }
+      }
 
       int currentPage = id(display_page);
 
