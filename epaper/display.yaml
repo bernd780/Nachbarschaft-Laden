@@ -15,6 +15,7 @@ esp32:
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "30"
 
 logger:
+  level: WARN
 
 api:
   encryption:
