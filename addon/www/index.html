@@ -67,8 +67,15 @@
   [data-theme="dark"] .preis-toggle:hover span { background: rgba(116,198,157,.12); }
   .preis-toggle svg { transition: transform .25s ease; }
   .preis-toggle.open svg { transform: rotate(180deg); }
-  .preis-details { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
-  .preis-details.open { max-height: 200px; }
+  .preis-details { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+  .preis-details.open { max-height: 360px; }
+  .km-rechner { margin-top: .65rem; padding-top: .65rem; border-top: 1px solid var(--green3); }
+  .km-rechner-header { display: flex; justify-content: space-between; align-items: baseline; font-size: .76rem; color: var(--muted); margin-bottom: .45rem; }
+  .km-rechner-verbrauch { font-weight: 600; color: var(--ink); font-size: .82rem; }
+  .km-slider { width: 100%; accent-color: var(--green); cursor: pointer; margin: .2rem 0 .5rem; }
+  .km-rechner-result { display: flex; justify-content: space-between; align-items: baseline; }
+  .km-rechner-result-val { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--green); }
+  .km-rechner-result-sub { font-size: .72rem; color: var(--muted); }
   .therm-verlauf-row { display: flex; align-items: center; gap: .6rem; margin-top: .1rem; padding-top: .65rem; border-top: 1px solid var(--green3); }
   .therm-verlauf-lbl { font-size: .68rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
   .therm-verlauf-wrap { flex: 1; height: 34px; position: relative; }
@@ -375,6 +382,18 @@
           Ø Spitzenlast <span id="kernzeit-label-spitzenlast">11–16 Uhr</span>
           <span class="preis-sekundaer-val skeleton" id="preis-mittel">–</span>
           ct/kWh
+        </div>
+        <div class="km-rechner">
+          <div class="km-rechner-header">
+            <span>Kosten für 100 km</span>
+            <span class="km-rechner-verbrauch"><span id="km-verbrauch-val">20</span> kWh/100km</span>
+          </div>
+          <input type="range" id="km-slider" class="km-slider" min="10" max="30" step="1" value="20"
+                 oninput="updateKmRechner(this.value)">
+          <div class="km-rechner-result">
+            <span class="km-rechner-result-sub">beim aktuellen Preis</span>
+            <span class="km-rechner-result-val" id="km-kosten-val">–</span>
+          </div>
         </div>
       </div>
     </div>
@@ -815,6 +834,15 @@ function togglePreisDetails(btn) {
   if (open) setTimeout(() => miniChart.resize(), 50);
 }
 
+function updateKmRechner(kwh) {
+  document.getElementById('km-verbrauch-val').textContent = kwh;
+  const ct = parseFloat(document.getElementById('preis-aktuell').textContent);
+  const el = document.getElementById('km-kosten-val');
+  if (isNaN(ct)) { el.textContent = '–'; return; }
+  const euro = (kwh * ct / 100).toFixed(2).replace('.', ',');
+  el.textContent = euro + ' €';
+}
+
 function openVerlauf() {
   const btn = document.querySelector('.accordion-btn');
   if (btn && btn.getAttribute('aria-expanded') !== 'true') toggleAccordion(btn);
@@ -1089,6 +1117,7 @@ async function loadAll() {
       else if (prevPreis !== null && ct < prevPreis) { trendEl.textContent = '↓'; trendEl.style.color = '#1D9E75'; }
       else                                           { trendEl.textContent = '→'; trendEl.style.color = ''; }
       prevPreis = ct;
+      updateKmRechner(document.getElementById('km-slider').value);
     }
     badge.className = 'status-badge ' + cls; badge.textContent = txt; badge.style.display = txt ? '' : 'none';
 
