@@ -204,7 +204,7 @@ display:
         {
           char buf[32];
           sprintf(buf, "%.1f", id(sensor_ladepreis_mittelwert).state);
-          it.print(240, 42,  id(font_roboto_700_120), color_on, TextAlign::TOP_CENTER, buf);
+          it.print(240, 36,  id(font_roboto_700_120), color_on, TextAlign::TOP_CENTER, buf);
           it.print(240, 217, id(font_roboto_400_40),  color_on, TextAlign::TOP_CENTER, "ct/kWh");
         }
         it.filled_rectangle(0, 267, 480, 2, COLOR_BLACK);
@@ -244,5 +244,5 @@ display:
         // Logo links: x=0, y=675 (290×102px)
         it.image(0, 675, id(img_images_logo_png_400x200), color_off, color_on);
         // QR weiter rechts und höher: x=344, y=635 (~132px)
-        it.qr_code(344, 635, id(qr_website), color_on, 4);
+        it.qr_code(335, 635, id(qr_website), color_on, 4);
       }

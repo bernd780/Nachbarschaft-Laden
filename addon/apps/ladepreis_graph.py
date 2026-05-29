@@ -212,7 +212,7 @@ class LadepreisGraph(hass.Hass):
 
         # ── Sektion 1: Preis (y=0–267) – mehr Abstand Preis↔Einheit ──
         ct(240, 5,   "Aktueller Ladepreis",                           True,  28)
-        ct(240, 42,  f"{ladepreis:.1f}" if ladepreis is not None else "—",
+        ct(240, 36,  f"{ladepreis:.1f}" if ladepreis is not None else "—",
                                                                        True,  180)
         ct(240, 217, "ct/kWh",                                        False, 40)
         draw.rectangle([(0, 267), (W, 269)], fill=FG)
@@ -274,7 +274,7 @@ class LadepreisGraph(hass.Hass):
             qr.make(fit=True)
             qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
             qr_img = qr_img.resize((132, 132), Image.LANCZOS)
-            img.paste(qr_img, (344, 635))
+            img.paste(qr_img, (335, 635))
         except Exception as e:
             self.log(f"QR-Code nicht verfügbar: {e}")
 
