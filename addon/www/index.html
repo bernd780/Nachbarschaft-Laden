@@ -394,6 +394,9 @@
             <a id="km-verbrenner-link" href="rechner.html#verbrenner-vergleich" class="km-rechner-result-sub" style="color:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer;">beim aktuellen Preis →</a>
             <span class="km-rechner-result-val" id="km-kosten-val">–</span>
           </div>
+          <div id="km-benzin-zeile" style="display:none;text-align:right;font-size:.72rem;color:var(--muted);margin-top:.25rem;">
+            = <span id="km-benzin-liter">–</span> Liter Benzin (à 1,75&nbsp;€/L)
+          </div>
         </div>
       </div>
     </div>
@@ -839,10 +842,13 @@ function updateKmRechner(kwh) {
   const ct = parseFloat(document.getElementById('preis-aktuell').textContent);
   const el = document.getElementById('km-kosten-val');
   if (isNaN(ct)) { el.textContent = '–'; return; }
-  const euro = (kwh * ct / 100).toFixed(2).replace('.', ',');
-  el.textContent = euro + ' €';
+  const euro = kwh * ct / 100;
+  el.textContent = euro.toFixed(2).replace('.', ',') + ' €';
   const link = document.getElementById('km-verbrenner-link');
   if (link) link.href = 'rechner.html?preis=' + ct.toFixed(1) + '#verbrenner-vergleich';
+  const liter = euro / 1.75;
+  document.getElementById('km-benzin-liter').textContent = liter.toFixed(1).replace('.', ',');
+  document.getElementById('km-benzin-zeile').style.display = '';
 }
 
 function openVerlauf() {
