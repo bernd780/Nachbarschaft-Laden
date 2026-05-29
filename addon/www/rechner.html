@@ -205,12 +205,12 @@
           <div class="slider-bounds"><span>10 kWh</span><span>30 kWh/100km</span></div>
         </div>
         <div class="slider-wrap">
-          <div class="slider-label">Benzinverbrauch <span id="vgl-benz-out">6,5 L</span></div>
+          <div class="slider-label">Spritverbrauch <span id="vgl-benz-out">6,5 L</span></div>
           <input type="range" id="vgl-benz-slider" min="4" max="15" value="6.5" step="0.5">
           <div class="slider-bounds"><span>4 L</span><span>15 L/100km</span></div>
         </div>
         <div class="slider-wrap">
-          <div class="slider-label">Benzinpreis <span id="vgl-benzpreis-out">1,75 €</span></div>
+          <div class="slider-label">Spritpreis <span id="vgl-benzpreis-out">1,75 €</span></div>
           <input type="range" id="vgl-benzpreis-slider" min="1.30" max="2.30" value="1.75" step="0.01">
           <div class="slider-bounds"><span>1,30 €</span><span>2,30 €/L</span></div>
         </div>
@@ -224,7 +224,7 @@
             <div class="vergleich-box-sub">pro 100 km</div>
           </div>
           <div class="vergleich-box benzin">
-            <div class="vergleich-box-label">⛽ Benziner</div>
+            <div class="vergleich-box-label">⛽ Verbrenner</div>
             <div class="vergleich-box-val" id="vgl-benz-kosten">–</div>
             <div class="vergleich-box-sub">pro 100 km</div>
           </div>
@@ -448,12 +448,12 @@ function updateVergleich() {
     label.textContent = 'Du sparst pro 100 km';
     val.textContent   = fmt(diff);
     const pct = Math.round(diff / benzKosten * 100);
-    sub.textContent   = pct + ' % günstiger als der Benziner';
+    sub.textContent   = pct + ' % günstiger als der Verbrenner';
   } else {
     box.className = 'vergleich-ersparnis nachteil';
     label.textContent = 'EV teurer um';
     val.textContent   = fmt(-diff);
-    sub.textContent   = 'Benziner wäre hier günstiger';
+    sub.textContent   = 'Verbrenner wäre hier günstiger';
   }
 }
 
