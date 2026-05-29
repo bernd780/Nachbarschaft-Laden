@@ -210,24 +210,32 @@ class LadepreisGraph(hass.Hass):
         def ct(x, y, text, bold, size):
             draw.text((x, y), text, font=self._load_font(bold, size), fill=FG, anchor="mt")
 
-        ct(240, 28,  "Aktueller Ladepreis",                           True,  28)
-        ct(240, 70,  f"{ladepreis:.1f}" if ladepreis is not None else "—",
+        # ── Sektion 1: Preis (y=0–267) ──
+        ct(240, 4,   "Aktueller Ladepreis",                           True,  28)
+        ct(240, 40,  f"{ladepreis:.1f}" if ladepreis is not None else "—",
                                                                        True,  180)
-        ct(240, 258, "ct/kWh",                                        False, 40)
-        draw.rectangle([(0, 296), (W, 298)], fill=FG)
+        ct(240, 226, "ct/kWh",                                        False, 40)
+        draw.rectangle([(0, 267), (W, 269)], fill=FG)
 
+        # ── Sektion 2: PV-Überschuss (y=267–534) ──
         cx0, cx1, cx2 = 80, 240, 400
-        ct(240, 304, "PV-Überschuss Prognose", True, 22)
-        ct(cx0, 334, "Morgen",                 True, 22)
-        ct(cx1, 334, "Übermorgen",             True, 22)
-        ct(cx2, 334, "In 3 Tagen",             True, 22)
+        ct(240, 273, "PV-Überschuss Prognose", True, 22)
+        ct(cx0, 303, "Morgen",                 True, 22)
+        ct(cx1, 303, "Übermorgen",             True, 22)
+        ct(cx2, 303, "In 3 Tagen",             True, 22)
 
-        img.paste(smiley_img, (10, 362))
+        img.paste(smiley_img, (10, 330))
 
         for cx, surplus in [(cx0, surplus_m), (cx1, surplus_u), (cx2, surplus_3)]:
-            ct(cx, 530, f"+{max(0.0, surplus):.0f} kWh", True, 28)
-        draw.rectangle([(0, 568), (W, 570)], fill=FG)
+            ct(cx, 470, f"+{max(0.0, surplus):.0f} kWh", True, 28)
+        draw.rectangle([(0, 534), (W, 536)], fill=FG)
 
+        # ── Sektion 3: Footer (y=534–800) ──
+        now = datetime.now()
+        ct(240, 540, now.strftime("%H:%M"),    True,  28)
+        ct(240, 578, now.strftime("%d.%m.%Y"), False, 20)
+
+        # Logo links: x=0, y=644, 336×118px
         LOGO_W, LOGO_H = 336, 118
         logo_drawn = False
         try:
@@ -237,8 +245,8 @@ class LadepreisGraph(hass.Hass):
             new_w = int(logo_w * scale)
             new_h = int(logo_h * scale)
             logo_img = logo_img.resize((new_w, new_h), Image.LANCZOS)
-            lx = 72 + (LOGO_W - new_w) // 2
-            ly = 680 + (LOGO_H - new_h) // 2
+            lx = (LOGO_W - new_w) // 2
+            ly = 644 + (LOGO_H - new_h) // 2
             img.paste(logo_img, (lx, ly))
             logo_drawn = True
             self.log(f"Logo geladen ({new_w}x{new_h})")
@@ -246,7 +254,7 @@ class LadepreisGraph(hass.Hass):
             self.log(f"Logo nicht ladbar: {e}")
 
         if not logo_drawn:
-            lx, ly = 20, 665
+            lx, ly = 20, 644
             draw.rectangle([(lx+10, ly+38), (lx+90, ly+88)], fill=FG)
             draw.polygon([(lx, ly+40), (lx+50, ly), (lx+100, ly+40)], fill=FG)
             draw.polygon([(lx+7, ly+40), (lx+50, ly+8), (lx+93, ly+40)], fill=(255,255,255))
@@ -259,13 +267,10 @@ class LadepreisGraph(hass.Hass):
             draw.rectangle([(lx+97, ly+34), (lx+110, ly+50)], fill=FG)
             draw.polygon([(lx+104,ly+54),(lx+98,ly+66),(lx+103,ly+66),
                           (lx+100,ly+76),(lx+111,ly+62),(lx+106,ly+62)], fill=FG)
-            ct(230, 670, "Nachbarschaft-", True, 26)
-            ct(230, 708, "Laden",          True, 34)
+            ct(230, 649, "Nachbarschaft-", True, 26)
+            ct(230, 687, "Laden",          True, 34)
 
-        now = datetime.now()
-        ct(130, 588, now.strftime("%H:%M"),    True,  28)
-        ct(130, 622, now.strftime("%d.%m.%Y"), False, 20)
-
+        # QR rechts neben Logo: x=342, y=637, ~132×132px (scale 4)
         try:
             import qrcode as _qr
             qr = _qr.QRCode(error_correction=_qr.constants.ERROR_CORRECT_M,
@@ -273,8 +278,8 @@ class LadepreisGraph(hass.Hass):
             qr.add_data(self.QR_CODE_URL)
             qr.make(fit=True)
             qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
-            qr_img = qr_img.resize((120, 120), Image.LANCZOS)
-            img.paste(qr_img, (348, 577))
+            qr_img = qr_img.resize((132, 132), Image.LANCZOS)
+            img.paste(qr_img, (342, 637))
         except Exception as e:
             self.log(f"QR-Code nicht verfügbar: {e}")
 
