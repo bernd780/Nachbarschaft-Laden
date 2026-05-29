@@ -167,27 +167,28 @@ display:
 
         // ── Aktueller Ladepreis (y=0–296) ──
         // ── Aktueller Ladepreis (y=0–267, 1. Drittel) ──
-        it.print(240, 4, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, "Aktueller Ladepreis");
+        // ── Sektion 1: Preis (y=0–267) – 9px Lücken ──
+        it.print(240, 9,   id(font_roboto_700_28),  color_on, TextAlign::TOP_CENTER, "Aktueller Ladepreis");
         {
           char buf[32];
           sprintf(buf, "%.1f", id(sensor_ladepreis_mittelwert).state);
-          it.print(240, 40, id(font_roboto_700_120), color_on, TextAlign::TOP_CENTER, buf);
-          it.print(240, 226, id(font_roboto_400_40), color_on, TextAlign::TOP_CENTER, "ct/kWh");
+          it.print(240, 50,  id(font_roboto_700_120), color_on, TextAlign::TOP_CENTER, buf);
+          it.print(240, 214, id(font_roboto_400_40),  color_on, TextAlign::TOP_CENTER, "ct/kWh");
         }
         it.filled_rectangle(0, 267, 480, 2, COLOR_BLACK);
 
-        // ── PV-Überschuss (y=267–534, 2. Drittel) ──
+        // ── Sektion 2: PV-Überschuss (y=267–534) – 10px Lücken ──
         int cx0 = 80, cx1 = 240, cx2 = 400;
 
-        it.print(240, 273, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "PV-Überschuss Prognose");
+        it.print(240, 277, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "PV-Überschuss Prognose");
 
-        it.print(cx0, 303, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "Morgen");
-        it.print(cx1, 303, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "Übermorgen");
-        it.print(cx2, 303, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "In 3 Tagen");
+        it.print(cx0, 312, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "Morgen");
+        it.print(cx1, 312, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "Übermorgen");
+        it.print(cx2, 312, id(font_dejavu_bold_22), color_on, TextAlign::TOP_CENTER, "In 3 Tagen");
 
-        // Smiley-Bild (460x136px) – zentriert auf 480px: x=(480-460)/2=10
-        it.image(10, 330, id(img_combined), color_on, color_off);
-        // Bild endet bei y=330+136=466
+        // Smiley-Bild (460x136px) – zentriert auf 480px: x=10
+        it.image(10, 347, id(img_combined), color_on, color_off);
+        // Bild endet bei y=347+136=483
 
         // kWh-Werte unterhalb der Smileys
         float s_m = id(sensor_surplus_morgen).state;
@@ -196,20 +197,20 @@ display:
 
         {
           char buf[16];
-          sprintf(buf, "%+.0f kWh", s_m); it.print(cx0, 470, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, buf);
-          sprintf(buf, "%+.0f kWh", s_u); it.print(cx1, 470, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, buf);
-          sprintf(buf, "%+.0f kWh", s_3); it.print(cx2, 470, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, buf);
+          sprintf(buf, "%+.0f kWh", s_m); it.print(cx0, 493, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, buf);
+          sprintf(buf, "%+.0f kWh", s_u); it.print(cx1, 493, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, buf);
+          sprintf(buf, "%+.0f kWh", s_3); it.print(cx2, 493, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, buf);
         }
         it.filled_rectangle(0, 534, 480, 2, COLOR_BLACK);
 
-        // ── Uhrzeit + QR + Logo (y=534–800, 3. Drittel) ──
+        // ── Sektion 3: Footer (y=534–800) – 23px Lücken, Logo/QR unten bündig ──
         {
           auto now = id(ha_time).now();
-          it.strftime(240, 540, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, "%H:%M", now);
-          it.strftime(240, 578, id(font_roboto_400_20), color_on, TextAlign::TOP_CENTER, "%d.%m.%Y", now);
+          it.strftime(240, 557, id(font_roboto_700_28), color_on, TextAlign::TOP_CENTER, "%H:%M", now);
+          it.strftime(240, 593, id(font_roboto_400_20), color_on, TextAlign::TOP_CENTER, "%d.%m.%Y", now);
         }
-        // Logo links: x=0–260, y=649–740 (260×91px)
-        it.image(0, 649, id(img_images_logo_png_400x200), color_off, color_on);
-        // QR rechts neben Logo: scale 4 → ~132px breit, x=268
-        it.qr_code(268, 637, id(qr_website), color_on, 4);
+        // Logo links: x=0, y=686–777 (260×91px, unten bei y=777)
+        it.image(0, 686, id(img_images_logo_png_400x200), color_off, color_on);
+        // QR rechts neben Logo: x=268, y=645–777 (132px, unten bei y=777)
+        it.qr_code(268, 645, id(qr_website), color_on, 4);
       }

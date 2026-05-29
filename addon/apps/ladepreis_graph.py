@@ -210,30 +210,30 @@ class LadepreisGraph(hass.Hass):
         def ct(x, y, text, bold, size):
             draw.text((x, y), text, font=self._load_font(bold, size), fill=FG, anchor="mt")
 
-        # ── Sektion 1: Preis (y=0–267) ──
-        ct(240, 4,   "Aktueller Ladepreis",                           True,  28)
-        ct(240, 40,  f"{ladepreis:.1f}" if ladepreis is not None else "—",
+        # ── Sektion 1: Preis (y=0–267) – 9px Lücken ──
+        ct(240, 9,   "Aktueller Ladepreis",                           True,  28)
+        ct(240, 50,  f"{ladepreis:.1f}" if ladepreis is not None else "—",
                                                                        True,  180)
-        ct(240, 226, "ct/kWh",                                        False, 40)
+        ct(240, 214, "ct/kWh",                                        False, 40)
         draw.rectangle([(0, 267), (W, 269)], fill=FG)
 
-        # ── Sektion 2: PV-Überschuss (y=267–534) ──
+        # ── Sektion 2: PV-Überschuss (y=267–534) – 10px Lücken ──
         cx0, cx1, cx2 = 80, 240, 400
-        ct(240, 273, "PV-Überschuss Prognose", True, 22)
-        ct(cx0, 303, "Morgen",                 True, 22)
-        ct(cx1, 303, "Übermorgen",             True, 22)
-        ct(cx2, 303, "In 3 Tagen",             True, 22)
+        ct(240, 277, "PV-Überschuss Prognose", True, 22)
+        ct(cx0, 312, "Morgen",                 True, 22)
+        ct(cx1, 312, "Übermorgen",             True, 22)
+        ct(cx2, 312, "In 3 Tagen",             True, 22)
 
-        img.paste(smiley_img, (10, 330))
+        img.paste(smiley_img, (10, 347))
 
         for cx, surplus in [(cx0, surplus_m), (cx1, surplus_u), (cx2, surplus_3)]:
-            ct(cx, 470, f"+{max(0.0, surplus):.0f} kWh", True, 28)
+            ct(cx, 493, f"+{max(0.0, surplus):.0f} kWh", True, 28)
         draw.rectangle([(0, 534), (W, 536)], fill=FG)
 
-        # ── Sektion 3: Footer (y=534–800) ──
+        # ── Sektion 3: Footer (y=534–800) – 23px Lücken, Logo/QR unten bündig ──
         now = datetime.now()
-        ct(240, 540, now.strftime("%H:%M"),    True,  28)
-        ct(240, 578, now.strftime("%d.%m.%Y"), False, 20)
+        ct(240, 557, now.strftime("%H:%M"),    True,  28)
+        ct(240, 593, now.strftime("%d.%m.%Y"), False, 20)
 
         # Logo links: x=0, y=649, 260×91px
         LOGO_W, LOGO_H = 260, 91
@@ -246,7 +246,7 @@ class LadepreisGraph(hass.Hass):
             new_h = int(logo_h * scale)
             logo_img = logo_img.resize((new_w, new_h), Image.LANCZOS)
             lx = (LOGO_W - new_w) // 2
-            ly = 649 + (LOGO_H - new_h) // 2
+            ly = 686 + (LOGO_H - new_h) // 2
             img.paste(logo_img, (lx, ly))
             logo_drawn = True
             self.log(f"Logo geladen ({new_w}x{new_h})")
@@ -274,7 +274,7 @@ class LadepreisGraph(hass.Hass):
             qr.make(fit=True)
             qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
             qr_img = qr_img.resize((132, 132), Image.LANCZOS)
-            img.paste(qr_img, (268, 637))
+            img.paste(qr_img, (268, 645))
         except Exception as e:
             self.log(f"QR-Code nicht verfügbar: {e}")
 
