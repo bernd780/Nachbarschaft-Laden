@@ -57,6 +57,29 @@
 
   .hinweis { background: #fff8e1; border: 1.5px solid var(--amber2); border-radius: var(--radius); padding: 1.1rem 1.25rem; font-size: .82rem; color: #7a5800; line-height: 1.6; }
 
+  /* Verbrenner-Vergleich */
+  .vergleich-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+  @media(max-width:620px){ .vergleich-grid { grid-template-columns: 1fr; } }
+  .vergleich-row { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; }
+  .vergleich-box { border-radius: 14px; padding: 1.1rem 1.25rem; text-align: center; }
+  .vergleich-box.ev    { background: var(--green4); border: 1.5px solid var(--green3); }
+  .vergleich-box.benzin { background: #fff3e0; border: 1.5px solid #ffb74d; }
+  .vergleich-box-label { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: .3rem; }
+  .vergleich-box-val { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: var(--green); line-height: 1; }
+  .vergleich-box.benzin .vergleich-box-val { color: var(--amber); }
+  .vergleich-box-sub { font-size: .72rem; color: var(--muted); margin-top: .25rem; }
+  .vergleich-ersparnis { border-radius: 14px; padding: 1.1rem 1.25rem; text-align: center; background: var(--green4); border: 2px solid var(--green2); }
+  .vergleich-ersparnis-label { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--green2); margin-bottom: .25rem; }
+  .vergleich-ersparnis-val { font-family: 'DM Serif Display', serif; font-size: 2.4rem; color: var(--green); line-height: 1; }
+  .vergleich-ersparnis.nachteil { background: var(--red2); border-color: var(--red); }
+  .vergleich-ersparnis.nachteil .vergleich-ersparnis-label { color: var(--red); }
+  .vergleich-ersparnis.nachteil .vergleich-ersparnis-val   { color: var(--red); }
+  .live-badge { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 600; color: var(--green2); background: var(--green4); border: 1px solid var(--green3); border-radius: 50px; padding: .2rem .6rem; margin-left: .5rem; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green2); animation: pulse 2s ease-in-out infinite; }
+  [data-theme="dark"] .vergleich-box.benzin { background: #2a1800; border-color: #c87000; }
+  [data-theme="dark"] .vergleich-ersparnis  { background: var(--green4); }
+  [data-theme="dark"] .vergleich-ersparnis.nachteil { background: var(--red2); }
+
   footer { text-align: center; font-size: .72rem; color: var(--muted); padding: .5rem 0 2rem; }
   footer a { color: var(--green2); text-decoration: none; }
   footer a:hover { text-decoration: underline; }
@@ -159,6 +182,61 @@
 
   <div class="hinweis">
     ⚠️ <strong>Hinweis:</strong> Diese Hochrechnung bildet eine Idealsituation ab. PV-Überschuss ist in der Regel im Sommer verfügbar (ca. 5–6 Monate). Im Winter profitierst du nicht von einem Solarüberschuss.
+  </div>
+
+  <!-- Verbrenner-Vergleich -->
+  <div class="card" id="verbrenner-vergleich">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      EV vs. Verbrenner – Kosten pro 100 km
+      <span class="live-badge" id="vgl-live-badge" style="display:none;"><span class="live-dot"></span>Live</span>
+    </div>
+    <div class="vergleich-grid">
+
+      <div style="display:flex;flex-direction:column;gap:1.2rem;">
+        <div class="slider-wrap">
+          <div class="slider-label">Ladepreis <span id="vgl-ladepreis-out">– ct</span></div>
+          <input type="range" id="vgl-ladepreis-slider" min="5" max="40" value="20" step="0.5">
+          <div class="slider-bounds"><span>5 ct</span><span>40 ct/kWh</span></div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-label">EV-Verbrauch <span id="vgl-ev-out">20 kWh</span></div>
+          <input type="range" id="vgl-ev-slider" min="10" max="30" value="20" step="1">
+          <div class="slider-bounds"><span>10 kWh</span><span>30 kWh/100km</span></div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-label">Benzinverbrauch <span id="vgl-benz-out">6,5 L</span></div>
+          <input type="range" id="vgl-benz-slider" min="4" max="15" value="6.5" step="0.5">
+          <div class="slider-bounds"><span>4 L</span><span>15 L/100km</span></div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-label">Benzinpreis <span id="vgl-benzpreis-out">1,75 €</span></div>
+          <input type="range" id="vgl-benzpreis-slider" min="1.30" max="2.30" value="1.75" step="0.01">
+          <div class="slider-bounds"><span>1,30 €</span><span>2,30 €/L</span></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:.85rem;">
+        <div class="vergleich-row">
+          <div class="vergleich-box ev">
+            <div class="vergleich-box-label">⚡ EV</div>
+            <div class="vergleich-box-val" id="vgl-ev-kosten">–</div>
+            <div class="vergleich-box-sub">pro 100 km</div>
+          </div>
+          <div class="vergleich-box benzin">
+            <div class="vergleich-box-label">⛽ Benziner</div>
+            <div class="vergleich-box-val" id="vgl-benz-kosten">–</div>
+            <div class="vergleich-box-sub">pro 100 km</div>
+          </div>
+        </div>
+        <div class="vergleich-ersparnis" id="vgl-ersparnis-box">
+          <div class="vergleich-ersparnis-label" id="vgl-ersparnis-label">Du sparst pro 100 km</div>
+          <div class="vergleich-ersparnis-val" id="vgl-ersparnis-val">–</div>
+          <div class="vergleich-box-sub" id="vgl-ersparnis-sub" style="margin-top:.3rem;"></div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
 </main>
@@ -338,8 +416,84 @@ function updateRechner() {
 ['kwh-slider', 'fest-slider', 'pv-tarif-slider', 'freq-slider'].forEach(id =>
   document.getElementById(id).addEventListener('input', updateRechner)
 );
-
 updateRechner();
+
+// ── Verbrenner-Vergleich ─────────────────────────────────────────
+function updateVergleich() {
+  const ct        = +document.getElementById('vgl-ladepreis-slider').value;
+  const evKwh     = +document.getElementById('vgl-ev-slider').value;
+  const benzL     = +document.getElementById('vgl-benz-slider').value;
+  const benzPreis = +document.getElementById('vgl-benzpreis-slider').value;
+
+  document.getElementById('vgl-ladepreis-out').textContent  = ct.toFixed(1) + ' ct';
+  document.getElementById('vgl-ev-out').textContent         = evKwh + ' kWh';
+  document.getElementById('vgl-benz-out').textContent       = benzL.toFixed(1).replace('.', ',') + ' L';
+  document.getElementById('vgl-benzpreis-out').textContent  = benzPreis.toFixed(2).replace('.', ',') + ' €';
+
+  const evKosten   = evKwh * ct / 100;
+  const benzKosten = benzL * benzPreis;
+  const diff       = benzKosten - evKosten;
+
+  const fmt = v => v.toFixed(2).replace('.', ',') + ' €';
+  document.getElementById('vgl-ev-kosten').textContent   = fmt(evKosten);
+  document.getElementById('vgl-benz-kosten').textContent = fmt(benzKosten);
+
+  const box   = document.getElementById('vgl-ersparnis-box');
+  const label = document.getElementById('vgl-ersparnis-label');
+  const val   = document.getElementById('vgl-ersparnis-val');
+  const sub   = document.getElementById('vgl-ersparnis-sub');
+
+  if (diff > 0) {
+    box.className = 'vergleich-ersparnis';
+    label.textContent = 'Du sparst pro 100 km';
+    val.textContent   = fmt(diff);
+    const pct = Math.round(diff / benzKosten * 100);
+    sub.textContent   = pct + ' % günstiger als der Benziner';
+  } else {
+    box.className = 'vergleich-ersparnis nachteil';
+    label.textContent = 'EV teurer um';
+    val.textContent   = fmt(-diff);
+    sub.textContent   = 'Benziner wäre hier günstiger';
+  }
+}
+
+['vgl-ladepreis-slider','vgl-ev-slider','vgl-benz-slider','vgl-benzpreis-slider'].forEach(id =>
+  document.getElementById(id).addEventListener('input', updateVergleich)
+);
+
+// Ladepreis: URL-Parameter oder Live-Fetch
+(function initVergleich() {
+  const params = new URLSearchParams(location.search);
+  const paramCt = parseFloat(params.get('preis'));
+  if (!isNaN(paramCt) && paramCt > 0) {
+    document.getElementById('vgl-ladepreis-slider').value = Math.min(40, Math.max(5, paramCt));
+    document.getElementById('vgl-live-badge').style.display = 'inline-flex';
+    updateVergleich();
+    if (location.hash === '#verbrenner-vergleich') {
+      setTimeout(() => document.getElementById('verbrenner-vergleich')
+        .scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+    }
+    return;
+  }
+  // Kein URL-Param → data.json laden
+  fetch('https://nachbarschaft-laden.de/local/nachbarschaft-laden/data.json')
+    .then(r => r.json())
+    .then(d => {
+      const ct = d.ladepreis_aktuell;
+      if (ct != null) {
+        document.getElementById('vgl-ladepreis-slider').value = Math.min(40, Math.max(5, ct));
+        document.getElementById('vgl-live-badge').style.display = 'inline-flex';
+      }
+    })
+    .catch(() => {})
+    .finally(() => {
+      updateVergleich();
+      if (location.hash === '#verbrenner-vergleich') {
+        setTimeout(() => document.getElementById('verbrenner-vergleich')
+          .scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+      }
+    });
+})();
 </script>
 </body>
 </html>

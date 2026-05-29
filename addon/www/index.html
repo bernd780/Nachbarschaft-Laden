@@ -391,7 +391,7 @@
           <input type="range" id="km-slider" class="km-slider" min="10" max="30" step="1" value="20"
                  oninput="updateKmRechner(this.value)">
           <div class="km-rechner-result">
-            <span class="km-rechner-result-sub">beim aktuellen Preis</span>
+            <a id="km-verbrenner-link" href="rechner.html#verbrenner-vergleich" class="km-rechner-result-sub" style="color:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer;">beim aktuellen Preis →</a>
             <span class="km-rechner-result-val" id="km-kosten-val">–</span>
           </div>
         </div>
@@ -841,6 +841,8 @@ function updateKmRechner(kwh) {
   if (isNaN(ct)) { el.textContent = '–'; return; }
   const euro = (kwh * ct / 100).toFixed(2).replace('.', ',');
   el.textContent = euro + ' €';
+  const link = document.getElementById('km-verbrenner-link');
+  if (link) link.href = 'rechner.html?preis=' + ct.toFixed(1) + '#verbrenner-vergleich';
 }
 
 function openVerlauf() {
