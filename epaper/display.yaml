@@ -58,31 +58,19 @@ time:
 sensor:
   - platform: homeassistant
     id: sensor_ladepreis_mittelwert
-    entity_id: sensor.expgldurchschnitt_ema_asymalpha
+    entity_id: sensor.nl_ladepreis_aktuell
     internal: true
   - platform: homeassistant
-    id: sensor_morgenpv
-    entity_id: sensor.morgenpv
+    id: sensor_surplus_morgen
+    entity_id: sensor.nl_surplus_morgen
     internal: true
   - platform: homeassistant
-    id: sensor_uebermorgenpv
-    entity_id: sensor.uebermorgenpv
+    id: sensor_surplus_uebermorgen
+    entity_id: sensor.nl_surplus_uebermorgen
     internal: true
   - platform: homeassistant
-    id: sensor_pvin3tagen
-    entity_id: sensor.pvin3tagen
-    internal: true
-  - platform: homeassistant
-    id: sensor_soc
-    entity_id: sensor.nuestra_coche_battery
-    internal: true
-  - platform: homeassistant
-    id: sensor_hausverbrauch
-    entity_id: input_number.hausverbrauchtgl
-    internal: true
-  - platform: homeassistant
-    id: sensor_akkuziel
-    entity_id: input_number.autoakkuziel
+    id: sensor_surplus_in3tagen
+    entity_id: sensor.nl_surplus_in3tagen
     internal: true
 
 image:
@@ -201,13 +189,9 @@ display:
         // Bild endet bei y=362+136=498
 
         // kWh-Werte unterhalb der Smileys
-        float haus     = id(sensor_hausverbrauch).state;
-        float ziel     = id(sensor_akkuziel).state;
-        float soc      = id(sensor_soc).state;
-        float auto_kwh = (ziel - soc > 0) ? (ziel - soc) * 0.75f / 3.0f : 0.0f;
-        float s_m = id(sensor_morgenpv).state      - haus - auto_kwh;
-        float s_u = id(sensor_uebermorgenpv).state - haus - auto_kwh;
-        float s_3 = id(sensor_pvin3tagen).state    - haus - auto_kwh;
+        float s_m = id(sensor_surplus_morgen).state;
+        float s_u = id(sensor_surplus_uebermorgen).state;
+        float s_3 = id(sensor_surplus_in3tagen).state;
 
         {
           char buf[16];
