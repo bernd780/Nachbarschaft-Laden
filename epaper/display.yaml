@@ -123,15 +123,17 @@ font:
   - file: "fonts/DejaVuSans.ttf"
     id: font_roboto_400_20
     size: 20
+    glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:-+/()!?%@ÄäÖöÜüß"
     ignore_missing_glyphs: true
   - file: "fonts/DejaVuSans-Bold.ttf"
     id: font_dejavu_bold_22
     size: 22
-    glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:-+/()ÄäÖöÜüß"
+    glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:-+/()!?%@ÄäÖöÜüß"
     ignore_missing_glyphs: true
   - file: "fonts/DejaVuSans-Bold.ttf"
     id: font_roboto_700_28
     size: 28
+    glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:-+/()!?%@ÄäÖöÜüß"
     ignore_missing_glyphs: true
   - file: "fonts/DejaVuSans-Bold.ttf"
     id: font_roboto_700_120
