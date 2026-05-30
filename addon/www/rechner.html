@@ -257,55 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('theme-btn').textContent = dark ? '☀️' : '🌙';
 });
 
-function updateRechner() {
-  const kwh     = +document.getElementById('kwh-slider').value;
-  const fest    = +document.getElementById('fest-slider').value;
-  const pvTarif = +document.getElementById('pv-tarif-slider').value;
-  const freq    = +document.getElementById('freq-slider').value;
-
-  document.getElementById('kwh-out').textContent      = kwh + ' kWh';
-  document.getElementById('fest-out').textContent     = fest.toFixed(1) + ' ct';
-  document.getElementById('pv-tarif-out').textContent = pvTarif.toFixed(1) + ' ct';
-  document.getElementById('freq-out').textContent     = freq + '×';
-
-  const diffCt   = fest - pvTarif;
-  const sparenEu = diffCt / 100 * kwh;
-
-  const valEl = document.getElementById('ersparnis-val');
-  const subEl = document.getElementById('ersparnis-sub');
-  if (diffCt > 0) {
-    valEl.textContent = sparenEu.toFixed(2).replace('.', ',') + ' €';
-    subEl.textContent = kwh + ' kWh × ' + diffCt.toFixed(1) + ' ct Differenz (Fest ' + fest.toFixed(1) + ' vs. PV ' + pvTarif.toFixed(1) + ' ct)';
-  } else {
-    valEl.textContent = 'Kein Vorteil';
-    subEl.textContent = 'PV-Tarif liegt über dem Festtarif';
-  }
-
-  const sparenJahr = sparenEu * freq * 26;
-  const jahrEl    = document.getElementById('ersparnis-jahr');
-  const jahrSubEl = document.getElementById('ersparnis-jahr-sub');
-  if (sparenJahr > 0) {
-    jahrEl.textContent    = sparenJahr.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' €';
-    jahrSubEl.textContent = freq + '× pro Woche × 26 Wochen (Sommer) = ' + (freq * 26) + ' Ladevorgänge';
-  } else {
-    jahrEl.textContent    = '–';
-    jahrSubEl.textContent = '';
-  }
-
-  const kmEl    = document.getElementById('ersparnis-km');
-  const kmSubEl = document.getElementById('ersparnis-km-sub');
-  const kwh_pro_euro = 100 / pvTarif;
-  const extra_kwh    = sparenJahr * kwh_pro_euro;
-  const extra_km     = extra_kwh / 20 * 100;
-  if (sparenJahr > 0) {
-    kmEl.textContent    = Math.round(extra_km).toLocaleString('de-DE') + ' km';
-    kmSubEl.textContent = 'Die ' + sparenJahr.toFixed(2).replace('.', ',') + ' € Ersparnis entsprechen ' + Math.round(extra_kwh) + ' kWh – genug für ' + Math.round(extra_km).toLocaleString('de-DE') + ' km bei 20 kWh/100 km.';
-  } else {
-    kmEl.textContent    = '–';
-    kmSubEl.textContent = '';
-  }
-}
-
 const WITZ_ITEMS = [
   { emoji: '🍺', preis: 15.0, text: (n) => `${n} Kisten Bier` },
   { emoji: '☕', preis:  2.8, text: (n) => `${n} Tassen Kaffee beim Bäcker` },
