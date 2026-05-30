@@ -213,9 +213,29 @@ display:
       // ── Pause-Modus: input_boolean.nl_display_pause ──
       if (id(display_pause).state) {
         it.fill(COLOR_WHITE);
-        auto txt = id(display_pause_text).state;
-        it.printf(240, 380, id(font_roboto_700_28), color_on, TextAlign::CENTER,
-                  "%s", txt.c_str());
+        // Pause-Text mit Zeilenumbruch (ca. 26 Zeichen pro Zeile bei Bold-28)
+        std::string remaining = id(display_pause_text).state;
+        const int MAX_CHARS = 26;
+        const int LINE_H    = 42;
+        std::string lines[4];
+        int num_lines = 0;
+        while (!remaining.empty() && num_lines < 4) {
+          if ((int)remaining.length() <= MAX_CHARS) {
+            lines[num_lines++] = remaining;
+            break;
+          }
+          int bp = MAX_CHARS;
+          while (bp > 0 && remaining[bp] != ' ') bp--;
+          if (bp == 0) bp = MAX_CHARS;
+          lines[num_lines++] = remaining.substr(0, bp);
+          int skip = (remaining[bp] == ' ') ? bp + 1 : bp;
+          remaining = remaining.substr(skip);
+        }
+        int y = (800 - num_lines * LINE_H) / 2;
+        for (int i = 0; i < num_lines; i++) {
+          it.printf(240, y + i * LINE_H, id(font_roboto_700_28), color_on,
+                    TextAlign::TOP_CENTER, "%s", lines[i].c_str());
+        }
         return;
       }
 
