@@ -1,6 +1,19 @@
 ﻿# Nachbarschaft-Laden
 
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![GitHub release](https://img.shields.io/github/release/bernd780/Nachbarschaft-Laden.svg)](https://github.com/bernd780/Nachbarschaft-Laden/releases)
+[![License](https://img.shields.io/github/license/bernd780/Nachbarschaft-Laden.svg)](LICENSE)
+
 [🇩🇪 Deutsch](#nachbarschaft-laden) · [🇬🇧 English](#nachbarschaft-laden-english)
+
+## Installation
+
+[![Add to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fbernd780%2FNachbarschaft-Laden)
+
+Oder manuell: **Einstellungen → Add-ons → Add-on Store → ⋮ → Repositories** → URL eintragen:
+```
+https://github.com/bernd780/Nachbarschaft-Laden
+```
 
 > **Frühes Entwicklungsstadium** — Dieses Projekt steckt noch in den Kinderschuhen. Der Ersteller ist kein professioneller Entwickler; der Code ist gewachsen, nicht geplant. Fehler sind wahrscheinlich, Verbesserungen willkommen.
 > Wer das Projekt übernehmen, forken oder als Basis für eigene Ideen nutzen möchte – nur zu. Ein Stern oder ein kurzes Hallo freut mich trotzdem. 🙂

@@ -1,8 +1,13 @@
 ﻿name: "Nachbarschaft-Laden"
-description: "EV-Lademanagement: Ladepreis-Visualisierung, Session-Tracking und E-Paper Display für den Nachbarschaft-Laden."
+description: "EV-Lademanagement: Dynamischer PV-Ladepreis, Session-Tracking, Web-Dashboard und E-Paper-Display für nachbarschaftliche Wallboxen."
 version: "1.0.3"
 slug: "nachbarschaft_laden"
 url: "https://github.com/bernd780/Nachbarschaft-Laden"
+documentation: "https://github.com/bernd780/Nachbarschaft-Laden/blob/main/README.md"
+issue: "https://github.com/bernd780/Nachbarschaft-Laden/issues"
+codenotice: "https://github.com/bernd780/Nachbarschaft-Laden/blob/main/LICENSE"
+logo: "logo.png"
+icon: "icon.png"
 init: false
 homeassistant_api: true
 hassio_api: true
