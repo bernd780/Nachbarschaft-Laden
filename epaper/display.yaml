@@ -173,7 +173,7 @@ display:
     model: 7.50inV2p
     rotation: 90
     update_interval: 5s
-    full_update_every: 60
+    full_update_every: 120
     lambda: |-
       const auto COLOR_WHITE  = Color(0,   0,   0);
       const auto COLOR_BLACK  = Color(255, 255, 255);
