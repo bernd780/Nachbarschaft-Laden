@@ -147,7 +147,7 @@ button:
     name: "Display Sofort-Refresh"
     id: btn_force_refresh
     on_press:
-      - online_image.update: img_combined
+      - component.update: img_combined
       - lambda: 'id(epaper_display).set_full_update_every(1);'
       - component.update: epaper_display
       - lambda: 'id(epaper_display).set_full_update_every(120);'
