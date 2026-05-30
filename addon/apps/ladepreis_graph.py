@@ -364,15 +364,15 @@ class LadepreisGraph(hass.Hass):
                            attributes={"unit_of_measurement": "%",
                                        "state_class": "measurement",
                                        "friendly_name": "NL Fahrzeug SOC"})
-            self.set_state("sensor.nl_surplus_morgen", state=round(max(0.0, surplus_m), 1),
-                           attributes={"unit_of_measurement": "kWh",
-                                       "friendly_name": "NL PV-Überschuss Morgen"})
-            self.set_state("sensor.nl_surplus_uebermorgen", state=round(max(0.0, surplus_u), 1),
-                           attributes={"unit_of_measurement": "kWh",
-                                       "friendly_name": "NL PV-Überschuss Übermorgen"})
-            self.set_state("sensor.nl_surplus_in3tagen", state=round(max(0.0, surplus_3), 1),
-                           attributes={"unit_of_measurement": "kWh",
-                                       "friendly_name": "NL PV-Überschuss In 3 Tagen"})
+            self.call_service("input_number/set_value",
+                              entity_id="input_number.nl_surplus_morgen",
+                              value=round(max(0.0, surplus_m), 1))
+            self.call_service("input_number/set_value",
+                              entity_id="input_number.nl_surplus_uebermorgen",
+                              value=round(max(0.0, surplus_u), 1))
+            self.call_service("input_number/set_value",
+                              entity_id="input_number.nl_surplus_in3tagen",
+                              value=round(max(0.0, surplus_3), 1))
         except Exception as e:
             self.log(f"HA-State-Publish fehlgeschlagen: {e}", level="WARNING")
 

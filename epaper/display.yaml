@@ -75,15 +75,15 @@ sensor:
     internal: true
   - platform: homeassistant
     id: sensor_surplus_morgen
-    entity_id: sensor.nl_surplus_morgen
+    entity_id: input_number.nl_surplus_morgen
     internal: true
   - platform: homeassistant
     id: sensor_surplus_uebermorgen
-    entity_id: sensor.nl_surplus_uebermorgen
+    entity_id: input_number.nl_surplus_uebermorgen
     internal: true
   - platform: homeassistant
     id: sensor_surplus_in3tagen
-    entity_id: sensor.nl_surplus_in3tagen
+    entity_id: input_number.nl_surplus_in3tagen
     internal: true
 
 image:
