@@ -1,19 +1,10 @@
-﻿# Nachbarschaft-Laden
+# Nachbarschaft-Laden
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![GitHub release](https://img.shields.io/github/release/bernd780/Nachbarschaft-Laden.svg)](https://github.com/bernd780/Nachbarschaft-Laden/releases)
 [![License](https://img.shields.io/github/license/bernd780/Nachbarschaft-Laden.svg)](LICENSE)
 
 [🇩🇪 Deutsch](#nachbarschaft-laden) · [🇬🇧 English](#nachbarschaft-laden-english)
-
-## Installation
-
-[![Add to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fbernd780%2FNachbarschaft-Laden)
-
-Oder manuell: **Einstellungen → Add-ons → Add-on Store → ⋮ → Repositories** → URL eintragen:
-```
-https://github.com/bernd780/Nachbarschaft-Laden
-```
 
 > **Frühes Entwicklungsstadium** — Dieses Projekt steckt noch in den Kinderschuhen. Der Ersteller ist kein professioneller Entwickler; der Code ist gewachsen, nicht geplant. Fehler sind wahrscheinlich, Verbesserungen willkommen.
 > Wer das Projekt übernehmen, forken oder als Basis für eigene Ideen nutzen möchte – nur zu. Ein Stern oder ein kurzes Hallo freut mich trotzdem. 🙂
@@ -24,6 +15,19 @@ https://github.com/bernd780/Nachbarschaft-Laden
 Home Assistant Add-on für die Verwaltung einer nachbarschaftlichen EV-Ladestation. Es berechnet einen dynamischen Ladepreis aus dem aktuellen PV-Überschuss, zeichnet Ladesessions auf und zeigt alles auf einer Webseite und einem E-Paper-Display an.
 
 **[→ Live-Demo mit Beispieldaten ansehen](https://bernd780.github.io/Nachbarschaft-Laden/)**
+
+---
+
+## Installation
+
+[![Add to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fbernd780%2FNachbarschaft-Laden)
+
+Oder manuell: **Einstellungen → Add-ons → Add-on Store → ⋮ → Repositories** → URL eintragen:
+```
+https://github.com/bernd780/Nachbarschaft-Laden
+```
+
+Danach: „Nachbarschaft-Laden" im Add-on Store suchen → **Installieren → Starten**.
 
 ---
 
@@ -53,10 +57,11 @@ Der aktuelle Ladepreis, der Tagesverlauf und die PV-Prognose für die nächsten 
 - **Gelb** = mittlerer Preis
 - **Rot** = teurer Preis (Netzbezug)
 - Die **beste Ladezeit** des Tages wird automatisch berechnet und hervorgehoben
+- Vor der Kernzeit wird die **voraussichtlich günstigste Stunde** auf Basis der PV-Prognose angezeigt
 
 ### E-Paper-Display
 
-Ein Waveshare 7,5"-Display am Eingang zeigt immer den aktuellen Ladepreis, die PV-Prognose als Smiley-Skala und den laufenden Ladevorgang an – auch ohne Smartphone oder Browser.
+Ein Waveshare 7,5"-Display am Eingang zeigt immer den aktuellen Ladepreis, die PV-Prognose als Smiley-Skala und Uhrzeit/Datum an – auch ohne Smartphone oder Browser.
 
 <p align="center">
   <img src="docs/foto_epaper.jpg" width="360" alt="E-Paper-Display in Betrieb"/>
@@ -70,50 +75,39 @@ Das Display zeigt auf einen Blick alles, was Nachbarn am Ladepunkt wissen müsse
 
 **Oben:** Der aktuelle Ladepreis in ct/kWh – groß und gut lesbar, auch aus etwas Entfernung.
 
-**Mitte:** Die PV-Überschuss-Prognose als Smiley-Skala für die nächsten drei Tage, jeweils mit dem erwarteten Ertrag in kWh:
+**Mitte:** Die PV-Überschuss-Prognose als Smiley-Skala für die nächsten drei Tage (morgen, übermorgen, in 3 Tagen), jeweils mit dem erwarteten Netto-Überschuss in kWh:
 - **😄 Sehr glücklich** = voller PV-Überschuss, günstigster Preis
 - **🙂 Glücklich** = guter Überschuss
 - **😐 Neutral** = gemischte Bedingungen
 - **😞 Traurig** = wenig PV, hoher Netzanteil
 
-**Unten:** Uhrzeit und Datum, ein QR-Code direkt zur Weboberfläche mit dem Preisverlauf und dem Ladeprotokoll sowie das Projektlogo.
+**Unten:** Uhrzeit und Datum, ein QR-Code direkt zur Weboberfläche sowie das Projektlogo.
 
-Das Display aktualisiert sich alle 60 Sekunden automatisch (alle 5 Sekunden partiell). Es läuft auf einem ESP32 via ESPHome, zieht das Bild direkt von Home Assistant und benötigt keinen eigenen Server.
+Das Display aktualisiert sich alle 5 Sekunden partiell und alle 10 Minuten vollständig (Full-Refresh). Nachts (22–6 Uhr) wird das Intervall automatisch auf 30 Minuten gedrosselt. Es läuft auf einem ESP32 via ESPHome, zieht das Bild direkt von Home Assistant und benötigt keinen eigenen Server.
 
 ---
 
 ## Funktionen
 
-- **Dynamischer Ladepreis** – berechnet in Echtzeit aus Netzleistung, Wallbox-Leistung und Batterieentladung
-- **Preisverlauf** – 72-Stunden-Aufzeichnung, geglättet in 15-Minuten-Buckets
+- **Dynamischer Ladepreis** – berechnet alle 5 Sekunden aus Netzleistung, Wallbox-Leistung und Batterieentladung
+- **Preisverlauf** – 2-Wochen-Aufzeichnung, geglättet in 15-Minuten-Buckets, 72h-Ansicht im Dashboard
 - **PV-Prognose** – 3-Tages-Vorschau als Smiley-Skala (traurig bis sehr glücklich)
+- **Günstigste Ladezeit** – automatisch berechnet; vor der Kernzeit als Forecast aus PV-Peak-Prognose
 - **Session-Tracking** – Energie, Kosten, Dauer und Nutzer (per RFID) je Ladevorgang
 - **Saldo-Verwaltung** – offene Beträge je Nutzer, Zahlung über HA-Helfer buchbar
 - **Weboberfläche** – `index.html` (Preis-Dashboard) und `sessions.html` (Ladeverlauf)
-- **E-Paper-Display** – 460×160 Smiley-Bild für Waveshare 7,5" via ESPHome
+- **E-Paper-Display** – Waveshare 7,5" via ESPHome mit Echtzeit-Preis, Smiley-Prognose, QR-Code
+- **Pause-Modus** – Display zeigt frei definierbaren Text (z. B. „Außer Betrieb") via HA-Helper
+- **Offline-Alarm** – HA-Automation benachrichtigt bei Display-Ausfall (Push + persistente Benachrichtigung)
+- **Sofort-Refresh-Button** – HA-Button löst sofortigen Full-Refresh des Displays aus
 
 ---
 
-## Installation
-
-### Voraussetzungen
+## Voraussetzungen
 
 - Home Assistant OS oder Supervised
 - go-eCharger mit HA-Integration
-- PV-Anlage mit Echtzeit-Leistungssensor
-
-### Add-on installieren
-
-1. Den Ordner `addon/` auf den HA-Host kopieren, z. B. nach `/addons/nachbarschaft-laden/`
-2. In HA: **Einstellungen → Add-ons → Add-on-Store → ⋮ → Lokale Add-ons neu laden**
-3. „Nachbarschaft-Laden" unter „Lokale Add-ons" → **Installieren → Starten**
-
-### Hilfsfelder
-
-Es sind **keine HA-Helfer nötig**. Das Add-on verwaltet alle Zwischenwerte intern:
-
-- Session-Startwerte (Zählerstand, Kosten-Integral) werden in `session_active.json` gespeichert
-- Hausverbrauch und Ladeziels-SOC sind feste Werte in der Add-on-Konfiguration
+- PV-Anlage mit Echtzeit-Leistungssensor in HA
 
 ---
 
@@ -151,7 +145,18 @@ Mit den Voreinstellungen liegt der Ladepreis zwischen **14 ct/kWh** (voller PV-�
 | `sensor_pv_morgen` | Erwarteter PV-Ertrag morgen in kWh | `sensor.morgenpv` |
 | `sensor_pv_uebermorgen` | Erwarteter PV-Ertrag übermorgen in kWh | `sensor.uebermorgenpv` |
 | `sensor_pv_in3tagen` | Erwarteter PV-Ertrag in 3 Tagen in kWh | `sensor.pvin3tagen` |
-| `sensor_pv_erzeugung_heute` | Heutige PV-Erzeugung in % des Tagesziels | `sensor.prozentpverzeugungheute` |
+| `sensor_pv_erzeugung_heute` | Heutige PV-Erzeugung in kWh | `sensor.daily_pv_generation` |
+| `sensor_pv_rest_heute` | Noch zu erwartende PV-Erzeugung heute in kWh (optional) | `""` |
+| `sensor_pv_peak_zeit_heute` | Zeitpunkt der heutigen PV-Spitzenleistung (Timestamp-Sensor) | `""` |
+
+> **Hinweis:** `sensor_pv_peak_zeit_heute` wird für die „voraussichtlich günstigste Stunde"-Anzeige benötigt. Passender Sensor z. B. von der Solcast- oder Forecast.Solar-Integration.
+
+### Kernzeit
+
+| Option | Bedeutung | Voreinstellung |
+|---|---|---|
+| `kernzeit_start` | Beginn der Auswertungsperiode für günstigste Stunde (Stunde 0–23) | `11` |
+| `kernzeit_ende` | Ende der Auswertungsperiode (exklusiv) | `16` |
 
 ### Fahrzeug & Ladestation
 
@@ -179,14 +184,14 @@ Nur nötig, wenn evcc installiert ist. Leer lassen, wenn nicht vorhanden.
 |---|---|---|
 | `hausverbrauch_kwh` | Täglicher Hausverbrauch in kWh (für PV-Überschuss-Berechnung) | `10.0` |
 | `ladeziel_soc` | Gewünschter Ziel-SOC des Fahrzeugs in % | `80` |
-| `helper_hausverbrauch` | Optional: HA-Entity-ID, die den Standardwert überschreibt | `""` |
-| `helper_ladeziel_soc` | Optional: HA-Entity-ID, die den Standardwert überschreibt | `""` |
+| `helper_hausverbrauch` | Optional: `input_number`-Entity-ID, die den Standardwert überschreibt | `""` |
+| `helper_ladeziel_soc` | Optional: `input_number`-Entity-ID, die den Standardwert überschreibt | `""` |
 
 ### Ausgabe & Darstellung
 
 | Option | Bedeutung | Voreinstellung |
 |---|---|---|
-| `qr_code_url` | URL als QR-Code auf dem E-Paper-Display | `https://nachbarschaft-laden.de/local/nachbarschaft-laden/index.html` |
+| `qr_code_url` | URL als QR-Code auf dem E-Paper-Display | `https://…/index.html` |
 | `web_unterverzeichnis` | Unterordner unter `/config/www/` für alle erzeugten Dateien | `nachbarschaft-laden` |
 
 ### RFID-Benutzer
@@ -200,9 +205,26 @@ rfid_benutzer:
     payment_helper: "input_number.nl_bezahlt_max_mustermann"
 ```
 
-Das Add-on legt den unter `payment_helper` angegebenen `input_number`-Helper **automatisch** in HA an, falls er noch nicht existiert. Sobald dort ein Betrag eingetragen wird, wird er vom offenen Saldo abgezogen und der Helper auf 0 zurückgesetzt.
+Das Add-on legt den unter `payment_helper` angegebenen `input_number`-Helper **automatisch** in HA an. Sobald dort ein Betrag eingetragen wird, wird er vom offenen Saldo abgezogen und der Helper auf 0 zurückgesetzt.
 
 Die RFID-ID lässt sich ermitteln, indem die Karte ans Ladegerät gehalten und dann der Zustand von `sensor_rfid_karte` in HA abgelesen wird.
+
+---
+
+## Automatisch angelegte HA-Helfer
+
+Das Add-on und die ESPHome-Konfiguration nutzen folgende HA-Helper, die beim ersten Start automatisch angelegt werden müssen (bzw. vom Nutzer anzulegen sind):
+
+| Helper | Typ | Funktion |
+|---|---|---|
+| `input_number.nl_surplus_morgen` | input_number | PV-Netto-Überschuss morgen in kWh (von AppDaemon beschrieben) |
+| `input_number.nl_surplus_uebermorgen` | input_number | PV-Netto-Überschuss übermorgen in kWh |
+| `input_number.nl_surplus_in3tagen` | input_number | PV-Netto-Überschuss in 3 Tagen in kWh |
+| `input_boolean.nl_display_pause` | input_boolean | Display-Pause aktivieren (zeigt Pause-Text statt Preis) |
+| `input_text.nl_display_pause_text` | input_text | Text für den Pause-Screen (max. 60 Zeichen) |
+| `input_number.nl_bezahlt_<name>` | input_number | Zahlungseingang je RFID-Nutzer (automatisch angelegt) |
+
+> Die `nl_surplus_*`-Helper werden vom Add-on alle 5 Minuten aktualisiert und überleben HA-Neustarts. Das E-Paper liest diese direkt aus HA.
 
 ---
 
@@ -298,8 +320,6 @@ xychart-beta
 **Obere Linie** – Tatsächlicher Preis: Hausbatterie lädt von ca. 7–10 Uhr (bis zu 3,5 kW), das reduziert den PV-Überschuss für die Wallbox erheblich.  
 **Untere Linie** – Hypothetischer Preis ohne Akkuladung (Batterie bereits voll).
 
-Die Akkuladephase verschiebt das günstige Ladefenster um 1–2 Stunden nach hinten. Ab ~11 Uhr, wenn die Batterie voll ist, kommt die volle PV-Leistung der Wallbox zugute.
-
 > Das günstigste Ladefenster liegt typischerweise zwischen 11 und 15 Uhr. Die Web-Oberfläche berechnet und zeigt die beste Stunde des Tages automatisch an.
 
 ### Warum diese Preislogik?
@@ -310,8 +330,6 @@ Die Akkuladephase verschiebt das günstige Ladefenster um 1–2 Stunden nach hin
 | **Obergrenze 36 ct/kWh** | Netzbezugspreis (30 ct) + Marge (6 ct) | Lädt der Nachbar aus dem Netz, trägt er den tatsächlichen Strompreis plus eine kleine Marge. |
 | **Dazwischen** | Lineare Interpolation | Je mehr Sonne, desto günstiger – kontinuierlich und fair. |
 
-Der Preis wird in Echtzeit aus den aktuellen Sensordaten berechnet und über ein Riemann-Integral für eine möglichst genaue Abrechnung integriert. Für den Preisverlauf auf der Webseite wird alle 5 Minuten ein Momentwert gespeichert – das ist eine reine Darstellungsentscheidung und unabhängig von der Abrechnungsgenauigkeit.
-
 ---
 
 ## Erzeugte Dateien
@@ -320,28 +338,72 @@ Alle Dateien landen unter `/config/www/<web_unterverzeichnis>/`:
 
 | Datei | Inhalt |
 |---|---|
-| `data.json` | Aktueller Preis, Preisverlauf, PV-Prognose, Ladevorgang-Status |
-| `sessions.json` | Alle Ladesessions (max. 500) |
+| `data.json` | Aktueller Preis, Preisverlauf (6h geglättet + 72h lang), PV-Prognose, Ladevorgang-Status, günstigste Stunden |
+| `sessions.json` | Alle Ladesessions (max. 500, FIFO) |
 | `balances.json` | Offene Salden je Benutzer |
-| `price_history.json` | Roher Preisverlauf (72 h) |
-| `display_preview.png` | 480×800px Vorschau des E-Paper-Displays |
-
-Zusätzlich wird `/config/www/display_combined.png` (460×160px, 1-bit) für das E-Paper-Display geschrieben.
+| `price_history.json` | Roher Preisverlauf der letzten **2 Wochen** (336h) |
+| `display_combined.png` | 460×136px, 1-bit Smiley-Bild für das E-Paper |
+| `display_preview.png` | 480×800px RGB-Vorschau des vollständigen E-Paper-Layouts |
+| `session_active.json` | Start-Snapshot der laufenden Session (Zählerstand, Kosten-Integral) |
 
 ---
 
 ## E-Paper-Display (optional)
 
-Das Display (Waveshare 7,5") läuft via ESPHome auf einem ESP32:
+Das Display (Waveshare 7,5" V2p) läuft via ESPHome auf einem ESP32.
 
-1. `epaper/display.yaml` anpassen: unter `http_request → url` die HA-URL eintragen
-2. Flashen:
-   ```bash
-   esphome compile epaper/display.yaml
-   esphome upload epaper/display.yaml
-   ```
+### Konfiguration
 
-Das Display lädt alle 60 Sekunden das aktuelle Bild von HA.
+Alle Zugangsdaten werden in `epaper/secrets.yaml` hinterlegt (nicht im Repo):
+
+```yaml
+wifi_ssid: "MeinWLAN"
+wifi_password: "..."
+api_encryption_key: "..."
+ota_password: "..."
+ap_password: "..."
+epaper_display_image_url: "http://192.168.x.x:8123/local/nachbarschaft-laden/display_combined.png"
+epaper_qr_url: "https://nachbarschaft-laden.de/local/nachbarschaft-laden/index.html"
+```
+
+### Flashen
+
+```bash
+esphome compile epaper/display.yaml
+esphome upload epaper/display.yaml
+```
+
+### Aktualisierungsintervall
+
+| Modus | Partial-Refresh | Full-Refresh |
+|---|---|---|
+| Normalbetrieb (6–22 Uhr) | alle 5 Sekunden | alle 10 Minuten |
+| Nachtmodus (22–6 Uhr) | alle 30 Minuten | alle 30 Minuten |
+
+### HA-Entities nach dem Flashen
+
+| Entity | Typ | Funktion |
+|---|---|---|
+| `sensor.display_wi_fi_signal` | sensor | WiFi-Signalstärke in dBm |
+| `sensor.display_uptime` | sensor | Laufzeit seit letztem Boot in Sekunden |
+| `button.display_display_sofort_refresh` | button | Neues Bild laden + sofortiger Full-Refresh |
+
+### Pause-Modus
+
+Das Display kann über zwei HA-Helper in den Pause-Modus versetzt werden:
+
+| Helper | Funktion |
+|---|---|
+| `input_boolean.nl_display_pause` | Einschalten → Pause-Screen aktiv |
+| `input_text.nl_display_pause_text` | Text der angezeigt wird (max. 60 Zeichen, Zeilenumbruch automatisch) |
+
+### Offline-Überwachung
+
+Zwei HA-Automationen benachrichtigen per Push-Notification auf das iPhone, wenn das Display länger als 5 Minuten nicht erreichbar ist, und wieder wenn es online geht.
+
+---
+
+## Preisbildung
 
 ---
 
@@ -365,29 +427,34 @@ You have a solar PV system, a wallbox — and neighbors who'd love to charge at 
 
 ### Features
 
-- **Dynamic charging price** — calculated in real time from grid power, wallbox power, and battery discharge
-- **Price history** — 72-hour log, smoothed into 15-minute buckets
-- **PV forecast** — 3-day preview as a smiley scale (sad to very happy)
+- **Dynamic charging price** — recalculated every 5 seconds from grid power, wallbox power, and battery discharge
+- **Price history** — 2-week raw log, 72h smoothed view in the dashboard
+- **PV forecast** — 3-day preview as a smiley scale (sad to very happy) for tomorrow, day after tomorrow, and in 3 days
+- **Best charging time** — automatically calculated; shows forecast before the peak window based on PV peak time
 - **Session tracking** — energy, cost, duration, and user (via RFID) per charging session
 - **Balance management** — open amounts per user, payments bookable via HA helpers
 - **Web interface** — `index.html` (price dashboard) and `sessions.html` (session history)
-- **E-paper display** — 460×160 smiley image for Waveshare 7.5" via ESPHome
+- **E-paper display** — Waveshare 7.5" via ESPHome with live price, smiley forecast, QR code
+- **Pause mode** — display shows freely configurable text (e.g. "Out of service") via HA helper
+- **Offline alert** — HA automation sends push notification when display is unreachable
+- **Instant refresh button** — HA button triggers immediate full refresh of the display
 
 ---
 
 ### Installation
 
+[![Add to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fbernd780%2FNachbarschaft-Laden)
+
+Or manually: **Settings → Add-ons → Add-on Store → ⋮ → Repositories** → enter:
+```
+https://github.com/bernd780/Nachbarschaft-Laden
+```
+
 #### Requirements
 
 - Home Assistant OS or Supervised
 - go-eCharger with HA integration
-- PV system with real-time power sensor
-
-#### Install the add-on
-
-1. Copy the `addon/` folder to the HA host, e.g. to `/addons/nachbarschaft-laden/`
-2. In HA: **Settings → Add-ons → Add-on Store → ⋮ → Reload local add-ons**
-3. Find "Nachbarschaft-Laden" under "Local add-ons" → **Install → Start**
+- PV system with real-time power sensor in HA
 
 ---
 
@@ -425,17 +492,8 @@ With the default settings, the charging price ranges between **14 ct/kWh** (full
 | `sensor_pv_morgen` | Expected PV yield tomorrow in kWh | `sensor.morgenpv` |
 | `sensor_pv_uebermorgen` | Expected PV yield the day after tomorrow in kWh | `sensor.uebermorgenpv` |
 | `sensor_pv_in3tagen` | Expected PV yield in 3 days in kWh | `sensor.pvin3tagen` |
-| `sensor_pv_erzeugung_heute` | Today's PV generation as % of daily target | `sensor.prozentpverzeugungheute` |
-
-#### Vehicle & charging station
-
-| Option | Description | Default |
-|---|---|---|
-| `sensor_fahrzeug_akku` | Current vehicle battery level in % | `sensor.mein_fahrzeug_battery` |
-| `sensor_ladegeraet_status` | Vehicle status at charger (`Charging`, `Complete`, …) | `sensor.go_echarger_XXXXXX_car` |
-| `sensor_zaehlerstand_kwh` | Wallbox total energy counter in kWh (monotonically increasing) | `sensor.go_echarger_XXXXXX_eto` |
-| `sensor_kosten_integral` | Riemann integral of charging costs in € (monotonically increasing) | `sensor.go_echarger_kosten_integral_2` |
-| `sensor_rfid_karte` | Last detected RFID card | `select.go_echarger_XXXXXX_trx` |
+| `sensor_pv_erzeugung_heute` | Today's PV generation in kWh | `sensor.daily_pv_generation` |
+| `sensor_pv_peak_zeit_heute` | Timestamp of today's PV peak (used for best-time forecast) | `""` |
 
 #### RFID users
 
@@ -448,9 +506,7 @@ rfid_benutzer:
     payment_helper: "input_number.nl_paid_jane_smith"
 ```
 
-The add-on automatically creates the `input_number` helper specified under `payment_helper` in HA if it does not yet exist. When an amount is entered there, it is deducted from the open balance and the helper is reset to 0.
-
-To find the RFID ID, hold the card against the charger and then read the state of `sensor_rfid_karte` in HA.
+The add-on automatically creates the `input_number` helper specified under `payment_helper` in HA if it does not yet exist.
 
 ---
 
@@ -466,40 +522,6 @@ To find the RFID ID, hold the card against the charger and then read the state o
 | **Grid feed-in** | When PV production > total consumption → surplus flows to the grid (negative meter reading, ~8 ct/kWh tariff) |
 | **Battery discharge** | Stored energy flows back into the house and wallbox |
 | **PV surplus** | The share of wallbox charging power that actually comes from solar energy |
-
-Simplified energy flow:
-
-```
-            ┌──────────────┐
-            │  ☀️ PV system  │
-            └──────┬───────┘
-                   │ production
-       ┌───────────┼───────────┐
-       ▼           ▼           ▼
-  🏠 House load  🔋 Battery  ⚡ Wallbox   🔌 Grid
-       ▲                ▲           │
-       └────────────────┘           │ grid import (expensive) /
-        battery discharge           │ grid feed-in (tariff)
-```
-
-#### How is the PV surplus measured?
-
-The system has no direct PV production sensor. It derives the solar share of the wallbox charging from three measurable values:
-
-```
-PV surplus [W] = wallbox power − grid power − battery discharge
-```
-
-When the grid is currently *exporting* (negative meter reading), subtracting a negative value increases the surplus — correctly reflecting that more PV is available than needed.
-
-**Examples** — wallbox charging at 11 kW:
-
-| Conditions | Grid | Battery | PV surplus | Price |
-|---|---|---|---|---|
-| Peak summer sunshine | −2 kW (export) | 0 kW | 13 kW → capped at 11 kW | **14 ct/kWh** |
-| Partly cloudy | +2 kW (import) | 0 kW | 9 kW | ~18 ct/kWh |
-| Overcast, battery helping | +6 kW (import) | 2 kW | 3 kW | ~30 ct/kWh |
-| Night / no PV | +11 kW (import) | 0 kW | 0 kW | **36 ct/kWh** |
 
 #### Price formula
 
@@ -520,36 +542,6 @@ With default values (feed-in 8 ct, margin 6 ct, grid price 30 ct, target 11 kW):
 | 8.25 kW | 75 % | 19.5 ct/kWh |
 | ≥ 11 kW | 100 % | **14 ct/kWh** |
 
-#### Price curve
-
-```mermaid
-xychart-beta
-    title "Charging price vs. PV surplus (default values)"
-    x-axis "PV surplus [kW]" [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    y-axis "Charging price [ct/kWh]" 10 --> 40
-    line [36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14]
-```
-
-#### Typical daily price curve
-
-On a sunny summer day the price drops as the sun rises — but **not immediately**: as long as the home battery is still charging, a large portion of PV energy flows there and is not available to the wallbox as surplus.
-
-```mermaid
-xychart-beta
-    title "Daily price curve on a sunny summer day (wallbox 11 kW)"
-    x-axis "Time of day" ["6h", "7h", "8h", "9h", "10h", "11h", "12h", "13h", "14h", "16h", "18h", "20h"]
-    y-axis "Charging price [ct/kWh]" 10 --> 40
-    line [36, 36, 34, 28, 19, 14, 14, 14, 15, 27, 35, 36]
-    line [36, 33, 27, 21, 17, 14, 14, 14, 15, 27, 35, 36]
-```
-
-**Upper line** – Actual price: home battery charging from approx. 7–10 am (up to 3.5 kW), which significantly reduces the PV surplus available to the wallbox.  
-**Lower line** – Hypothetical price without battery charging (battery already full).
-
-The battery charging phase shifts the cheap charging window by roughly 1–2 hours. From ~11 am onwards, once the battery is full, the full PV output benefits the wallbox.
-
-> The cheapest charging window is typically between 11 am and 3 pm. The web interface automatically calculates and highlights the best hour of the day.
-
 #### Why this pricing logic?
 
 | Bound | Calculation | Rationale |
@@ -557,8 +549,6 @@ The battery charging phase shifts the cheap charging window by roughly 1–2 hou
 | **Lower bound 14 ct/kWh** | Feed-in tariff (8 ct) + margin (6 ct) | Every kWh could have been sold to the grid for ~8 ct. The margin covers operating costs. |
 | **Upper bound 36 ct/kWh** | Grid price (30 ct) + margin (6 ct) | When charging from the grid, the neighbor pays the actual electricity cost plus a small margin. |
 | **In between** | Linear interpolation | More sun → cheaper price — continuous and fair. |
-
-The price is calculated in real time from current sensor data and integrated via a Riemann sum for accurate billing. For the price history shown on the web interface, a snapshot is saved every 5 minutes — this is a display decision and independent of billing accuracy.
 
 ---
 
@@ -568,25 +558,30 @@ All files are written to `/config/www/<web_unterverzeichnis>/`:
 
 | File | Content |
 |---|---|
-| `data.json` | Current price, price history, PV forecast, session status |
-| `sessions.json` | All charging sessions (max. 500) |
+| `data.json` | Current price, price history, PV forecast, session status, best charging times |
+| `sessions.json` | All charging sessions (max. 500, FIFO) |
 | `balances.json` | Open balances per user |
-| `price_history.json` | Raw price history (72 h) |
-| `display_preview.png` | 480×800px preview of the e-paper display |
-
-Additionally, `/config/www/display_combined.png` (460×160px, 1-bit) is written for the e-paper display.
+| `price_history.json` | Raw price history (last **2 weeks** / 336 h) |
+| `display_combined.png` | 460×136px 1-bit smiley image for the e-paper |
+| `display_preview.png` | 480×800px RGB preview of the full e-paper layout |
+| `session_active.json` | Start snapshot of the running session (meter reading, cost integral) |
 
 ---
 
 ### E-paper display (optional)
 
-The display (Waveshare 7.5") runs via ESPHome on an ESP32:
+The display (Waveshare 7.5" V2p) runs via ESPHome on an ESP32.
 
-1. Edit `epaper/display.yaml`: enter the HA URL under `http_request → url`
-2. Flash:
-   ```bash
-   esphome compile epaper/display.yaml
-   esphome upload epaper/display.yaml
-   ```
+Configure `epaper/secrets.yaml` (not in the repo) with WiFi credentials, API key, and the HA image URL, then flash:
 
-The display fetches the current image from HA every 60 seconds.
+```bash
+esphome compile epaper/display.yaml
+esphome upload epaper/display.yaml
+```
+
+**Update intervals:**
+
+| Mode | Partial refresh | Full refresh |
+|---|---|---|
+| Day (6 am – 10 pm) | every 5 seconds | every 10 minutes |
+| Night (10 pm – 6 am) | every 30 minutes | every 30 minutes |
