@@ -60,6 +60,18 @@ time:
   - platform: homeassistant
     id: ha_time
 
+binary_sensor:
+  - platform: homeassistant
+    id: display_pause
+    entity_id: input_boolean.nl_display_pause
+    internal: true
+
+text_sensor:
+  - platform: homeassistant
+    id: display_pause_text
+    entity_id: input_text.nl_display_pause_text
+    internal: true
+
 sensor:
   - platform: wifi_signal
     name: "Display WiFi Signal"
@@ -194,6 +206,15 @@ display:
         } else {
           id(night_skip_counter) = 0;
         }
+      }
+
+      // ── Pause-Modus: input_boolean.nl_display_pause ──
+      if (id(display_pause).state) {
+        it.fill(COLOR_WHITE);
+        auto txt = id(display_pause_text).state;
+        it.printf(240, 380, id(font_roboto_700_28), color_on, TextAlign::CENTER,
+                  "%s", txt.c_str());
+        return;
       }
 
       int currentPage = id(display_page);
