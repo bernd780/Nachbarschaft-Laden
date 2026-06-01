@@ -163,7 +163,8 @@ Das Add-on berechnet den Preis direkt aus drei Leistungssensoren. Kein externer 
 |---|---|---|
 | `sensor_netzleistung` | Netzleistung am Hauptzähler in W (positiv = Bezug, negativ = Einspeisung) | `sensor.leistung_stromzaehler` |
 | `sensor_wallbox_leistung` | Aktuelle Ladeleistung der Wallbox in W | `sensor.go_echarger_XXXXXX_nrg_12` |
-| `sensor_batterie_leistung` | Aktuelle Batterieentladungsleistung in W (positiv = Entladung) | `sensor.summe_battery_leistung` |
+| `sensor_batterie_leistung` | Batterieleistung in W (positiv = Entladung, negativ = Laden) | `sensor.summe_battery_leistung` |
+| `sensor_batterie_soc` | Ladestand des Heimspeichers in % | `sensor.summe_batterysoc` |
 
 #### Preiskonstanten
 
@@ -175,6 +176,17 @@ Das Add-on berechnet den Preis direkt aus drei Leistungssensoren. Kein externer 
 | `preis_zielleistung_kw` | PV-Überschuss in kW, ab dem der günstigste Preis gilt | `11.0` |
 
 Mit den Voreinstellungen liegt der Ladepreis zwischen **14 ct/kWh** (voller PV-Überschuss) und **36 ct/kWh** (Netzbezug).
+
+### Heimspeicher-SOC-Gewichtung
+
+Wenn der Heimspeicher lädt, „sieht" die Wallbox weniger PV-Überschuss – der Ladepreis steigt. Das ist sinnvoll, solange der Akku noch leer ist. Ist er aber schon halb voll, lohnt es sich kaum noch, den Nachbarn dafür zahlen zu lassen. Diese Parameter steuern, ab wann der Einfluss des Akku-Bezugs auf den Ladepreis schrittweise zurückgeht:
+
+| Option | Bedeutung | Voreinstellung |
+|---|---|---|
+| `akku_soc_mindest` | Unterhalb dieses SOC (%) wirkt der Akku-Bezug voll auf den Preis | `40` |
+| `akku_soc_voll` | Ab diesem SOC (%) hat der Akku-Bezug keinen Einfluss mehr; leer lassen = deaktiviert | `80` |
+
+Zwischen den beiden Schwellen wird der Einfluss **linear interpoliert**. Ist `akku_soc_voll` leer, ist das Feature deaktiviert (Akku-Bezug wirkt immer voll). → Detaillierte Erklärung: [Heimspeicher-Logik](#heimspeicher-soc-logik)
 
 ### PV-Prognose
 
@@ -359,6 +371,50 @@ xychart-beta
 **Untere Linie** – Hypothetischer Preis ohne Akkuladung (Batterie bereits voll).
 
 > Das günstigste Ladefenster liegt typischerweise zwischen 11 und 15 Uhr. Die Web-Oberfläche berechnet und zeigt die beste Stunde des Tages automatisch an.
+
+### Heimspeicher-SOC-Logik
+
+#### Das Problem ohne SOC-Gewichtung
+
+Wenn der Heimspeicher lädt (z. B. mit 3 kW), floss dieser Strom aus der PV-Anlage. Für die Preisformel sieht das genauso aus wie Netzbezug – der scheinbare PV-Überschuss für die Wallbox sinkt, der Ladepreis steigt. Das ist fair, solange der Akku noch leer ist und wirklich „wertvolle" Energie aufnimmt. Aber wenn der Akku schon bei 90 % steht und die letzten kWh aufnimmt, ist es wenig sinnvoll, den Nachbarn dafür mit einem höheren Preis zu belasten.
+
+#### Die Lösung: SOC-abhängige Korrektur
+
+Je voller der Heimspeicher, desto mehr wird sein Strombezug bei der Überschussberechnung **ignoriert**. Die Korrektur läuft zwischen zwei konfigurierbaren Schwellen:
+
+```
+SOC ≤ akku_soc_mindest (z. B. 40 %)  →  Akku-Bezug wirkt voll    (Faktor 0)
+SOC ≥ akku_soc_voll    (z. B. 80 %)  →  Akku-Bezug wird ignoriert (Faktor 1)
+Dazwischen                            →  lineare Interpolation
+```
+
+Die korrigierte Formel lautet:
+
+```
+PV-Überschuss [W] = Wallbox − Netzleistung − Batterieentladung + (Faktor × Akku-Ladeleistung)
+```
+
+#### Beispiele – Wallbox lädt mit 11 kW, Akku lädt mit 3 kW
+
+| Akku-SOC | Faktor | Zurückaddiert | PV-Überschuss | Ladepreis |
+|:---:|:---:|:---:|:---:|:---:|
+| 20 % | 0,0 | 0 kW | 5 kW | ~26 ct/kWh |
+| 40 % | 0,0 | 0 kW | 5 kW | ~26 ct/kWh |
+| 60 % | 0,5 | 1,5 kW | 6,5 kW | ~22 ct/kWh |
+| 80 % | 1,0 | 3,0 kW | 8 kW | ~18 ct/kWh |
+| 95 % | 1,0 | 3,0 kW | 8 kW | ~18 ct/kWh |
+
+*(Annahme: Netzeinspeisung 3 kW, keine Batterieentladung)*
+
+```mermaid
+xychart-beta
+    title "SOC-Korrekturfaktor (Mindest 40 %, Voll 80 %)"
+    x-axis "Heimspeicher-SOC [%]" [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    y-axis "Korrekturfaktor" 0 --> 1
+    line [0, 0, 0, 0, 0, 0.25, 0.5, 0.75, 1, 1, 1]
+```
+
+> **Deaktivieren:** `akku_soc_voll` leer lassen → der Faktor bleibt immer 0, Akku-Bezug wirkt stets voll auf den Preis (Verhalten wie vor Einführung dieser Funktion).
 
 ### Warum diese Preislogik?
 
