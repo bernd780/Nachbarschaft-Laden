@@ -32,8 +32,8 @@ options:
   # Heimspeicher-SOC-Schwellen für Preisauswirkung (leer lassen = Feature deaktiviert)
   # Unterhalb akku_soc_mindest: volle Auswirkung des Akku-Bezugs auf den Ladepreis
   # Ab akku_soc_voll: kein Einfluss des Akku-Bezugs mehr auf den Ladepreis
-  akku_soc_mindest: 20
-  akku_soc_voll: ""
+  akku_soc_mindest: 40
+  akku_soc_voll: 80
 
   # Preisberechnung – Konstanten (alle in ct/kWh bzw. kW)
   preis_einspeiseverguetung_ct: 8.0

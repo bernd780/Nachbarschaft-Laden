@@ -44,7 +44,7 @@ class LadepreisGraph(hass.Hass):
         # Heimspeicher-SOC-Schwellen: unterhalb Mindest volle Auswirkung, ab Voll keine Auswirkung
         _mindest = a.get("akku_soc_mindest", 0)
         _voll    = a.get("akku_soc_voll",    None)
-        self.AKKU_SOC_MINDEST = float(_mindest) if _mindest not in (None, "", "none") else 0.0
+        self.AKKU_SOC_MINDEST = float(_mindest) if _mindest not in (None, "", "none") else 40.0
         self.AKKU_SOC_VOLL    = float(_voll)    if _voll    not in (None, "", "none") else None
         # Preisberechnung – Konstanten (ct/kWh bzw. kW)
         self.PREIS_EINSPEISUNG   = float(a.get("preis_einspeiseverguetung_ct", 8.0))
