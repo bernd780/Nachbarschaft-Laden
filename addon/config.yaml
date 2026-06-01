@@ -1,6 +1,6 @@
 ﻿name: "Nachbarschaft-Laden"
 description: "EV-Lademanagement: Dynamischer PV-Ladepreis, Session-Tracking, Web-Dashboard und E-Paper-Display für nachbarschaftliche Wallboxen."
-version: "1.0.3"
+version: "1.0.4"
 slug: "nachbarschaft_laden"
 url: "https://github.com/bernd780/Nachbarschaft-Laden"
 documentation: "https://github.com/bernd780/Nachbarschaft-Laden/blob/main/README.md"

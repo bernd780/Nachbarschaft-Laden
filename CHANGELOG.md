@@ -3,7 +3,18 @@
 Alle relevanten Änderungen werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
-## [1.0.3] – aktuell
+## [1.0.4] – aktuell
+
+### Hinzugefügt
+- Heimspeicher-SOC-Gewichtung: Je voller der Akku, desto weniger wirkt sein Strombezug auf den Ladepreis (`sensor_batterie_soc`, `akku_soc_mindest`, `akku_soc_voll`)
+- Neue Konfigurationsparameter: `sensor_pv_rest_heute` und `sensor_pv_peak_zeit_heute` (aktivieren PV-Performance-Anzeige und günstigste-Stunde-Forecast)
+
+### Behoben
+- PV-Performance-View (Heutige Erzeugung vs. Prognose) wurde nicht angezeigt wenn `sensor_pv_rest_heute` nicht konfiguriert war
+
+---
+
+## [1.0.3]
 
 ### Hinzugefügt
 - E-Paper Display: RSSI- und Uptime-Sensoren → Home Assistant
