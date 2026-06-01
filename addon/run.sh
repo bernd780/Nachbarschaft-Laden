@@ -106,8 +106,8 @@ HELPER_HAUS=$(jq -r '.helper_hausverbrauch'                 "$OPTS")
 HELPER_LADEZIEL=$(jq -r '.helper_ladeziel_soc'              "$OPTS")
 
 # Ausgabe
-BASIS_URL=$(jq -r '.basis_url'                               "$OPTS")
-QR_CODE_URL=$(jq -r '.qr_code_url'                          "$OPTS")
+BASIS_URL=$(jq -r '.basis_url // ""'                         "$OPTS")
+QR_CODE_URL=$(jq -r '.qr_code_url // ""'                    "$OPTS")
 WEB_UNTERVERZEICHNIS=$(jq -r '.web_unterverzeichnis'        "$OPTS")
 WWW="/homeassistant/www/$WEB_UNTERVERZEICHNIS"
 
