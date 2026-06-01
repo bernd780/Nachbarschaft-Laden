@@ -195,7 +195,7 @@ for _f in /www/*; do
     *.html)
       sed \
         "s|https://nachbarschaft-laden.de|${BASIS_URL}|g; \
-         s|__SESSIONS_PASSWORT_HASH__|${SESSIONS_HASH}|g" \
+         s|disabled|${SESSIONS_HASH}|g" \
         "$_f" > "$WWW/$(basename "$_f")"
       ;;
     *)

@@ -9,7 +9,7 @@
 <script>(function(){
   const t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
   document.documentElement.setAttribute('data-theme',t);
-  const _cfg = '__SESSIONS_PASSWORT_HASH__';
+  const _cfg = 'disabled';
   if (_cfg === 'disabled') { sessionStorage.setItem('nl_access','1'); }
   const supplied = new URLSearchParams(location.search).get('key');
   if (supplied && _cfg !== 'disabled') {
@@ -41,7 +41,7 @@
   }
 })();
 function unlock() {
-  const _cfg = '__SESSIONS_PASSWORT_HASH__';
+  const _cfg = 'disabled';
   const val = document.getElementById('key-input').value.trim();
   crypto.subtle.digest('SHA-256', new TextEncoder().encode(val)).then(b => {
     const hex = [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
