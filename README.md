@@ -497,7 +497,115 @@ Zwei HA-Automationen benachrichtigen per Push-Notification auf das iPhone, wenn 
 
 ---
 
-## Preisbildung
+## Öffentlicher Zugriff via Cloudflare Tunnel
+
+Der Ladepreis und die Web-Oberfläche sollen für Nachbarn von unterwegs erreichbar sein – aber die Home-Assistant-Instanz selbst soll dabei nicht im Internet exponiert werden. Das lässt sich sauber mit einem **Cloudflare Tunnel** und einer **WAF-Rule** lösen.
+
+```
+Nachbar (Browser)
+      │
+      ▼
+  cloudflare.com  ←── WAF-Rule blockiert alles außer /local/nachbarschaft-laden/*
+      │
+  Cloudflare Tunnel (verschlüsselt, ausgehend von HA)
+      │
+      ▼
+  Home Assistant :8123
+      │
+      └── /local/nachbarschaft-laden/   ← nur dieser Pfad ist öffentlich
+```
+
+HA liefert Dateien unter `/local/` **ohne Authentifizierung** aus. Der Rest (Dashboard, API, Login) bleibt vollständig geblockt.
+
+---
+
+### Schritt 1 – Cloudflare-Konto & Domain
+
+1. [cloudflare.com](https://cloudflare.com) → kostenloses Konto anlegen
+2. Eine eigene Domain bei Cloudflare hinterlegen (oder eine kostenlose `.workers.dev`-Subdomain nutzen)
+
+---
+
+### Schritt 2 – Cloudflared als HA-Add-on installieren
+
+Das Add-on **cloudflared** (von brenner-tobias, im [HA-Community-Store](https://github.com/brenner-tobias/addon-cloudflared)) stellt den Tunnel direkt aus Home Assistant heraus her – kein separater Server nötig.
+
+1. Add-on installieren und starten
+2. Im Add-on-Log erscheint ein einmaliger Authentifizierungslink → im Browser öffnen und mit dem Cloudflare-Konto verbinden
+3. Im Add-on die gewünschte externe Adresse eintragen, z. B.:
+
+```yaml
+external_hostname: laden.example.com
+tunnel_name: nachbarschaft-laden
+```
+
+Das Add-on legt den Tunnel automatisch in Cloudflare an und verbindet sich.
+
+---
+
+### Schritt 3 – Öffentlichen Hostnamen konfigurieren
+
+Im [Cloudflare Zero Trust Dashboard](https://one.dash.cloudflare.com):
+
+**Networks → Tunnels → `nachbarschaft-laden` → Public Hostname → Add**
+
+| Feld | Wert |
+|---|---|
+| Subdomain | `laden` |
+| Domain | `example.com` |
+| Service Type | `HTTP` |
+| URL | `homeassistant:8123` |
+
+---
+
+### Schritt 4 – WAF-Rule: nur `/local/nachbarschaft-laden/` erlauben
+
+Das ist der entscheidende Schritt. Ohne diese Regel wäre die gesamte HA-Instanz erreichbar.
+
+**Cloudflare Dashboard → Deine Domain → Security → WAF → Custom Rules → Create rule**
+
+| Feld | Wert |
+|---|---|
+| Regelname | `Nur nachbarschaft-laden erlauben` |
+| Expression | siehe unten |
+| Aktion | **Block** |
+
+**Expression:**
+```
+(not starts_with(http.request.uri.path, "/local/nachbarschaft-laden/"))
+```
+
+Diese Regel blockt jeden Request, dessen Pfad **nicht** mit `/local/nachbarschaft-laden/` beginnt – also alles außer den Dateien des Add-ons.
+
+> **Testen:** Nach dem Speichern `https://laden.example.com/` aufrufen → `403 Forbidden` (geblockt ✅). `https://laden.example.com/local/nachbarschaft-laden/index.html` → Ladepreis-Dashboard lädt ✅.
+
+---
+
+### Was geblockt wird
+
+| Pfad | Ergebnis |
+|---|---|
+| `/local/nachbarschaft-laden/index.html` | ✅ erreichbar |
+| `/local/nachbarschaft-laden/data.json` | ✅ erreichbar |
+| `/local/nachbarschaft-laden/sessions.json` | ✅ erreichbar |
+| `/` (HA-Dashboard) | ❌ 403 geblockt |
+| `/auth/login` | ❌ 403 geblockt |
+| `/api/` | ❌ 403 geblockt |
+| `/config/` | ❌ 403 geblockt |
+| Jeder andere Pfad | ❌ 403 geblockt |
+
+---
+
+### QR-Code auf dem E-Paper
+
+Den Link zur öffentlichen URL in der Add-on-Konfiguration eintragen:
+
+```yaml
+basis_url: "https://laden.example.com"
+qr_code_url: "https://laden.example.com/local/nachbarschaft-laden/index.html"
+```
+
+Der QR-Code auf dem E-Paper führt Nachbarn dann direkt zur öffentlichen Seite – von unterwegs genauso wie im Heimnetz.
 
 ---
 
