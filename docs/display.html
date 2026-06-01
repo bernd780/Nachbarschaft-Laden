@@ -1,10 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>E-Paper Display – Nachbarschaft-Laden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --green:  #2d6a4f; --green2: #40916c; --green3: #74c69d; --green4: #d8f3dc;
@@ -130,17 +132,17 @@
       <div class="info-item">
         <div class="info-item-icon">⚡</div>
         <div class="info-item-title">Aktueller Ladepreis</div>
-        <div class="info-item-text">Der dynamische Strompreis in ct/kWh, stündlich aktualisiert aus dem Spotmarkt.</div>
+        <div class="info-item-text">Der dynamische Strompreis in ct/kWh, alle 5 Sekunden anhand des aktuellen PV-Überschusses berechnet – je mehr Solarstrom, desto günstiger.</div>
       </div>
       <div class="info-item">
         <div class="info-item-icon">☀️</div>
         <div class="info-item-title">PV-Stimmung (Smileys)</div>
-        <div class="info-item-text">Drei Smileys zeigen die PV-Überschussprognose für heute, morgen und übermorgen.</div>
+        <div class="info-item-text">Drei Smileys zeigen die PV-Überschussprognose für morgen, übermorgen und in 3 Tagen.</div>
       </div>
       <div class="info-item">
-        <div class="info-item-icon">🔋</div>
-        <div class="info-item-title">Geladene Energie</div>
-        <div class="info-item-text">Die in der letzten Session geladenen Kilowattstunden – direkt vom go-eCharger.</div>
+        <div class="info-item-icon">🕐</div>
+        <div class="info-item-title">Uhrzeit &amp; Datum</div>
+        <div class="info-item-text">Aktuelle Uhrzeit und Datum – direkt vom Home Assistant synchronisiert.</div>
       </div>
       <div class="info-item">
         <div class="info-item-icon">📱</div>
@@ -172,7 +174,7 @@ const label = document.getElementById('last-refresh');
 let count = 300;
 
 function refreshImg() {
-  img.src = './display_preview.png?t=' + Date.now();
+  img.src = 'https://nachbarschaft-laden.de/local/nachbarschaft-laden/display_preview.png?t=' + Date.now();
   count = 300;
 }
 
