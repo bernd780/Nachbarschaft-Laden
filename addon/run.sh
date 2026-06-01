@@ -67,6 +67,9 @@ fi
 SENSOR_NETZLEISTUNG=$(jq -r '.sensor_netzleistung'          "$OPTS")
 SENSOR_WALLBOX_LEISTUNG=$(jq -r '.sensor_wallbox_leistung'  "$OPTS")
 SENSOR_BATTERIE_LEISTUNG=$(jq -r '.sensor_batterie_leistung' "$OPTS")
+SENSOR_BATTERIE_SOC=$(jq -r '.sensor_batterie_soc // "sensor.summe_batterysoc"' "$OPTS")
+AKKU_SOC_MINDEST=$(jq -r '.akku_soc_mindest // 20'          "$OPTS")
+AKKU_SOC_VOLL=$(jq -r '.akku_soc_voll // ""'                "$OPTS")
 PREIS_EINSPEISUNG=$(jq -r '.preis_einspeiseverguetung_ct'   "$OPTS")
 PREIS_MARGE=$(jq -r '.preis_marge_ct'                       "$OPTS")
 PREIS_NETZBEZUG=$(jq -r '.preis_netzbezug_ct'               "$OPTS")
@@ -124,6 +127,9 @@ ladepreis_graph:
   sensor_netzleistung: "$SENSOR_NETZLEISTUNG"
   sensor_wallbox_leistung: "$SENSOR_WALLBOX_LEISTUNG"
   sensor_batterie_leistung: "$SENSOR_BATTERIE_LEISTUNG"
+  sensor_batterie_soc: "$SENSOR_BATTERIE_SOC"
+  akku_soc_mindest: $AKKU_SOC_MINDEST
+  akku_soc_voll: "$AKKU_SOC_VOLL"
   preis_einspeiseverguetung_ct: $PREIS_EINSPEISUNG
   preis_marge_ct: $PREIS_MARGE
   preis_netzbezug_ct: $PREIS_NETZBEZUG

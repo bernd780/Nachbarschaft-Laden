@@ -54,7 +54,10 @@ Das Add-on berechnet den dynamischen Ladepreis selbst, direkt aus Netzleistung, 
 |--------|-----------|----------------|
 | `sensor_netzleistung` | Aktuelle Netzleistung am Hauptzähler in W (positiv = Bezug, negativ = Einspeisung) | `sensor.leistung_stromzaehler` |
 | `sensor_wallbox_leistung` | Aktuelle Ladeleistung der Wallbox in W | `sensor.go_echarger_XXXXXX_nrg_12` |
-| `sensor_batterie_leistung` | Aktuelle Batterieleistung in W (positiv = Entladung) | `sensor.summe_battery_leistung` |
+| `sensor_batterie_leistung` | Aktuelle Batterieleistung in W (positiv = Entladung, negativ = Laden) | `sensor.summe_battery_leistung` |
+| `sensor_batterie_soc` | Ladestand des Heimspeichers in % | `sensor.summe_batterysoc` |
+| `akku_soc_mindest` | SOC-Schwelle (%), unterhalb derer der Akku-Bezug voll auf den Preis wirkt | `20` |
+| `akku_soc_voll` | SOC-Schwelle (%), ab der der Akku-Bezug gar nicht mehr auf den Preis wirkt (leer = deaktiviert) | `""` |
 
 **Preiskonstanten:**
 

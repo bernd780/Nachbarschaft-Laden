@@ -40,6 +40,12 @@ class LadepreisGraph(hass.Hass):
         self.S_NETZLEISTUNG      = a.get("sensor_netzleistung",          "sensor.leistung_stromzaehler")
         self.S_WALLBOX_LEISTUNG  = a.get("sensor_wallbox_leistung",      "sensor.go_echarger_XXXXXX_nrg_12")
         self.S_BATTERIE_LEISTUNG = a.get("sensor_batterie_leistung",     "sensor.summe_battery_leistung")
+        self.S_BATTERIE_SOC      = a.get("sensor_batterie_soc",          "sensor.summe_batterysoc") or None
+        # Heimspeicher-SOC-Schwellen: unterhalb Mindest volle Auswirkung, ab Voll keine Auswirkung
+        _mindest = a.get("akku_soc_mindest", 0)
+        _voll    = a.get("akku_soc_voll",    None)
+        self.AKKU_SOC_MINDEST = float(_mindest) if _mindest not in (None, "", "none") else 0.0
+        self.AKKU_SOC_VOLL    = float(_voll)    if _voll    not in (None, "", "none") else None
         # Preisberechnung – Konstanten (ct/kWh bzw. kW)
         self.PREIS_EINSPEISUNG   = float(a.get("preis_einspeiseverguetung_ct", 8.0))
         self.PREIS_MARGE         = float(a.get("preis_marge_ct",               6.0))
@@ -290,6 +296,18 @@ class LadepreisGraph(hass.Hass):
             import shutil
             shutil.copy2(out, os.path.join(legacy_dir, "display_preview.png"))
 
+    def _akku_soc_faktor(self, soc):
+        """Gibt zurück, wie viel des Akku-Bezugs ignoriert werden soll (0=voll, 1=gar nicht)."""
+        mindest = self.AKKU_SOC_MINDEST
+        voll    = self.AKKU_SOC_VOLL
+        if voll is None or voll <= mindest:
+            return 0.0
+        if soc <= mindest:
+            return 0.0
+        if soc >= voll:
+            return 1.0
+        return (soc - mindest) / (voll - mindest)
+
     def _berechne_ladepreis(self):
         """Dynamischer Ladepreis basierend auf PV-Überschuss (ct/kWh)."""
         zaehler_w = self._float_safe(self.S_NETZLEISTUNG)
@@ -297,7 +315,16 @@ class LadepreisGraph(hass.Hass):
         akku_w    = self._float_safe(self.S_BATTERIE_LEISTUNG)
 
         akku_entladung_w = max(akku_w, 0.0)
-        ueberschuss_w    = wallbox_w - zaehler_w - akku_entladung_w
+        akku_laden_w     = max(-akku_w, 0.0)   # Akku-Bezugsleistung (positiv wenn Akku lädt)
+
+        # Je voller der Heimspeicher, desto weniger zählt sein Strombezug gegen den EV-Überschuss
+        soc_korrektur_w = 0.0
+        if akku_laden_w > 0 and self.S_BATTERIE_SOC and self.AKKU_SOC_VOLL is not None:
+            soc = self._float_safe(self.S_BATTERIE_SOC)
+            f   = self._akku_soc_faktor(soc)
+            soc_korrektur_w = f * akku_laden_w  # dieser Anteil wird zum Überschuss zurückaddiert
+
+        ueberschuss_w = wallbox_w - zaehler_w - akku_entladung_w + soc_korrektur_w
         ueberschuss_kw   = max(ueberschuss_w, 0.0) / 1000.0
         preis_max = self.PREIS_NETZBEZUG + self.PREIS_MARGE
         if ueberschuss_kw < self.PREIS_TOTZONE_KW:

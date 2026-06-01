@@ -27,6 +27,13 @@ options:
   sensor_netzleistung: "sensor.leistung_stromzaehler"
   sensor_wallbox_leistung: "sensor.go_echarger_XXXXXX_nrg_12"
   sensor_batterie_leistung: "sensor.summe_battery_leistung"
+  sensor_batterie_soc: "sensor.summe_batterysoc"
+
+  # Heimspeicher-SOC-Schwellen für Preisauswirkung (leer lassen = Feature deaktiviert)
+  # Unterhalb akku_soc_mindest: volle Auswirkung des Akku-Bezugs auf den Ladepreis
+  # Ab akku_soc_voll: kein Einfluss des Akku-Bezugs mehr auf den Ladepreis
+  akku_soc_mindest: 20
+  akku_soc_voll: ""
 
   # Preisberechnung – Konstanten (alle in ct/kWh bzw. kW)
   preis_einspeiseverguetung_ct: 8.0
@@ -84,6 +91,9 @@ schema:
   sensor_netzleistung: str
   sensor_wallbox_leistung: str
   sensor_batterie_leistung: str
+  sensor_batterie_soc: str
+  akku_soc_mindest: int
+  akku_soc_voll: str
   preis_einspeiseverguetung_ct: float
   preis_marge_ct: float
   preis_netzbezug_ct: float
