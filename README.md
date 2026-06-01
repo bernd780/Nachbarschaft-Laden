@@ -625,6 +625,40 @@ You have a solar PV system, a wallbox — and neighbors who'd love to charge at 
 
 **Nachbarschaft-Laden** makes exactly that possible: the charging price drops automatically when the sun is shining. Each charging session is attributed to a user via RFID card and tracked for billing. No cloud service, no subscriptions — everything runs locally in Home Assistant.
 
+#### How much PV capacity do you need?
+
+Less than you might think. Even a modest rooftop system generates a surprising surplus on a sunny summer day.
+
+The table below shows realistic net surplus on a **clear summer day in Germany** — after subtracting household load (~1.5 kW) and home battery charging (~3 kW):
+
+| System | Peak output | Midday surplus | Max. discount¹ | Discounted charging hours/day² |
+|--------|:-----------:|:--------------:|:--------------:|:------------------------------:|
+| 5 kWp  | ~4.5 kW     | ~2 kW          | ~18 %          | 2–3 h                          |
+| 8 kWp  | ~7.5 kW     | ~5 kW          | ~45 %          | 4–5 h                          |
+| 10 kWp | ~9 kW       | ~6.5 kW        | ~60 %          | 5–6 h                          |
+| 15 kWp | ~13.5 kW    | ~11 kW         | **100 %** 🎉   | 6–8 h                          |
+| 20 kWp | ~18 kW      | ~15 kW         | **100 %** 🎉   | 8–10 h                         |
+| 25 kWp | ~22.5 kW    | ~19 kW         | **100 %** 🎉   | 9–11 h                         |
+
+> ¹ Maximum discount vs. grid tariff (target power 11 kW, configurable)  
+> ² Hours per day with a meaningful price reduction
+
+```
+Discounted charging window on a summer day
+
+25 kWp  ░░░░░░░░░█████████████████████████████░░░░░░░
+20 kWp  ░░░░░░░░░██████████████████████████░░░░░░░░░░
+15 kWp  ░░░░░░░░░░████████████████████████░░░░░░░░░░░
+10 kWp  ░░░░░░░░░░░░███████████████████░░░░░░░░░░░░░░
+ 8 kWp  ░░░░░░░░░░░░░██████████████░░░░░░░░░░░░░░░░░░
+ 5 kWp  ░░░░░░░░░░░░░░█████████░░░░░░░░░░░░░░░░░░░░░░
+         6h  7h  8h  9h  10h 11h 12h 13h 14h 15h 16h 17h 18h 19h 20h
+```
+
+- **5–8 kWp** — Surplus kicks in around midday once the home battery is full. Neighbors can charge with up to 45 % off during that window.
+- **10–14 kWp** — The discount window opens earlier and closes later. A full charge (~50 kWh) from PV alone is realistic on a good summer day.
+- **15 kWp and above** — Minimum price is reached for several consecutive hours. Even two vehicles can charge simultaneously near cost price.
+
 ---
 
 ### Features
@@ -674,7 +708,8 @@ The add-on calculates the price directly from three power sensors. No external p
 |---|---|---|
 | `sensor_netzleistung` | Grid power at main meter in W (positive = consumption, negative = feed-in) | `sensor.leistung_stromzaehler` |
 | `sensor_wallbox_leistung` | Current wallbox charging power in W | `sensor.go_echarger_XXXXXX_nrg_12` |
-| `sensor_batterie_leistung` | Current battery discharge power in W (positive = discharging) | `sensor.summe_battery_leistung` |
+| `sensor_batterie_leistung` | Battery power in W (positive = discharging, negative = charging) | `sensor.summe_battery_leistung` |
+| `sensor_batterie_soc` | Home battery state of charge in % | `sensor.summe_batterysoc` |
 
 **Price constants**
 
@@ -686,6 +721,17 @@ The add-on calculates the price directly from three power sensors. No external p
 | `preis_zielleistung_kw` | PV surplus in kW at which the lowest price applies | `11.0` |
 
 With the default settings, the charging price ranges between **14 ct/kWh** (full PV surplus) and **36 ct/kWh** (grid only).
+
+#### Home battery SOC weighting
+
+When the home battery is charging, it reduces the apparent PV surplus available to the wallbox — which raises the charging price. That is fair when the battery is nearly empty. But when it is already at 90 %, there is little reason to pass that cost on to the neighbor. These parameters control how the battery's influence fades as the battery fills up:
+
+| Option | Description | Default |
+|---|---|---|
+| `akku_soc_mindest` | Below this SOC (%), battery draw has full effect on the price | `40` |
+| `akku_soc_voll` | Above this SOC (%), battery draw has no effect at all; leave empty to disable | `80` |
+
+Between the two thresholds the influence is **linearly interpolated**. → See [Home battery SOC logic](#home-battery-soc-logic) for details.
 
 #### PV forecast
 
@@ -744,6 +790,42 @@ With default values (feed-in 8 ct, margin 6 ct, grid price 30 ct, target 11 kW):
 | 8.25 kW | 75 % | 19.5 ct/kWh |
 | ≥ 11 kW | 100 % | **14 ct/kWh** |
 
+#### Home battery SOC logic
+
+**The problem without SOC weighting**
+
+When the home battery charges (e.g. at 3 kW), that power came from the PV system. From the price formula's point of view this looks the same as grid import — the apparent PV surplus for the wallbox drops and the price rises. That is appropriate while the battery is nearly empty. But when it is already at 90 % and absorbing the last few kWh, it makes little sense to pass that cost on to the neighbor.
+
+**The solution: SOC-dependent correction**
+
+The more charged the home battery, the more its power draw is **ignored** in the surplus calculation. The correction ramps linearly between two configurable thresholds:
+
+```
+SOC ≤ akku_soc_mindest (e.g. 40 %)  →  battery draw has full effect    (factor 0)
+SOC ≥ akku_soc_voll    (e.g. 80 %)  →  battery draw is ignored entirely (factor 1)
+In between                           →  linear interpolation
+```
+
+The corrected formula:
+
+```
+PV surplus [W] = Wallbox − Grid power − Battery discharge + (factor × Battery charge power)
+```
+
+**Examples — wallbox at 11 kW, battery charging at 3 kW**
+
+| Battery SOC | Factor | Added back | PV surplus | Charging price |
+|:-----------:|:------:|:----------:|:----------:|:--------------:|
+| 20 % | 0.0 | 0 kW   | 5 kW | ~26 ct/kWh |
+| 40 % | 0.0 | 0 kW   | 5 kW | ~26 ct/kWh |
+| 60 % | 0.5 | 1.5 kW | 6.5 kW | ~22 ct/kWh |
+| 80 % | 1.0 | 3.0 kW | 8 kW | ~18 ct/kWh |
+| 95 % | 1.0 | 3.0 kW | 8 kW | ~18 ct/kWh |
+
+*(Assumes: 3 kW grid feed-in, no battery discharge)*
+
+> **Disable:** leave `akku_soc_voll` empty → factor stays 0, battery draw always has full effect (original behaviour).
+
 #### Why this pricing logic?
 
 | Bound | Calculation | Rationale |
@@ -751,6 +833,103 @@ With default values (feed-in 8 ct, margin 6 ct, grid price 30 ct, target 11 kW):
 | **Lower bound 14 ct/kWh** | Feed-in tariff (8 ct) + margin (6 ct) | Every kWh could have been sold to the grid for ~8 ct. The margin covers operating costs. |
 | **Upper bound 36 ct/kWh** | Grid price (30 ct) + margin (6 ct) | When charging from the grid, the neighbor pays the actual electricity cost plus a small margin. |
 | **In between** | Linear interpolation | More sun → cheaper price — continuous and fair. |
+
+---
+
+### Public access via Cloudflare Tunnel
+
+The charging price and web interface should be reachable for neighbors on the go — without exposing the entire Home Assistant instance to the internet. A **Cloudflare Tunnel** combined with a **WAF rule** achieves this cleanly.
+
+```
+Neighbor (browser)
+      │
+      ▼
+  cloudflare.com  ←── WAF rule blocks everything except /local/nachbarschaft-laden/*
+      │
+  Cloudflare Tunnel (encrypted, outbound from HA)
+      │
+      ▼
+  Home Assistant :8123
+      └── /local/nachbarschaft-laden/   ← only this path is public
+```
+
+HA serves files under `/local/` **without authentication**. Everything else (dashboard, API, login) stays blocked.
+
+#### Step 1 — Cloudflare account & domain
+
+1. Create a free account at [cloudflare.com](https://cloudflare.com)
+2. Add your own domain to Cloudflare (or use a free `.workers.dev` subdomain)
+
+#### Step 2 — Install cloudflared as a HA add-on
+
+The **cloudflared** add-on by brenner-tobias ([HA community store](https://github.com/brenner-tobias/addon-cloudflared)) establishes the tunnel directly from Home Assistant — no separate server required.
+
+1. Install and start the add-on
+2. A one-time authentication link appears in the add-on log → open it in a browser and connect with your Cloudflare account
+3. Set the desired public address in the add-on configuration:
+
+```yaml
+external_hostname: laden.example.com
+tunnel_name: nachbarschaft-laden
+```
+
+The add-on creates the tunnel in Cloudflare automatically.
+
+#### Step 3 — Configure a public hostname
+
+In the [Cloudflare Zero Trust Dashboard](https://one.dash.cloudflare.com):
+
+**Networks → Tunnels → `nachbarschaft-laden` → Public Hostname → Add**
+
+| Field | Value |
+|---|---|
+| Subdomain | `laden` |
+| Domain | `example.com` |
+| Service type | `HTTP` |
+| URL | `homeassistant:8123` |
+
+#### Step 4 — WAF rule: allow only `/local/nachbarschaft-laden/`
+
+This is the critical step. Without this rule the entire HA instance would be reachable.
+
+**Cloudflare Dashboard → Your domain → Security → WAF → Custom Rules → Create rule**
+
+| Field | Value |
+|---|---|
+| Rule name | `Allow only nachbarschaft-laden` |
+| Expression | see below |
+| Action | **Block** |
+
+**Expression:**
+```
+(not starts_with(http.request.uri.path, "/local/nachbarschaft-laden/"))
+```
+
+This blocks every request whose path does **not** start with `/local/nachbarschaft-laden/`.
+
+> **Test:** After saving, open `https://laden.example.com/` → `403 Forbidden` ✅. Then open `https://laden.example.com/local/nachbarschaft-laden/index.html` → the price dashboard loads ✅.
+
+#### What gets blocked
+
+| Path | Result |
+|---|---|
+| `/local/nachbarschaft-laden/index.html` | ✅ accessible |
+| `/local/nachbarschaft-laden/data.json` | ✅ accessible |
+| `/` (HA dashboard) | ❌ 403 blocked |
+| `/auth/login` | ❌ 403 blocked |
+| `/api/` | ❌ 403 blocked |
+| Any other path | ❌ 403 blocked |
+
+#### QR code on the e-paper display
+
+Add the public URL to the add-on configuration:
+
+```yaml
+basis_url: "https://laden.example.com"
+qr_code_url: "https://laden.example.com/local/nachbarschaft-laden/index.html"
+```
+
+The QR code on the e-paper display then takes neighbors directly to the public page — whether they are on the home network or out and about.
 
 ---
 
