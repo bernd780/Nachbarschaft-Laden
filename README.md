@@ -37,9 +37,47 @@ Du hast eine PV-Anlage, eine Wallbox – und Nachbarn, die gerne günstiger lade
 
 **Nachbarschaft-Laden** macht genau das möglich: Der Ladepreis sinkt automatisch, wenn gerade viel Sonne scheint. Per RFID-Karte wird jeder Ladevorgang einem Nutzer zugeordnet und abgerechnet. Kein Cloud-Dienst, keine Abonnements – alles läuft lokal in Home Assistant.
 
-<p align="center">
-  <img src="docs/flyer_instagram.png" width="480" alt="Nachbarschaft-Laden Projektübersicht"/>
-</p>
+### Wie viel PV-Anlage braucht man dafür?
+
+Weniger als man denkt – auch kleinere Anlagen liefern an einem sonnigen Sommertag überraschend viel Überschuss.
+
+Die folgende Übersicht zeigt, was eine typische private Dachanlage an einem **klaren Sommertag in Deutschland** (Süddeutschland, Südausrichtung) realistisch ins System einspeist – nach Abzug von Hausverbrauch (~1,5 kW) und Heimspeicher-Ladung (~3 kW):
+
+| Anlage | Peak-Leistung | Überschuss mittags | Max. Preisrabatt¹ | Günstige Ladestunden/Tag² |
+|--------|:-------------:|:-----------------:|:-----------------:|:-------------------------:|
+| 5 kWp  | ~4,5 kW       | ~2 kW             | ~18 %             | 2–3 h                     |
+| 8 kWp  | ~7,5 kW       | ~5 kW             | ~45 %             | 4–5 h                     |
+| 10 kWp | ~9 kW         | ~6,5 kW           | ~60 %             | 5–6 h                     |
+| 15 kWp | ~13,5 kW      | ~11 kW            | **100 %** 🎉      | 6–8 h                     |
+| 20 kWp | ~18 kW        | ~15 kW            | **100 %** 🎉      | 8–10 h                    |
+| 25 kWp | ~22,5 kW      | ~19 kW            | **100 %** 🎉      | 9–11 h                    |
+
+> ¹ Maximaler Rabatt auf den Netzstrompreis (Zielleistung 11 kW konfigurierbar)  
+> ² Stunden mit spürbarem Preisnachlass gegenüber Netzbezug
+
+```
+Günstige Ladestunden an einem Sommertag
+
+25 kWp  ░░░░░░░░░█████████████████████████████░░░░░░░
+20 kWp  ░░░░░░░░░██████████████████████████░░░░░░░░░░
+15 kWp  ░░░░░░░░░░████████████████████████░░░░░░░░░░░
+10 kWp  ░░░░░░░░░░░░███████████████████░░░░░░░░░░░░░░
+ 8 kWp  ░░░░░░░░░░░░░██████████████░░░░░░░░░░░░░░░░░░
+ 5 kWp  ░░░░░░░░░░░░░░█████████░░░░░░░░░░░░░░░░░░░░░░
+         6h  7h  8h  9h  10h 11h 12h 13h 14h 15h 16h 17h 18h 19h 20h
+```
+
+**Was bedeutet das in der Praxis?**
+
+- **5–8 kWp** – Zur Mittagszeit (11–15 Uhr) entsteht echter Überschuss, sobald der Heimspeicher geladen ist. Nachbarn können in diesem Fenster mit bis zu 45 % Rabatt laden. Ideal für kurze Ladevorgänge oder Topper.
+
+- **10–14 kWp** – Das Rabattfenster öffnet sich früher und schließt sich später. Gut die Hälfte des Tages liegt der Preis deutlich unter Netzbezugspreis. Eine vollständige Ladung (z. B. ~50 kWh) ist an einem Sommertag oft komplett aus PV-Überschuss möglich.
+
+- **Ab 15 kWp** – Der Minimalpreis (Einspeisevergütung + Marge) wird mehrere Stunden am Stück erreicht. Selbst ein zweites Fahrzeug lässt sich gleichzeitig nahezu zum Selbstkostenpreis laden. Für dieses Modell besonders attraktiv: der Überschuss ist so groß, dass mehrere Nachbarn davon profitieren.
+
+- **20–25 kWp** – An einem sonnigen Sommertag übersteigt der Überschuss (~100–115 kWh) den Tagesbedarf mehrerer Fahrzeuge deutlich. Der Ladepreis liegt für fast den gesamten Sonnentag beim Minimum.
+
+> **Fazit:** Schon eine 8-kWp-Anlage macht dieses Modell sinnvoll – das günstigste Ladefenster ist für Nachbarn klar kommunizierbar, und der Nutzen für alle Seiten ist spürbar. Mit wachsender Anlagengröße wird das Angebot attraktiver, länger und entspannter zu betreiben.
 
 ---
 
