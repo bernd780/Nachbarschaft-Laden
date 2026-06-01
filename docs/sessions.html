@@ -1,14 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Ladesessions – Nachbarschaft-Laden</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script>(function(){
   const t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
   document.documentElement.setAttribute('data-theme',t);
-  const _cfg = 'disabled';
+  const _cfg = '__SESSIONS_PASSWORT_HASH__';
   if (_cfg === 'disabled') { sessionStorage.setItem('nl_access','1'); }
   const supplied = new URLSearchParams(location.search).get('key');
   if (supplied && _cfg !== 'disabled') {
@@ -40,7 +41,7 @@
   }
 })();
 function unlock() {
-  const _cfg = 'disabled';
+  const _cfg = '__SESSIONS_PASSWORT_HASH__';
   const val = document.getElementById('key-input').value.trim();
   crypto.subtle.digest('SHA-256', new TextEncoder().encode(val)).then(b => {
     const hex = [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -139,6 +140,23 @@ function unlock() {
   .theme-toggle { position: absolute; top: 1rem; right: 1.25rem; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); color: #fff; border-radius: 50%; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
   .theme-toggle:hover { background: rgba(255,255,255,.25); }
 
+  /* Lücken-Einträge */
+  .gap-row td { background: #fef9ec !important; }
+  [data-theme="dark"] .gap-row td { background: #261c00 !important; }
+  .gap-row:hover td { filter: brightness(.97); }
+  .badge-lucke { background:#fef9ec; color:var(--amber); border:1px solid var(--amber2); border-radius:6px; padding:.15rem .55rem; font-size:.75rem; font-weight:600; white-space:nowrap; }
+  [data-theme="dark"] .badge-lucke { background:#261c00; color:#ffd166; border-color:#c87000; }
+  .badge-lucke-done { background:var(--green4); color:var(--green2); border:1px solid var(--green3); border-radius:6px; padding:.15rem .55rem; font-size:.75rem; font-weight:600; cursor:pointer; white-space:nowrap; }
+  [data-theme="dark"] .badge-lucke-done { background:#0d2318; color:#74c69d; border-color:#2d6a4f; }
+  .gap-calc-btn { background:none; border:1px solid var(--amber); color:var(--amber); border-radius:6px; padding:.22rem .7rem; font-size:.78rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap; }
+  .gap-calc-btn:hover { background:var(--amber); color:#fff; }
+  /* Lücken-Modal */
+  #gap-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; align-items:center; justify-content:center; }
+  #gap-modal.open { display:flex; }
+  #gap-modal select, #gap-modal input { appearance:auto; -webkit-appearance:auto; }
+  [data-theme="dark"] #gap-modal select,
+  [data-theme="dark"] #gap-modal input { background:#1b2c20; color:var(--ink); border-color:var(--border); }
+
   /* Modal */
   #chart-modal {
     display: none;
@@ -184,23 +202,6 @@ function unlock() {
     text-align: center;
   }
 
-  /* Lücken-Einträge */
-  .gap-row td { background: #fef9ec !important; }
-  [data-theme="dark"] .gap-row td { background: #261c00 !important; }
-  .gap-row:hover td { filter: brightness(.97); }
-  .badge-lucke { background:#fef9ec; color:var(--amber); border:1px solid var(--amber2); border-radius:6px; padding:.15rem .55rem; font-size:.75rem; font-weight:600; white-space:nowrap; }
-  [data-theme="dark"] .badge-lucke { background:#261c00; color:#ffd166; border-color:#c87000; }
-  .badge-lucke-done { background:var(--green4); color:var(--green2); border:1px solid var(--green3); border-radius:6px; padding:.15rem .55rem; font-size:.75rem; font-weight:600; cursor:pointer; white-space:nowrap; }
-  [data-theme="dark"] .badge-lucke-done { background:#0d2318; color:#74c69d; border-color:#2d6a4f; }
-  .gap-calc-btn { background:none; border:1px solid var(--amber); color:var(--amber); border-radius:6px; padding:.22rem .7rem; font-size:.78rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap; }
-  .gap-calc-btn:hover { background:var(--amber); color:#fff; }
-  /* Lücken-Modal */
-  #gap-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; align-items:center; justify-content:center; }
-  #gap-modal.open { display:flex; }
-  #gap-modal select, #gap-modal input { appearance:auto; -webkit-appearance:auto; }
-  [data-theme="dark"] #gap-modal select,
-  [data-theme="dark"] #gap-modal input { background:#1b2c20; color:var(--ink); border-color:var(--border); }
-
   .github-banner { background: var(--green4); border-bottom: 1.5px solid var(--green3); color: var(--green); padding: .55rem 1.25rem; font-size: .82rem; display: flex; align-items: center; justify-content: center; gap: .5rem 1.25rem; flex-wrap: wrap; }
   .github-banner a { color: var(--green); font-weight: 600; text-decoration: underline; text-decoration-color: var(--green3); text-underline-offset: 2px; display: inline-flex; align-items: center; gap: .3rem; }
   .github-banner a:hover { text-decoration-color: var(--green); }
@@ -210,14 +211,6 @@ function unlock() {
 </head>
 <body>
 
-<header style="position:relative;">
-  <div class="header-inner">
-    <h1>Ladesessions</h1>
-    <p>Übersicht aller erfassten Ladevorgänge · <a href="index.html">← Zurück zur Startseite</a></p>
-  </div>
-  <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Dark/Light Mode">🌙</button>
-</header>
-
 <div class="github-banner">
   <span class="github-badge">🍼 Baby-Projekt · in Entwicklung</span>
   <a href="https://github.com/bernd780/Nachbarschaft-Laden" target="_blank" rel="noopener">
@@ -226,6 +219,14 @@ function unlock() {
   </a>
   <span class="github-muted">· Mitentwickeln oder Projekt übernehmen? <a href="https://github.com/bernd780/Nachbarschaft-Laden" target="_blank" rel="noopener">Meld dich!</a></span>
 </div>
+
+<header style="position:relative;">
+  <div class="header-inner">
+    <h1>Ladesessions</h1>
+    <p>Übersicht aller erfassten Ladevorgänge · <a href="index.html">← Zurück zur Startseite</a></p>
+  </div>
+  <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Dark/Light Mode">🌙</button>
+</header>
 
 <main>
 
@@ -313,9 +314,9 @@ function unlock() {
   <p style="max-width:640px;margin:0 auto 0.6rem;line-height:1.6;">
     ⚡ Die angezeigte Energiemenge wird vom integrierten Zähler des go-eChargers auf der Netzseite erfasst – vor dem fahrzeugeigenen Ladegerät (OBC). Der go-eCharger misst dabei sehr präzise und liefert eine zuverlässige Grundlage für die Kostenabrechnung.
     Durch Umwandlungsverluste im OBC kann das Fahrzeugdisplay typischerweise <strong>5–10 %</strong> weniger anzeigen – das ist physikalisch bedingt und kein Fehler der Messung.
-    [Quelle: ADAC]
+    <a href="https://www.adac.de/rund-ums-fahrzeug/elektromobilitaet/laden/ladeverluste-elektroauto-studie/" target="_blank" rel="noopener" style="color:inherit;opacity:.6;white-space:nowrap;">[Quelle: ADAC]</a>
     &thinsp;·&thinsp;
-    [go-e: Wallbox-Zähler]
+    <a href="https://go-e.com/de-at/magazin/wallbox-mit-mid" target="_blank" rel="noopener" style="color:inherit;opacity:.6;white-space:nowrap;">[go-e: Wallbox-Zähler]</a>
   </p>
   Nachbarschaft-Laden · Ladesessions
 </footer>
@@ -346,17 +347,20 @@ function unlock() {
       <button class="chart-close" onclick="closeGapCalc()" aria-label="Schließen">×</button>
     </div>
     <div style="display:grid;gap:.85rem;padding-top:.15rem;">
+      <!-- Energie-Info -->
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;">
         <div style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.25rem;">Zähler-Lücke</div>
         <div style="font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--green);" id="gap-energy-display">–</div>
         <div style="font-size:.75rem;color:var(--muted);margin-top:.2rem;" id="gap-zaehler-info"></div>
       </div>
+      <!-- Benutzer -->
       <label style="display:grid;gap:.3rem;">
         <span style="font-size:.8rem;font-weight:600;color:var(--muted);">Benutzer</span>
         <select id="gap-user-select" style="padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.9rem;background:var(--card);color:var(--ink);">
           <option value="–">– Unbekannt –</option>
         </select>
       </label>
+      <!-- Preis -->
       <label style="display:grid;gap:.3rem;">
         <span style="font-size:.8rem;font-weight:600;color:var(--muted);">Preis je kWh</span>
         <div style="display:flex;align-items:center;gap:.5rem;">
@@ -366,10 +370,12 @@ function unlock() {
           <span style="font-size:.9rem;color:var(--muted);white-space:nowrap;">ct/kWh</span>
         </div>
       </label>
+      <!-- Kosten-Vorschau -->
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:.85rem;color:var(--muted);">Geschätzte Kosten</span>
         <span style="font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--amber);" id="gap-cost-display">–</span>
       </div>
+      <!-- Buttons -->
       <div style="display:flex;gap:.6rem;padding-top:.1rem;">
         <button onclick="closeGapCalc()"
           style="flex:1;padding:.65rem;border:1px solid var(--border);border-radius:10px;background:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.9rem;cursor:pointer;">
@@ -398,8 +404,8 @@ function toggleTheme() {
   });
 })();
 
-const SESSIONS_URL  = './sessions.json';
-const BALANCES_URL  = './balances.json';
+const SESSIONS_URL  = 'https://nachbarschaft-laden.de/local/nachbarschaft-laden/sessions.json';
+const BALANCES_URL  = 'https://nachbarschaft-laden.de/local/nachbarschaft-laden/balances.json';
 
 let allSessions = [];
 let lastSorted  = [];
@@ -424,6 +430,7 @@ function renderGapRow(s, i) {
     ? `Zähler ${(+s.eto_gap_start).toFixed(1)} → ${(+s.eto_gap_end).toFixed(1)} kWh`
     : '';
   if (ov) {
+    // bereits manuell berechnet
     const ctLabel = ov.price_kwh != null ? (ov.price_kwh * 100).toFixed(1) + ' ct' : '–';
     return `<tr class="gap-row">
       <td>${fmt_date(s.end)}</td>
@@ -461,11 +468,13 @@ function openGapCalc(s) {
       ? `Zähler ${(+s.eto_gap_start).toFixed(1)} → ${(+s.eto_gap_end).toFixed(1)} kWh`
       : '';
 
+  // Benutzer-Dropdown aus bekannten Sessions befüllen
   const sel = document.getElementById('gap-user-select');
   sel.innerHTML = '<option value="–">– Unbekannt –</option>';
   [...new Set(allSessions.filter(x => !x.type).map(x => x.user || x.rfid).filter(Boolean))]
     .forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; sel.appendChild(o); });
 
+  // Vorhandene Override vorladen
   const ov = gapOverrides[currentGapId];
   sel.value = ov ? (ov.user || '–') : '–';
   document.getElementById('gap-price-ct').value =
@@ -689,6 +698,7 @@ function update_stats(sessions) {
   document.getElementById('stat-avg-price').textContent = avgP != null ? (avgP * 100).toFixed(1) + ' ct' : '–';
   document.getElementById('stat-avg-kwh').textContent   = count ? (energy / count).toFixed(1) : '–';
 
+  // Ungelöste Lücken anzeigen
   const unresolved = gaps.filter(s => !gapOverrides[s.id]);
   const gapBox = document.getElementById('stat-gaps-box');
   if (unresolved.length > 0) {
@@ -773,6 +783,7 @@ function apply_filters() {
 
   const filtered = allSessions.filter(s => {
     if (s.type === 'lucke') {
+      // Lücken-Einträge: immer zeigen, außer sie wurden einem anderen Benutzer zugeordnet
       const ov = gapOverrides[s.id];
       if (vehicle && ov && ov.user && ov.user !== '–' && ov.user !== vehicle) return false;
       if (cutoff && new Date(s.end).getTime() < cutoff) return false;
