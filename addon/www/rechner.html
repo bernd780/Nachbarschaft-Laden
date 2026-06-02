@@ -427,7 +427,7 @@ function updateVergleich() {
     return;
   }
   // Kein URL-Param → data.json laden
-  fetch('https://nachbarschaft-laden.de/local/nachbarschaft-laden/data.json')
+  fetch('./data.json')
     .then(r => r.json())
     .then(d => {
       const ct = d.ladepreis_aktuell;
