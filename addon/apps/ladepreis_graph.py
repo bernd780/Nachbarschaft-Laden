@@ -335,7 +335,9 @@ class LadepreisGraph(hass.Hass):
         preis     = preis_max - ueberschuss * (preis_max - preis_min)
         return round(max(preis_min, min(preis_max, preis)), 2)
 
-    def render_combined(self, kwargs):
+    def render_combined(self, *args, **kwargs):
+        # Akzeptiert sowohl run_every (self, kwargs) als auch
+        # listen_state (self, entity, attribute, old, new, kwargs).
         self.log("Rendere Smiley-Bild...")
 
         ladepreis = None
