@@ -79,6 +79,63 @@ class LadepreisGraph(hass.Hass):
         self.render_combined({})
         self.run_every(self.render_combined, "now+300", 5 * 60)
         self.listen_state(self.render_combined, self.S_LADEGERAET)
+        self.run_in(self._check_sensors, 8)
+
+    def _check_sensors(self, kwargs):
+        sensors = {
+            "Netzleistung":      self.S_NETZLEISTUNG,
+            "Wallbox-Leistung":  self.S_WALLBOX_LEISTUNG,
+            "Batterie-Leistung": self.S_BATTERIE_LEISTUNG,
+            "Ladegerät-Status":  self.S_LADEGERAET,
+            "Zählerstand":       self.S_ZAEHLER,
+            "Kosten-Integral":   self.S_KOSTEN,
+            "Fahrzeug-Akku":     self.S_FAHRZEUG_AKKU,
+        }
+        optional = {
+            "Batterie-SOC":      self.S_BATTERIE_SOC,
+            "PV morgen":         self.S_PV_MORGEN,
+            "PV übermorgen":     self.S_PV_UEBERMORGEN,
+            "PV in 3 Tagen":     self.S_PV_IN3TAGEN,
+            "PV Erzeugung heute":self.S_PV_HEUTE_KWH,
+            "PV Rest heute":     self.S_PV_REST_HEUTE,
+            "PV Peak-Zeit":      self.S_PV_PEAK_ZEIT,
+            "Session-Energie":   self.S_SESSION_ENE,
+            "Session-Dauer":     self.S_SESSION_DAUER,
+            "Session-SOC":       self.S_SESSION_SOC,
+        }
+        for label, eid in optional.items():
+            if eid:
+                sensors[label] = eid
+
+        warnings = []
+        for label, entity_id in sensors.items():
+            state = self.get_state(entity_id)
+            if state is None:
+                warnings.append({"sensor": entity_id, "label": label, "problem": "nicht gefunden"})
+                self.log(f"Sensor nicht gefunden: {label} ({entity_id})", level="WARNING")
+            elif state in ("unavailable", "unknown"):
+                warnings.append({"sensor": entity_id, "label": label, "problem": state})
+                self.log(f"Sensor {state}: {label} ({entity_id})", level="WARNING")
+
+        status_path = os.path.join(self.WWW_DIR, "sensor_status.json")
+        try:
+            existing = {}
+            if os.path.exists(status_path):
+                with open(status_path) as f:
+                    existing = json.load(f)
+            existing["ladepreisGraph"] = {
+                "checked": datetime.now(timezone.utc).isoformat(),
+                "warnings": warnings,
+            }
+            tmp = status_path + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump(existing, f, ensure_ascii=False, indent=2)
+            os.replace(tmp, status_path)
+        except Exception as e:
+            self.log(f"sensor_status.json schreiben fehlgeschlagen: {e}", level="WARNING")
+
+        if not warnings:
+            self.log("Alle Sensoren verfügbar")
 
     def _get_hausverbrauch(self):
         if self.H_HAUSVERBRAUCH:
@@ -518,9 +575,9 @@ class LadepreisGraph(hass.Hass):
                            "energie_kwh": None, "dauer_s": None, "soc": None,
                            "kosten_session": None}
             try:
-                car = self.get_state(self.S_LADEGERAET)
-                ladevorgang["aktiv"]     = (car == "Charging")
-                ladevorgang["verbunden"] = car in ("Charging", "Complete", "Wait for car")
+                car = (self.get_state(self.S_LADEGERAET) or "").lower()
+                ladevorgang["aktiv"]     = (car == "charging")
+                ladevorgang["verbunden"] = car in ("charging", "complete", "wait_for_car", "wait for car")
 
                 session_state = self._load_session_state()
                 try:
@@ -582,6 +639,7 @@ class LadepreisGraph(hass.Hass):
                     "erzeugung_prozent": pv_erzeugung_prozent,
                 },
                 "ladevorgang": ladevorgang,
+                "referenzpreis_ct": float(self.args.get("referenzpreis_ct", 29)),
             }
             json_path = os.path.join(self.WWW_DIR, "data.json")
             os.makedirs(os.path.dirname(json_path), exist_ok=True)

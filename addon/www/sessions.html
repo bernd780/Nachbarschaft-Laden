@@ -131,11 +131,9 @@ function unlock() {
   footer { text-align: center; font-size: .72rem; color: var(--muted); padding: .5rem 0 2rem; }
 
   @media(max-width:600px) {
-    .col-dauer { display: none; }
     thead th { padding: .4rem .5rem; font-size: .65rem; }
     tbody td { padding: .5rem .5rem; font-size: .8rem; }
     .filter-bar select { flex: 1; min-width: 0; }
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
   }
   .theme-toggle { position: absolute; top: 1rem; right: 1.25rem; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); color: #fff; border-radius: 50%; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
   .theme-toggle:hover { background: rgba(255,255,255,.25); }
@@ -148,6 +146,8 @@ function unlock() {
   [data-theme="dark"] .badge-lucke { background:#261c00; color:#ffd166; border-color:#c87000; }
   .badge-lucke-done { background:var(--green4); color:var(--green2); border:1px solid var(--green3); border-radius:6px; padding:.15rem .55rem; font-size:.75rem; font-weight:600; cursor:pointer; white-space:nowrap; }
   [data-theme="dark"] .badge-lucke-done { background:#0d2318; color:#74c69d; border-color:#2d6a4f; }
+  .badge-pv { display:inline-block; background:#fefce8; color:#ca8a04; border:1px solid #fde047; border-radius:6px; padding:.1rem .4rem; font-size:.7rem; font-weight:600; margin-left:.3rem; vertical-align:middle; }
+  [data-theme="dark"] .badge-pv { background:#422006; color:#facc15; border-color:#a16207; }
   .gap-calc-btn { background:none; border:1px solid var(--amber); color:var(--amber); border-radius:6px; padding:.22rem .7rem; font-size:.78rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap; }
   .gap-calc-btn:hover { background:var(--amber); color:#fff; }
   /* Lücken-Modal */
@@ -156,6 +156,8 @@ function unlock() {
   #gap-modal select, #gap-modal input { appearance:auto; -webkit-appearance:auto; }
   [data-theme="dark"] #gap-modal select,
   [data-theme="dark"] #gap-modal input { background:#1b2c20; color:var(--ink); border-color:var(--border); }
+  [data-theme="dark"] #sensor-warnings { background:#2a1e00; border-color:#c87000; color:#ffd166; }
+  [data-theme="dark"] #sensor-warnings code { color:#ffc107; }
 
   /* Modal */
   #chart-modal {
@@ -216,6 +218,11 @@ function unlock() {
 
 <main>
 
+  <div id="sensor-warnings" style="display:none;background:#fef3cd;border:1px solid #ffc107;border-radius:12px;padding:.9rem 1.2rem;margin-bottom:1rem;font-size:.82rem;color:#664d03;">
+    <strong>⚠ Sensor-Probleme:</strong>
+    <ul id="sensor-warnings-list" style="margin:.4rem 0 0 1.2rem;padding:0;"></ul>
+  </div>
+
   <!-- Statistiken -->
   <div class="card">
     <div class="card-title">Gesamtübersicht</div>
@@ -244,6 +251,11 @@ function unlock() {
         <div class="stat-label">Ø pro Session</div>
         <div class="stat-val" id="stat-avg-kwh">–</div>
         <div class="stat-sub">kWh</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Ersparnis gesamt</div>
+        <div class="stat-val" id="stat-savings" style="color:var(--green2);">–</div>
+        <div class="stat-sub">ggü. <span id="ref-price-display">–</span> ct/kWh Hausstrom</div>
       </div>
       <div class="stat-box" id="stat-gaps-box" style="display:none;">
         <div class="stat-label">⚠ Lücken</div>
@@ -284,11 +296,12 @@ function unlock() {
             <th>Energie</th>
             <th>Kosten</th>
             <th title="Klick für Preisverlauf">ct/kWh ↗</th>
+            <th>Ersparnis</th>
             <th class="col-dauer">Dauer</th>
           </tr>
         </thead>
         <tbody id="sessions-body">
-          <tr><td colspan="7" class="empty">Wird geladen…</td></tr>
+          <tr><td colspan="8" class="empty">Wird geladen…</td></tr>
         </tbody>
       </table>
     </div>
@@ -412,29 +425,41 @@ function saveGapOverrides() {
 /* ── Gap-Zeile rendern ── */
 function renderGapRow(s, i) {
   const ov = gapOverrides[s.id];
+  const hasPrice = ov || s.price_kwh != null;
+  const priceKwh = ov ? ov.price_kwh : s.price_kwh;
+  const priceEur = ov ? ov.price_eur : s.price_eur;
+  const user = ov ? ov.user : (s.user || '–');
   const zaehlerHint = s.eto_gap_start != null
     ? `Zähler ${(+s.eto_gap_start).toFixed(1)} → ${(+s.eto_gap_end).toFixed(1)} kWh`
     : '';
-  if (ov) {
-    // bereits manuell berechnet
-    const ctLabel = ov.price_kwh != null ? (ov.price_kwh * 100).toFixed(1) + ' ct' : '–';
+  const timeCol = s.start && s.start !== s.end
+    ? `${fmt_time(s.start)} – ${fmt_time(s.end)}`
+    : fmt_time(s.end);
+  const isPV = s.evcc_modus && ['pv','minpv','min+pv'].includes((s.evcc_modus || '').toLowerCase());
+  const pvBadge = isPV ? ` <span class="badge-pv" title="Überschuss-Laden (${s.evcc_modus})">☀</span>` : '';
+  if (hasPrice) {
+    const ctLabel = priceKwh != null ? (priceKwh * 100).toFixed(1) + ' ct' : '–';
+    const dauerCol = s.duration_s ? fmt_duration(s.duration_s) : 'Lücke';
+    const savingsData = ov ? {ref_price_kwh: s.ref_price_kwh, savings_eur: null} : s;
     return `<tr class="gap-row">
       <td>${fmt_date(s.end)}</td>
-      <td style="font-size:.8rem;color:var(--muted);">Lücke erkannt</td>
-      <td><span class="vehicle-pill">${ov.user !== '–' ? ov.user : '–'}</span></td>
+      <td>${timeCol}</td>
+      <td><span class="vehicle-pill">${user !== '–' ? user : '–'}</span></td>
       <td><strong>${(+s.energy_kwh).toFixed(2)}</strong> kWh</td>
-      <td>${ov.price_eur != null ? (+ov.price_eur).toFixed(2) + ' €' : '–'}</td>
-      <td><span class="badge-lucke-done" onclick="openGapCalc(lastSorted[${i}])" title="Berechnung ändern">✓ ${ctLabel}</span></td>
-      <td class="col-dauer" style="color:var(--muted);font-size:.78rem;">Lücke</td>
+      <td>${priceEur != null ? (+priceEur).toFixed(2) + ' €' : '–'}</td>
+      <td><span class="badge-lucke-done" onclick="openGapCalc(lastSorted[${i}])" title="Berechnung ändern">✓ ${ctLabel}</span>${pvBadge}</td>
+      <td class="col-ersparnis">${fmt_savings(s)}</td>
+      <td class="col-dauer">${dauerCol}</td>
     </tr>`;
   }
   return `<tr class="gap-row">
     <td>${fmt_date(s.end)}</td>
-    <td style="font-size:.8rem;color:var(--muted);" title="${zaehlerHint}">Lücke erkannt</td>
+    <td title="${zaehlerHint}">${timeCol}</td>
     <td><span class="badge-lucke">⚠ Nicht erfasst</span></td>
     <td><strong>${(+s.energy_kwh).toFixed(2)}</strong> kWh</td>
     <td style="color:var(--muted);">–</td>
     <td><button class="gap-calc-btn" onclick="openGapCalc(lastSorted[${i}])">Berechnen</button></td>
+    <td class="col-ersparnis" style="color:var(--muted);">–</td>
     <td class="col-dauer" style="color:var(--muted);font-size:.78rem;">Lücke</td>
   </tr>`;
 }
@@ -497,6 +522,29 @@ function saveGapCalc() {
   saveGapOverrides();
   closeGapCalc();
   apply_filters();
+}
+
+/* ── Referenzpreis & Ersparnis ── */
+let currentRefPriceCt = null;
+
+function fmt_savings(s) {
+  if (s.savings_eur != null) {
+    const v = +s.savings_eur;
+    if (Math.abs(v) < 0.005) return '0,00 €';
+    const cls = v > 0 ? 'color:var(--green2)' : 'color:var(--red)';
+    return `<span style="${cls};font-weight:600;">${v > 0 ? '+' : ''}${v.toFixed(2).replace('.', ',')} €</span>`;
+  }
+  return '<span style="color:var(--muted);">–</span>';
+}
+function fmt_savings_gap(s, ov) {
+  if (!ov || ov.price_kwh == null || !s.energy_kwh) return '–';
+  const ref = s.ref_price_kwh != null ? s.ref_price_kwh
+            : currentRefPriceCt != null ? currentRefPriceCt / 100 : null;
+  if (ref == null) return '–';
+  const diff = (ref - ov.price_kwh) * (+s.energy_kwh);
+  if (Math.abs(diff) < 0.005) return '0,00 €';
+  const cls = diff > 0 ? 'color:var(--green2)' : 'color:var(--red)';
+  return `<span style="${cls};font-weight:600;">${diff > 0 ? '+' : ''}${diff.toFixed(2).replace('.', ',')} €</span>`;
 }
 
 /* ── Hilfsfunktionen ── */
@@ -635,7 +683,7 @@ document.addEventListener('keydown', e => {
 function render(sessions) {
   const tbody = document.getElementById('sessions-body');
   if (!sessions.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty">Keine Sessions gefunden</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">Keine Sessions gefunden</td></tr>';
     return;
   }
 
@@ -644,6 +692,8 @@ function render(sessions) {
   tbody.innerHTML = sorted.map((s, i) => {
     if (s.type === 'lucke') return renderGapRow(s, i);
     const hasChart = s.price_samples && s.price_samples.length >= 2;
+    const isPV = s.evcc_modus && ['pv','minpv','min+pv'].includes(s.evcc_modus.toLowerCase());
+    const pvBadge = isPV ? ` <span class="badge-pv" title="Überschuss-Laden (${s.evcc_modus})">☀</span>` : '';
     const priceLabel = s.price_kwh != null
       ? `${(s.price_kwh * 100).toFixed(1)} ct`
       : '–';
@@ -652,7 +702,7 @@ function render(sessions) {
               ${hasChart ? `onclick="openChart(lastSorted[${i}])"` : ''}
               title="${hasChart ? 'Preisverlauf anzeigen' : ''}">
            ${priceLabel}
-         </span>`
+         </span>${pvBadge}`
       : '–';
 
     return `<tr>
@@ -662,6 +712,7 @@ function render(sessions) {
       <td><strong>${s.energy_kwh.toFixed(2)}</strong> kWh</td>
       <td>${s.price_eur != null ? s.price_eur.toFixed(2) + ' €' : '–'}</td>
       <td>${priceCell}</td>
+      <td class="col-ersparnis">${fmt_savings(s)}</td>
       <td class="col-dauer">${fmt_duration(s.duration_s)}</td>
     </tr>`;
   }).join('');
@@ -678,14 +729,22 @@ function update_stats(sessions) {
   const prices = regular.filter(s => s.price_kwh != null).map(s => s.price_kwh);
   const avgP   = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : null;
 
+  let totalSavings = 0;
+  regular.forEach(s => {
+    if (s.savings_eur != null) totalSavings += +s.savings_eur;
+  });
+
   document.getElementById('stat-count').textContent     = count;
   document.getElementById('stat-energy').textContent    = energy.toFixed(1);
   document.getElementById('stat-cost').textContent      = cost.toFixed(2) + ' €';
   document.getElementById('stat-avg-price').textContent = avgP != null ? (avgP * 100).toFixed(1) + ' ct' : '–';
   document.getElementById('stat-avg-kwh').textContent   = count ? (energy / count).toFixed(1) : '–';
+  const savEl = document.getElementById('stat-savings');
+  savEl.textContent = (totalSavings > 0 ? '+' : '') + totalSavings.toFixed(2).replace('.', ',') + ' €';
+  savEl.style.color = totalSavings >= 0 ? 'var(--green2)' : 'var(--red)';
 
   // Ungelöste Lücken anzeigen
-  const unresolved = gaps.filter(s => !gapOverrides[s.id]);
+  const unresolved = gaps.filter(s => !gapOverrides[s.id] && s.price_kwh == null);
   const gapBox = document.getElementById('stat-gaps-box');
   if (unresolved.length > 0) {
     const gapKwh = unresolved.reduce((a, s) => a + (+s.energy_kwh || 0), 0);
@@ -790,9 +849,10 @@ async function load() {
   loadGapOverrides();
   try {
     const ts = Date.now();
-    const [r, rb] = await Promise.all([
+    const [r, rb, rd] = await Promise.all([
       fetch(SESSIONS_URL + '?_=' + ts),
-      fetch(BALANCES_URL + '?_=' + ts).catch(() => null)
+      fetch(BALANCES_URL + '?_=' + ts).catch(() => null),
+      fetch('./data.json?_=' + ts).catch(() => null)
     ]);
     if (!r.ok) throw new Error(`HTTP ${r.status} – Datei nicht erreichbar`);
     const text = await r.text();
@@ -802,6 +862,15 @@ async function load() {
 
     if (rb && rb.ok) {
       try { allBalances = await rb.json(); } catch(e) { allBalances = {}; }
+    }
+    if (rd && rd.ok) {
+      try {
+        const dj = await rd.json();
+        if (dj.referenzpreis_ct != null) {
+          currentRefPriceCt = dj.referenzpreis_ct;
+          document.getElementById('ref-price-display').textContent = (+dj.referenzpreis_ct).toFixed(0);
+        }
+      } catch(e) {}
     }
 
     const vehicles = [...new Set(allSessions.map(s => s.user || s.rfid).filter(Boolean))];
@@ -815,7 +884,7 @@ async function load() {
     apply_filters();
   } catch(e) {
     document.getElementById('sessions-body').innerHTML =
-      `<tr><td colspan="7" class="empty">
+      `<tr><td colspan="8" class="empty">
         ⚠️ Fehler beim Laden der Sessions<br>
         <small style="color:#c62828">${e.message}</small><br><br>
         <small>Prüfe ob <code>sessions.json</code> unter<br>
@@ -831,6 +900,25 @@ async function load() {
 document.getElementById('filter-search').addEventListener('input', apply_filters);
 
 load();
+
+(async function loadSensorWarnings() {
+  try {
+    const r = await fetch('./sensor_status.json?_=' + Date.now());
+    if (!r.ok) return;
+    const data = await r.json();
+    const all = [
+      ...(data.ladepreisGraph?.warnings || []),
+      ...(data.ladeSession?.warnings || [])
+    ];
+    const unique = [...new Map(all.map(w => [w.sensor, w])).values()];
+    if (!unique.length) return;
+    const ul = document.getElementById('sensor-warnings-list');
+    ul.innerHTML = unique.map(w =>
+      `<li><code>${w.sensor}</code> – ${w.label}: <strong>${w.problem}</strong></li>`
+    ).join('');
+    document.getElementById('sensor-warnings').style.display = '';
+  } catch(e) {}
+})();
 </script>
 </body>
 </html>

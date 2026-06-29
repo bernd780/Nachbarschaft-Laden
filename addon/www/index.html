@@ -123,6 +123,8 @@
   .nav-links-row .nl-title { font-weight: 600; color: var(--ink); line-height: 1.2; }
   .nav-links-row .nl-sub   { font-size: .75rem; color: var(--muted); margin-top: .1rem; }
   [data-theme="dark"] .nav-links-row a { background: var(--card); color: var(--ink); }
+  [data-theme="dark"] #sensor-warnings { background:#2a1e00; border-color:#c87000; color:#ffd166; }
+  [data-theme="dark"] #sensor-warnings code { color:#ffc107; }
 
   /* Accordion */
   .accordion-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,.04); overflow: hidden; }
@@ -332,6 +334,11 @@
 </header>
 
 <main>
+
+  <div id="sensor-warnings" style="display:none;background:#fef3cd;border:1px solid #ffc107;border-radius:12px;padding:.9rem 1.2rem;margin-bottom:1rem;font-size:.82rem;color:#664d03;">
+    <strong>⚠ Sensor-Probleme:</strong>
+    <ul id="sensor-warnings-list" style="margin:.4rem 0 0 1.2rem;padding:0;"></ul>
+  </div>
 
   <!-- Aktueller Preis -->
   <div class="card">
@@ -1265,6 +1272,25 @@ async function loadAll() {
 
 loadAll();
 setInterval(loadAll, REFRESH);
+
+(async function loadSensorWarnings() {
+  try {
+    const r = await fetch('./sensor_status.json?_=' + Date.now());
+    if (!r.ok) return;
+    const data = await r.json();
+    const all = [
+      ...(data.ladepreisGraph?.warnings || []),
+      ...(data.ladeSession?.warnings || [])
+    ];
+    const unique = [...new Map(all.map(w => [w.sensor, w])).values()];
+    if (!unique.length) return;
+    const ul = document.getElementById('sensor-warnings-list');
+    ul.innerHTML = unique.map(w =>
+      `<li><code>${w.sensor}</code> – ${w.label}: <strong>${w.problem}</strong></li>`
+    ).join('');
+    document.getElementById('sensor-warnings').style.display = '';
+  } catch(e) {}
+})();
 </script>
 </body>
 </html>

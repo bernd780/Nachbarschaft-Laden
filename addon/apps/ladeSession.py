@@ -30,6 +30,8 @@ class LadeSession(hass.Hass):
         self.PREIS_MARGE         = float(a.get("preis_marge_ct",               6.0))
         self.PREIS_NETZBEZUG     = float(a.get("preis_netzbezug_ct",           30.0))
         self.PREIS_ZIELLEISTUNG  = float(a.get("preis_zielleistung_kw",        11.0))
+        self.REFERENZPREIS_CT    = float(a.get("referenzpreis_ct",            29.0))
+        self.S_EVCC_MODUS        = a.get("sensor_evcc_modus",               "") or None
         self.WWW_DIR         = a.get("www_dir",                   "/homeassistant/www/nachbarschaft-laden")
 
         self.SESSION_FILE  = os.path.join(self.WWW_DIR, "sessions.json")
@@ -80,6 +82,9 @@ class LadeSession(hass.Hass):
 
         self.listen_state(self.on_car_change, self.S_LADEGERAET)
 
+        if self.S_EVCC_MODUS:
+            self.listen_state(self._on_evcc_mode_change, self.S_EVCC_MODUS)
+
         for entity_id in self.ZAHLUNGS_HELPERS.values():
             self.listen_state(self._on_payment_change, entity_id)
         self._init_balances()
@@ -90,16 +95,83 @@ class LadeSession(hass.Hass):
         # HASS-Verbindung stabil ist)
         self.run_in(self._check_charging_at_startup, 5)
         self.run_in(self._check_gap_on_startup,      12)
+        self.run_in(self._check_sensors,              8)
+
+    def _check_sensors(self, kwargs):
+        sensors = {
+            "Ladegerät-Status":    self.S_LADEGERAET,
+            "Zählerstand":         self.S_ZAEHLER,
+            "Kosten-Integral":     self.S_KOSTEN,
+            "RFID-Karte":          self.S_RFID,
+            "Netzleistung":        self.S_NETZLEISTUNG,
+            "Wallbox-Leistung":    self.S_WALLBOX_LEISTUNG,
+            "Batterie-Leistung":   self.S_BATTERIE_LEISTUNG,
+        }
+        if self.S_SESSION_SOC:
+            sensors["Session-SOC"] = self.S_SESSION_SOC
+        if self.S_EVCC_MODUS:
+            sensors["evcc-Modus"] = self.S_EVCC_MODUS
+
+        warnings = []
+        for label, entity_id in sensors.items():
+            state = self.get_state(entity_id)
+            if state is None:
+                warnings.append({"sensor": entity_id, "label": label, "problem": "nicht gefunden"})
+                self.log(f"Sensor nicht gefunden: {label} ({entity_id})", level="WARNING")
+            elif state in ("unavailable", "unknown"):
+                warnings.append({"sensor": entity_id, "label": label, "problem": state})
+                self.log(f"Sensor {state}: {label} ({entity_id})", level="WARNING")
+
+        status_path = os.path.join(self.WWW_DIR, "sensor_status.json")
+        try:
+            existing = {}
+            if os.path.exists(status_path):
+                with open(status_path) as f:
+                    existing = json.load(f)
+            existing["ladeSession"] = {
+                "checked": datetime.now(timezone.utc).isoformat(),
+                "warnings": warnings,
+            }
+            tmp = status_path + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump(existing, f, ensure_ascii=False, indent=2)
+            os.replace(tmp, status_path)
+        except Exception as e:
+            self.log(f"sensor_status.json schreiben fehlgeschlagen: {e}", level="WARNING")
+
+        if not warnings:
+            self.log("Alle Sensoren verfügbar")
+
+    def _on_evcc_mode_change(self, entity, attribute, old, new, kwargs):
+        if not self._session_active:
+            return
+        if old in (None, "unavailable", "unknown") or new in (None, "unavailable", "unknown"):
+            return
+        old_pv = old.lower() in ("pv", "minpv", "min+pv")
+        new_pv = new.lower() in ("pv", "minpv", "min+pv")
+        if old_pv == new_pv:
+            return
+        self.log(
+            f"evcc-Modus gewechselt: {old} → {new} – "
+            f"beende laufende Session und starte neue"
+        )
+        if self._end_timer:
+            self.cancel_timer(self._end_timer)
+            self._end_timer = None
+        self._session_end_handler({})
+        self._session_start_handler()
 
     def on_car_change(self, entity, attribute, old, new, kwargs):
         self.log(f"Ladegerät-Status: {old} → {new}")
-        if new == "Charging" and not self._session_active:
+        old_l = (old or "").lower()
+        new_l = (new or "").lower()
+        if new_l == "charging" and not self._session_active:
             self._session_start_handler()
-        elif new == "Charging" and self._session_active and self._end_timer:
+        elif new_l == "charging" and self._session_active and self._end_timer:
             self.cancel_timer(self._end_timer)
             self._end_timer = None
             self.log("Schnelle Wiederverbindung – Session wird fortgesetzt")
-        elif old == "Charging" and new != "Charging" and self._session_active:
+        elif old_l == "charging" and new_l != "charging" and self._session_active:
             self._end_timer = self.run_in(self._session_end_handler, 10)
 
     def _session_start_handler(self):
@@ -189,6 +261,9 @@ class LadeSession(hass.Hass):
 
         user = self._rfid_to_user(rfid) if rfid else "–"
 
+        ref_kwh = round(self.REFERENZPREIS_CT / 100, 4)
+        savings = round((ref_kwh - price_kwh) * energy, 2) if price_kwh is not None else None
+
         session = {
             "id":            end_time,
             "start":         self._session_start or end_time,
@@ -198,10 +273,13 @@ class LadeSession(hass.Hass):
             "energy_kwh":    energy,
             "price_eur":     price_eur,
             "price_kwh":     price_kwh,
+            "ref_price_kwh": ref_kwh,
+            "savings_eur":   savings,
+            "evcc_modus":    (self.get_state(self.S_EVCC_MODUS) or "").lower() if self.S_EVCC_MODUS else None,
             "duration_s":    int(duration) if duration else 0,
             "soc_end":       round(soc, 0) if soc else None,
             "price_samples": self._price_samples,
-            "eto_end":       eto,   # absoluter Zählerstand am Ende (für Lückenerkennung)
+            "eto_end":       eto,
         }
 
         self.log(
@@ -234,14 +312,14 @@ class LadeSession(hass.Hass):
           Session aktiv (restore) + Fahrzeug lädt nicht mehr → beenden
           Keine Session aktiv + Fahrzeug lädt bereits → nachträglich starten
         """
-        state = self.get_state(self.S_LADEGERAET)
-        if self._session_active and state != "Charging":
+        state = (self.get_state(self.S_LADEGERAET) or "").lower()
+        if self._session_active and state != "charging":
             self.log(
                 "Wiederhergestellte Session: Fahrzeug lädt nicht mehr – "
                 "beende Session nach Neustart"
             )
             self._session_end_handler({})
-        elif not self._session_active and state == "Charging":
+        elif not self._session_active and state == "charging":
             self.log(
                 "Fahrzeug lädt bereits beim Start – "
                 "Session wird nachträglich gestartet"
@@ -356,8 +434,17 @@ class LadeSession(hass.Hass):
     def _rfid_to_user(self, rfid):
         return self.RFID_BENUTZER.get(rfid, rfid)
 
+    def _ist_ueberschussladen(self):
+        if not self.S_EVCC_MODUS:
+            return False
+        modus = (self.get_state(self.S_EVCC_MODUS) or "").lower()
+        return modus in ("pv", "minpv", "min+pv")
+
     def _berechne_ladepreis(self):
         """Dynamischer Ladepreis basierend auf PV-Überschuss (ct/kWh)."""
+        if self._ist_ueberschussladen():
+            return round(self.PREIS_EINSPEISUNG, 2)
+
         zaehler_w = self._float_safe(self.S_NETZLEISTUNG)
         wallbox_w = self._float_safe(self.S_WALLBOX_LEISTUNG)
         akku_w    = self._float_safe(self.S_BATTERIE_LEISTUNG)

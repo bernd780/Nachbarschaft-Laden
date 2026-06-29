@@ -74,6 +74,7 @@ PREIS_EINSPEISUNG=$(jq -r '.preis_einspeiseverguetung_ct'   "$OPTS")
 PREIS_MARGE=$(jq -r '.preis_marge_ct'                       "$OPTS")
 PREIS_NETZBEZUG=$(jq -r '.preis_netzbezug_ct'               "$OPTS")
 PREIS_ZIELLEISTUNG=$(jq -r '.preis_zielleistung_kw'         "$OPTS")
+REFERENZPREIS=$(jq -r '.referenzpreis_ct // 29'              "$OPTS")
 
 # PV-Prognose
 SENSOR_PV_MORGEN=$(jq -r '.sensor_pv_morgen'                "$OPTS")
@@ -95,6 +96,7 @@ SENSOR_KOSTEN=$(jq -r '.sensor_kosten_integral'             "$OPTS")
 SENSOR_RFID=$(jq -r '.sensor_rfid_karte'                    "$OPTS")
 
 # evcc (optional)
+SENSOR_EVCC_MODUS=$(jq -r '.sensor_evcc_modus'              "$OPTS")
 SENSOR_SESSION_ENERGIE=$(jq -r '.sensor_session_energie'    "$OPTS")
 SENSOR_SESSION_DAUER=$(jq -r '.sensor_session_dauer'        "$OPTS")
 SENSOR_SESSION_SOC=$(jq -r '.sensor_session_soc'            "$OPTS")
@@ -154,6 +156,7 @@ ladepreis_graph:
   helper_hausverbrauch: "$HELPER_HAUS"
   helper_ladeziel_soc: "$HELPER_LADEZIEL"
   qr_code_url: "$QR_CODE_URL"
+  referenzpreis_ct: $REFERENZPREIS
   www_dir: "$WWW"
 
 ladeSession:
@@ -171,6 +174,8 @@ ladeSession:
   sensor_kosten_integral: "$SENSOR_KOSTEN"
   sensor_rfid_karte: "$SENSOR_RFID"
   sensor_session_soc: "$SENSOR_SESSION_SOC"
+  sensor_evcc_modus: "$SENSOR_EVCC_MODUS"
+  referenzpreis_ct: $REFERENZPREIS
   www_dir: "$WWW"
   rfid_benutzer:
 $(jq -r '

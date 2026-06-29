@@ -12,11 +12,11 @@ template:
         unit_of_measurement: "€/h"
         state_class: measurement
         state: >
-          {% set w = states('sensor.go_echarger_XXXXXX_nrg_12') | float(0) %}
+          {% set w = states('sensor.go_echarger_072750_nrg_12') | float(0) %}
           {% set ct = states('sensor.expgldurchschnitt_ema_asymalpha') | float(0) %}
           {{ ((w / 1000) * ct / 100) | round(6) }}
 
 utility_meter:
   go_echarger_kosten_session:
     name: "go_echarger_kosten_session"
-    source: sensor.go_echarger_kosten_integral_2
+    source: sensor.go_echarger_kosten_integral
