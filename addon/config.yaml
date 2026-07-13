@@ -60,7 +60,7 @@ options:
   sensor_fahrzeug_akku: "sensor.mein_fahrzeug_battery"
   sensor_ladegeraet_status: "sensor.go_echarger_XXXXXX_car"
   sensor_zaehlerstand_kwh: "sensor.go_echarger_XXXXXX_eto"
-  sensor_kosten_integral: "sensor.go_echarger_kosten_integral_2"
+  sensor_kosten_integral: "sensor.go_echarger_kosten_integral"
   sensor_rfid_karte: "select.go_echarger_XXXXXX_trx"
 
   # evcc-Sensoren (optional – nur wenn evcc installiert ist)
