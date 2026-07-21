@@ -291,6 +291,7 @@ class LadeSession(hass.Hass):
         )
 
         self._save_session(session)
+        self._append_statistics(session)
         if price_eur and user in self.ZAHLUNGS_HELPERS:
             self._add_to_balance(user, price_eur)
         self._reset()
@@ -592,3 +593,58 @@ class LadeSession(hass.Hass):
             self.log(f"Sessions gespeichert: {len(sessions)} total")
         except Exception as e:
             self.log(f"Sessions speichern fehlgeschlagen: {e}", level="ERROR")
+
+    # ── Long-Term Statistics ─────────────────────────────────────────────────
+
+    STATS_MAX_DAYS = 365
+
+    def _append_statistics(self, session):
+        """Hängt eine abgeschlossene Session als Zeile an statistics.jsonl an.
+
+        Format: eine JSON-Zeile pro Ereignis, maschinenlesbar für
+        Grafana (Infinity Plugin), InfluxDB-Import, Pandas, etc.
+        """
+        stats_path = os.path.join(self.WWW_DIR, "statistics.jsonl")
+        try:
+            duration_min = round(session.get("duration_s", 0) / 60, 1)
+            entry = {
+                "ts":           session.get("end") or session.get("start"),
+                "ts_start":     session.get("start"),
+                "typ":          "session",
+                "benutzer":     session.get("user", "–"),
+                "energie_kwh":  session.get("energy_kwh"),
+                "preis_eur":    session.get("price_eur"),
+                "preis_kwh":    round(session["price_kwh"] * 100, 2) if session.get("price_kwh") else None,
+                "ersparnis_eur": session.get("savings_eur"),
+                "evcc_modus":   session.get("evcc_modus"),
+                "dauer_min":    duration_min,
+                "soc_end":      session.get("soc_end"),
+                "lucke":        session.get("type") == "lucke",
+            }
+            with open(stats_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            self._trim_statistics(stats_path)
+        except Exception as e:
+            self.log(f"Statistics schreiben fehlgeschlagen: {e}", level="WARNING")
+
+    def _trim_statistics(self, path):
+        """Entfernt Einträge die älter als STATS_MAX_DAYS sind."""
+        try:
+            cutoff = (datetime.now(timezone.utc)
+                      - __import__("datetime").timedelta(days=self.STATS_MAX_DAYS)).isoformat()
+            lines = []
+            with open(path, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        ts = json.loads(line).get("ts", "")
+                        if ts >= cutoff:
+                            lines.append(line)
+                    except Exception:
+                        pass
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("\n".join(lines) + "\n" if lines else "")
+        except Exception:
+            pass

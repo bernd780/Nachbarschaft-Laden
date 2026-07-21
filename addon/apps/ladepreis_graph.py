@@ -669,6 +669,7 @@ class LadepreisGraph(hass.Hass):
                 json.dump(data, f)
             self.log(f"JSON ok: aktuell={aktuell}, peak_avg={peak_avg}, vortag_avg={vortag_avg}")
             self._write_health_snapshot(surplus_m, surplus_u, surplus_3, ladepreis, ladevorgang, end_dt)
+            self._append_price_statistics(ladepreis, ladevorgang, surplus_m, end_dt)
         except Exception as e:
             self.log(f"JSON-Fehler: {e}", level="ERROR")
 
@@ -799,3 +800,56 @@ class LadepreisGraph(hass.Hass):
 
         except Exception as e:
             self.log(f"Health-Snapshot fehlgeschlagen: {e}", level="WARNING")
+
+    # ── Long-Term Statistics ─────────────────────────────────────────────────
+
+    STATS_MAX_DAYS = 365
+
+    def _append_price_statistics(self, ladepreis, ladevorgang, surplus_m, ts):
+        """Schreibt alle 5 Min einen Preis-Tick in statistics.jsonl.
+
+        Eine Zeile pro Ereignis, maschinenlesbar für Grafana (Infinity Plugin),
+        InfluxDB-Import, Pandas, etc. Retention: 365 Tage.
+        """
+        stats_path = os.path.join(self.WWW_DIR, "statistics.jsonl")
+        try:
+            entry = {
+                "ts":               ts.isoformat(),
+                "typ":              "preis",
+                "ladepreis_ct":     round(ladepreis, 2) if ladepreis is not None else None,
+                "netzleistung_w":   self._float_safe(self.S_NETZLEISTUNG),
+                "wallbox_w":        self._float_safe(self.S_WALLBOX_LEISTUNG),
+                "batterie_w":       self._float_safe(self.S_BATTERIE_LEISTUNG),
+                "surplus_morgen_kwh": round(max(0.0, surplus_m), 1),
+                "laden_aktiv":      ladevorgang.get("aktiv", False),
+                "laden_kwh":        ladevorgang.get("energie_kwh"),
+            }
+            with open(stats_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            self._trim_statistics(stats_path)
+        except Exception as e:
+            self.log(f"Price-Statistics schreiben fehlgeschlagen: {e}", level="WARNING")
+
+    def _trim_statistics(self, path):
+        """Entfernt Einträge die älter als STATS_MAX_DAYS sind (max. täglich)."""
+        try:
+            # Nur kürzen wenn Datei > 50 MB oder stündlich (nicht bei jedem Tick)
+            if os.path.getsize(path) < 50 * 1024 * 1024:
+                return
+            cutoff = (datetime.now(timezone.utc)
+                      - timedelta(days=self.STATS_MAX_DAYS)).isoformat()
+            kept = []
+            with open(path, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        if json.loads(line).get("ts", "") >= cutoff:
+                            kept.append(line)
+                    except Exception:
+                        pass
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("\n".join(kept) + "\n" if kept else "")
+        except Exception:
+            pass
