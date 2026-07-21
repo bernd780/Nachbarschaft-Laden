@@ -215,11 +215,18 @@ class LadeSession(hass.Hass):
         user = self._rfid_to_user(self._rfid_at_start) if self._rfid_at_start else "–"
         self.log(f"Session gestartet: RFID={self._rfid_at_start} ({user}) um {self._session_start}")
 
+    PRICE_SAMPLE_MIN_S = 60  # max. 1 Preissample pro Minute
+
     def _on_price_change(self, entity, attribute, old, new, kwargs):
         if self._session_active and new not in (None, "unknown", "unavailable"):
             try:
+                now = datetime.now(timezone.utc)
+                if self._price_samples:
+                    last_t = datetime.fromisoformat(self._price_samples[-1]["t"])
+                    if (now - last_t).total_seconds() < self.PRICE_SAMPLE_MIN_S:
+                        return
                 self._price_samples.append({
-                    "t": datetime.now(timezone.utc).isoformat(),
+                    "t": now.isoformat(),
                     "v": round(self._berechne_ladepreis(), 1)
                 })
                 self._save_state()
@@ -483,13 +490,7 @@ class LadeSession(hass.Hass):
             return default
 
     def _float(self, entity_id):
-        try:
-            val = self.get_state(entity_id)
-            if val in (None, "unknown", "unavailable"):
-                return 0.0
-            return float(val)
-        except Exception:
-            return 0.0
+        return self._float_safe(entity_id, 0.0)
 
     def _save_state(self):
         state = {
@@ -627,7 +628,7 @@ class LadeSession(hass.Hass):
                 "benutzer":     session.get("user", "–"),
                 "energie_kwh":  session.get("energy_kwh"),
                 "preis_eur":    session.get("price_eur"),
-                "preis_kwh":    round(session["price_kwh"] * 100, 2) if session.get("price_kwh") else None,
+                "preis_ct":     round(session["price_kwh"] * 100, 2) if session.get("price_kwh") else None,
                 "ersparnis_eur": session.get("savings_eur"),
                 "evcc_modus":   session.get("evcc_modus"),
                 "dauer_min":    duration_min,

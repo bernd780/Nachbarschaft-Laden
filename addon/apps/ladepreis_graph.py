@@ -81,7 +81,10 @@ class LadepreisGraph(hass.Hass):
         self.render_combined({})
         self.run_every(self.render_combined, "now+300", 5 * 60)
         self.listen_state(self.render_combined, self.S_LADEGERAET)
-        self.listen_state(self._on_surplus_helper_change, "input_number.nl_surplus_morgen")
+        for helper in ("input_number.nl_surplus_morgen",
+                       "input_number.nl_surplus_uebermorgen",
+                       "input_number.nl_surplus_in3tagen"):
+            self.listen_state(self._on_surplus_helper_change, helper)
         self.run_in(self._check_sensors, 8)
 
     def _check_sensors(self, kwargs):
@@ -248,7 +251,12 @@ class LadepreisGraph(hass.Hass):
             bbox = [cx-mx, cy-int(r*0.10), cx+mx, cy+int(r*0.65)]
             draw.arc(bbox, start=0, end=180, fill=(0,0,0), width=lw)
 
+    _font_cache = {}
+
     def _load_font(self, bold, size):
+        cached = self._font_cache.get((bold, size))
+        if cached is not None:
+            return cached
         from PIL import ImageFont
         font_file = "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -261,7 +269,9 @@ class LadepreisGraph(hass.Hass):
         ]
         for path in candidates:
             try:
-                return ImageFont.truetype(path, size)
+                font = ImageFont.truetype(path, size)
+                self._font_cache[(bold, size)] = font
+                return font
             except Exception:
                 continue
         return ImageFont.load_default()
