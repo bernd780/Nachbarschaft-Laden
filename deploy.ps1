@@ -39,8 +39,7 @@ if ($target -eq "addon") {
     }
 
     Write-Host "  Supervisor Store reload..." -ForegroundColor Cyan
-    $storeResult = & ssh "${HA_USER}@${HA_HOST}" 'curl -sf -X POST -H "Authorization: Bearer $SUPERVISOR_TOKEN" http://supervisor/store/reload'
-    if ($LASTEXITCODE -ne 0) { Write-Warning "store/reload fehlgeschlagen: $storeResult" }
+    RunSsh "ha store reload"
 
     $info    = & ssh "${HA_USER}@${HA_HOST}" "ha apps info local_nachbarschaft_laden 2>/dev/null"
     $version = ($info | Select-String 'version:'        | Select-Object -First 1).Line.Split(':')[1].Trim()
