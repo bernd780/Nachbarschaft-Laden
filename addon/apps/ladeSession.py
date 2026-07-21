@@ -110,6 +110,13 @@ class LadeSession(hass.Hass):
             pass
         self.run_in(self._check_restore, 3)
 
+        # Lücken-Übernahme: nur über HA-Helfer auslösbar (Admin-Zugriff,
+        # nicht über die öffentliche Website).
+        try:
+            self.listen_state(self._on_luecken_uebernehmen, "input_button.nl_luecken_uebernehmen")
+        except Exception:
+            pass
+
     def _check_sensors(self, kwargs):
         sensors = {
             "Ladegerät-Status":    self.S_LADEGERAET,
@@ -761,3 +768,75 @@ class LadeSession(hass.Hass):
         except Exception as e:
             self.log(f"Restore fehlgeschlagen (nichts überschrieben ab Fehlerdatei): {e}",
                      level="ERROR")
+
+    # ── Lücken-Übernahme (Admin) ─────────────────────────────────────────────
+
+    LUECKEN_UEBERNAHME_USER = "Unbestimmt"
+
+    def _on_luecken_uebernehmen(self, entity, attribute, old, new, kwargs):
+        """Übernimmt alle offenen Zähler-Lücken permanent als reguläre Sessions,
+        mit einem in input_number.nl_luecken_preis_ct festgelegten Preis.
+
+        Nur über den HA-Helfer input_button.nl_luecken_uebernehmen auslösbar –
+        bewusst kein Bedienelement auf der öffentlichen Website.
+        """
+        if new in (None, "unknown", "unavailable"):
+            return
+        price_ct = self._float_safe("input_number.nl_luecken_preis_ct", default=0.0)
+        if price_ct <= 0:
+            self.log(
+                "Lücken-Übernahme abgebrochen: input_number.nl_luecken_preis_ct "
+                "ist nicht gesetzt oder 0", level="WARNING")
+            return
+        price_kwh = round(price_ct / 100, 4)
+        ref_kwh   = round(self.REFERENZPREIS_CT / 100, 4)
+
+        self._create_backup(trigger="vor-luecken-uebernahme")
+
+        try:
+            with open(self.SESSION_FILE) as f:
+                sessions = json.load(f)
+        except Exception as e:
+            self.log(f"Lücken-Übernahme fehlgeschlagen (Sessions lesen): {e}", level="ERROR")
+            return
+
+        count = 0
+        total_eur = 0.0
+        user = self.LUECKEN_UEBERNAHME_USER
+        for s in sessions:
+            if s.get("type") != "lucke":
+                continue
+            energy = float(s.get("energy_kwh") or 0)
+            price_eur = round(energy * price_kwh, 2)
+            s.pop("type", None)
+            s["user"]        = user
+            s["price_kwh"]   = price_kwh
+            s["price_eur"]   = price_eur
+            s["ref_price_kwh"] = ref_kwh
+            s["savings_eur"] = round((ref_kwh - price_kwh) * energy, 2)
+            s["eto_end"]     = s.get("eto_gap_end")
+            s.pop("note", None)
+            count += 1
+            total_eur += price_eur
+
+            self._append_statistics(s)
+            if user in self.ZAHLUNGS_HELPERS:
+                self._add_to_balance(user, price_eur)
+
+        if count == 0:
+            self.log("Lücken-Übernahme: keine offenen Lücken gefunden")
+            return
+
+        tmp = self.SESSION_FILE + ".tmp"
+        try:
+            with open(tmp, "w") as f:
+                json.dump(sessions, f, indent=2, ensure_ascii=False)
+            os.replace(tmp, self.SESSION_FILE)
+        except Exception as e:
+            self.log(f"Lücken-Übernahme fehlgeschlagen (Speichern): {e}", level="ERROR")
+            return
+
+        self.log(
+            f"Lücken-Übernahme: {count} Lücke(n) zu {price_ct:.1f} ct/kWh übernommen, "
+            f"gesamt {round(total_eur, 2)} € auf '{user}' verbucht"
+        )

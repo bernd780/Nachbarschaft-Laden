@@ -460,6 +460,21 @@ Nicht-öffentliche Daten (nicht über den Webserver erreichbar) landen unter `/c
 
 ---
 
+## Lücken-Übernahme (Admin)
+
+Nicht erfasste Zähler-Lücken (siehe [Lücken-Erkennung](#automatisch-angelegte-ha-helfer)) lassen sich gesammelt und dauerhaft mit einem festen Preis abrechnen – **ausschließlich über Home Assistant**, nicht über die öffentliche Website (dort gibt es dafür bewusst kein Bedienelement).
+
+Zwei Helfer anlegen (Einstellungen → Geräte & Dienste → Helfer):
+
+| Helfer | Typ | Zweck |
+|---|---|---|
+| `input_number.nl_luecken_preis_ct` | Zahl | Preis in ct/kWh, der beim nächsten Knopfdruck für **alle** offenen Lücken verwendet wird |
+| `input_button.nl_luecken_uebernehmen` | Taste | Löst die Übernahme aus |
+
+Ablauf bei Knopfdruck: Preis aus dem Zahlenfeld lesen (Abbruch falls 0 oder leer) → Sicherungs-Backup erstellen → alle Lücken-Einträge in `sessions.json` permanent in reguläre Sessions umwandeln (Benutzer „Unbestimmt", Preis = gesetzter ct/kWh-Wert) → Betrag auf das Guthaben von „Unbestimmt" verbuchen → in `statistics.jsonl` nachtragen. Die Aktion ist **irreversibel** (aber durch das automatische Backup jederzeit rückgängig zu machen, siehe Restore oben).
+
+---
+
 ## E-Paper-Display (optional)
 
 Das Display (Waveshare 7,5" V2p) läuft via ESPHome auf einem ESP32.
