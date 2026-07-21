@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.6
+
+- Fix: akku_soc_voll im Konfigurations-Schema war fälschlich als String typisiert (str statt int) – blockierte das Speichern der Add-on-Konfiguration
+- Backup & Restore: tägliches Daten-Backup + manueller Button-Trigger, Restore per ZIP-Ordner
+- Statistics-Logging (statistics.jsonl) + Health-History für KI-Anomalie-Erkennung, in nicht-öffentlichem Verzeichnis
+
 ## 1.0.5
 
 - Ersparnis-Tracking: Ersparnis pro Session (ref. Hausstrom-Tarif), Gesamtersparnis im Header

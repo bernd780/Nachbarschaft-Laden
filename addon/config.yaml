@@ -1,6 +1,6 @@
 ﻿name: "Nachbarschaft-Laden"
 description: "EV-Lademanagement: Dynamischer PV-Ladepreis, Session-Tracking, Web-Dashboard und E-Paper-Display für nachbarschaftliche Wallboxen."
-version: "1.0.5"
+version: "1.0.6"
 slug: "nachbarschaft_laden"
 url: "https://github.com/bernd780/Nachbarschaft-Laden"
 documentation: "https://github.com/bernd780/Nachbarschaft-Laden/blob/main/README.md"
@@ -97,7 +97,7 @@ schema:
   sensor_batterie_leistung: str
   sensor_batterie_soc: str
   akku_soc_mindest: int
-  akku_soc_voll: str
+  akku_soc_voll: int
   preis_einspeiseverguetung_ct: float
   preis_marge_ct: float
   preis_netzbezug_ct: float
