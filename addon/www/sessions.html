@@ -414,9 +414,19 @@ let currentGapId  = null;
 let currentGapKwh = 0;
 
 /* ── Gap-Override-Persistenz (localStorage) ── */
+// Alte Overrides koennen noch veraltete Benutzer-Labels enthalten (z.B. "Card 0"
+// vor der Umbenennung zu "Unbestimmt", oder "card_0" durch einen Integrations-
+// Formatwechsel). Beim Laden einmalig normalisieren und selbstheilend speichern.
+const GAP_USER_ALIASES = { 'card 0': 'Unbestimmt', 'card_0': 'Unbestimmt' };
 function loadGapOverrides() {
   try { gapOverrides = JSON.parse(localStorage.getItem('nl_gap_overrides') || '{}'); }
   catch(e) { gapOverrides = {}; }
+  let changed = false;
+  for (const id in gapOverrides) {
+    const alias = GAP_USER_ALIASES[(gapOverrides[id].user || '').toLowerCase()];
+    if (alias) { gapOverrides[id].user = alias; changed = true; }
+  }
+  if (changed) saveGapOverrides();
 }
 function saveGapOverrides() {
   localStorage.setItem('nl_gap_overrides', JSON.stringify(gapOverrides));
