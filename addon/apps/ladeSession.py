@@ -452,8 +452,18 @@ class LadeSession(hass.Hass):
             self.log(f"RFID auslesen fehlgeschlagen: {e}", level="WARNING")
             return None
 
+    @staticmethod
+    def _normalize_rfid(rfid):
+        """Manche Integrationen liefern die RFID-Karte mal als 'Card 0', mal als
+        'card_0' o.ä. – Groß-/Kleinschreibung und Trennzeichen ignorieren."""
+        return (rfid or "").strip().lower().replace("_", " ").replace("-", " ")
+
     def _rfid_to_user(self, rfid):
-        return self.RFID_BENUTZER.get(rfid, rfid)
+        norm = self._normalize_rfid(rfid)
+        for known_rfid, name in self.RFID_BENUTZER.items():
+            if self._normalize_rfid(known_rfid) == norm:
+                return name
+        return rfid
 
     def _ist_ueberschussladen(self):
         if not self.S_EVCC_MODUS:
