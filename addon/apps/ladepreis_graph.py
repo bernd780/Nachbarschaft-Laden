@@ -79,6 +79,7 @@ class LadepreisGraph(hass.Hass):
         self.render_combined({})
         self.run_every(self.render_combined, "now+300", 5 * 60)
         self.listen_state(self.render_combined, self.S_LADEGERAET)
+        self.listen_state(self._on_surplus_helper_change, "input_number.nl_surplus_morgen")
         self.run_in(self._check_sensors, 8)
 
     def _check_sensors(self, kwargs):
@@ -392,6 +393,26 @@ class LadepreisGraph(hass.Hass):
         preis     = preis_max - ueberschuss * (preis_max - preis_min)
         return round(max(preis_min, min(preis_max, preis)), 2)
 
+    def _on_surplus_helper_change(self, entity, attribute, old, new, kwargs):
+        """Rendert die Vorschau neu, sobald HA den Surplus-Helper-Wert bestätigt.
+        Dadurch stimmt display_preview.png immer mit dem E-Paper überein."""
+        if new in (None, "unknown", "unavailable") or new == old:
+            return
+        try:
+            surplus_m = self._float_safe("input_number.nl_surplus_morgen")
+            surplus_u = self._float_safe("input_number.nl_surplus_uebermorgen")
+            surplus_3 = self._float_safe("input_number.nl_surplus_in3tagen")
+            ladepreis = self._float_safe("sensor.nl_ladepreis_aktuell") or None
+
+            smiley_path = os.path.join(self.WWW_DIR, "display_combined.png")
+            smiley_img = Image.open(smiley_path).convert("RGB") if os.path.exists(smiley_path) else None
+            if smiley_img is None:
+                return
+            self._render_preview(ladepreis, smiley_img, surplus_m, surplus_u, surplus_3)
+            self.log(f"Vorschau nach Helper-Update: m={surplus_m:.1f} u={surplus_u:.1f} 3={surplus_3:.1f}")
+        except Exception as e:
+            self.log(f"Vorschau-Update nach Helper fehlgeschlagen: {e}", level="WARNING")
+
     def render_combined(self, *args, **kwargs):
         # Akzeptiert sowohl run_every (self, kwargs) als auch
         # listen_state (self, entity, attribute, old, new, kwargs).
@@ -459,6 +480,7 @@ class LadepreisGraph(hass.Hass):
             self.call_service("input_number/set_value",
                               entity_id="input_number.nl_surplus_in3tagen",
                               value=round(max(0.0, surplus_3), 1))
+            self.log(f"Surplus-Helper geschrieben: m={surplus_m:.1f} u={surplus_u:.1f} 3={surplus_3:.1f}")
         except Exception as e:
             self.log(f"HA-State-Publish fehlgeschlagen: {e}", level="WARNING")
 
