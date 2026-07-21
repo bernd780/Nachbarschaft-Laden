@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.5
+
+- Ersparnis-Tracking: Ersparnis pro Session (ref. Hausstrom-Tarif), Gesamtersparnis im Header
+- evcc-Modus: PV/MinPV-Laden wird erkannt → Einspeisevergütung als Ladepreis, ☀-Badge in Session-Liste
+- Session-Split bei Moduswechsel zwischen PV und Normalladen
+- Sensor-Verfügbarkeitsprüfung: Warnungen im Add-on-Log und im Web-Dashboard
+- Sessions-Liste: mobile Ansicht identisch mit Desktop, alle 8 Spalten sichtbar
+- Lücken-Erkennung: Uhrzeit immer sichtbar, Dauer erst nach Nachtragen
+- Display-Vorschau: reaktiv aus HA-Helper-Werten gerendert (immer synchron mit E-Paper)
+- Fix: go-eCharger Statuswerte (lowercase) korrekt erkannt → Sessions werden wieder erfasst
+- Fix: render_combined Signatur für listen_state-Callback korrigiert
+- Fix: sensor_kosten_integral ohne _2-Suffix (korrekter Sensor-Name)
+
 ## 1.0.3
 
 - Startseite: Ersparnis-Rechner-Karte optisch unauffälliger
