@@ -668,5 +668,134 @@ class LadepreisGraph(hass.Hass):
             with open(json_path, "w") as f:
                 json.dump(data, f)
             self.log(f"JSON ok: aktuell={aktuell}, peak_avg={peak_avg}, vortag_avg={vortag_avg}")
+            self._write_health_snapshot(surplus_m, surplus_u, surplus_3, ladepreis, ladevorgang, end_dt)
         except Exception as e:
             self.log(f"JSON-Fehler: {e}", level="ERROR")
+
+    # ── Health-Monitoring ────────────────────────────────────────────────────
+
+    HEALTH_MAX_ENTRIES = 2016  # 7 Tage à 5 Min
+
+    def _write_health_snapshot(self, surplus_m, surplus_u, surplus_3,
+                                ladepreis, ladevorgang, ts):
+        """Schreibt alle 5 Min einen strukturierten Diagnose-Snapshot.
+
+        Die Datei health_history.json kann von einer KI auf Anomalien
+        geprüft werden (Display-Sync, verpasste Sessions, Sensor-Ausfälle).
+        """
+        try:
+            # ── Display-Sync: Python-Werte vs. HA-Helper-Werte ──────────────
+            ha_m = self._float_safe("input_number.nl_surplus_morgen")
+            ha_u = self._float_safe("input_number.nl_surplus_uebermorgen")
+            ha_3 = self._float_safe("input_number.nl_surplus_in3tagen")
+            py_m = round(max(0.0, surplus_m), 1)
+            py_u = round(max(0.0, surplus_u), 1)
+            py_3 = round(max(0.0, surplus_3), 1)
+            display_diff = max(abs(py_m - ha_m), abs(py_u - ha_u), abs(py_3 - ha_3))
+            display_sync = display_diff < 1.0
+
+            # ── Session-Gesundheit: ETO-Lücke seit letzter Session ───────────
+            eto_current = self._float_safe(self.S_ZAEHLER)
+            last_eto_end = None
+            eto_gap_kwh  = None
+            session_ok   = True
+            try:
+                sf = os.path.join(self.WWW_DIR, "sessions.json")
+                if os.path.exists(sf):
+                    with open(sf) as f:
+                        sessions = json.load(f)
+                    for s in reversed(sessions):
+                        v = s.get("eto_end") or s.get("eto_gap_end")
+                        if v is not None:
+                            last_eto_end = float(v)
+                            break
+                    if last_eto_end and eto_current > last_eto_end:
+                        eto_gap_kwh = round(eto_current - last_eto_end, 2)
+                        if eto_gap_kwh > 1.0 and not ladevorgang.get("aktiv"):
+                            session_ok = False
+            except Exception:
+                pass
+
+            # ── Sensor-Zustände ──────────────────────────────────────────────
+            sensor_map = {
+                "ladegeraet":   self.S_LADEGERAET,
+                "zaehler":      self.S_ZAEHLER,
+                "netzleistung": self.S_NETZLEISTUNG,
+                "wallbox":      self.S_WALLBOX_LEISTUNG,
+                "batterie":     self.S_BATTERIE_LEISTUNG,
+            }
+            sensor_states = {}
+            sensors_ok = True
+            for label, eid in sensor_map.items():
+                state = self.get_state(eid) if eid else None
+                sensor_states[label] = state
+                if state in (None, "unavailable", "unknown"):
+                    sensors_ok = False
+
+            # ── Snapshot zusammenbauen ────────────────────────────────────────
+            snapshot = {
+                "ts": ts.isoformat(),
+                "anomalien": [],
+                "display": {
+                    "python_m": py_m, "ha_m": ha_m,
+                    "python_u": py_u, "ha_u": ha_u,
+                    "python_3": py_3, "ha_3": ha_3,
+                    "sync": display_sync,
+                    "max_diff_kwh": round(display_diff, 2),
+                },
+                "session": {
+                    "aktiv":        ladevorgang.get("aktiv", False),
+                    "eto_aktuell":  round(eto_current, 2) if eto_current else None,
+                    "eto_letztes_ende": round(last_eto_end, 2) if last_eto_end else None,
+                    "eto_luecke_kwh":   eto_gap_kwh,
+                    "ok":           session_ok,
+                },
+                "sensoren": sensor_states,
+                "sensoren_ok": sensors_ok,
+                "ladepreis_ct": ladepreis,
+            }
+
+            # Anomalien als Liste für einfache KI-Auswertung
+            if not display_sync:
+                snapshot["anomalien"].append({
+                    "typ": "display_sync",
+                    "beschreibung": f"Vorschau weicht vom E-Paper ab (max. {display_diff:.1f} kWh)",
+                })
+            if not session_ok:
+                snapshot["anomalien"].append({
+                    "typ": "session_luecke",
+                    "beschreibung": f"{eto_gap_kwh:.1f} kWh am Zähler ohne Session erfasst",
+                })
+            if not sensors_ok:
+                unavail = [k for k, v in sensor_states.items()
+                           if v in (None, "unavailable", "unknown")]
+                snapshot["anomalien"].append({
+                    "typ": "sensor_unavailable",
+                    "beschreibung": f"Sensoren nicht verfügbar: {', '.join(unavail)}",
+                })
+
+            # Datei laden, anhängen, kürzen
+            health_path = os.path.join(self.WWW_DIR, "health_history.json")
+            history = []
+            if os.path.exists(health_path):
+                try:
+                    with open(health_path) as f:
+                        history = json.load(f)
+                except Exception:
+                    history = []
+            history.append(snapshot)
+            if len(history) > self.HEALTH_MAX_ENTRIES:
+                history = history[-self.HEALTH_MAX_ENTRIES:]
+
+            tmp = health_path + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump(history, f, ensure_ascii=False)
+            os.replace(tmp, health_path)
+
+            if snapshot["anomalien"]:
+                for a in snapshot["anomalien"]:
+                    self.log(f"HEALTH-ANOMALIE [{a['typ']}]: {a['beschreibung']}",
+                             level="WARNING")
+
+        except Exception as e:
+            self.log(f"Health-Snapshot fehlgeschlagen: {e}", level="WARNING")
