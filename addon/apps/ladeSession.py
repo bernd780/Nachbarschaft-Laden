@@ -33,6 +33,8 @@ class LadeSession(hass.Hass):
         self.REFERENZPREIS_CT    = float(a.get("referenzpreis_ct",            29.0))
         self.S_EVCC_MODUS        = a.get("sensor_evcc_modus",               "") or None
         self.WWW_DIR         = a.get("www_dir",                   "/homeassistant/www/nachbarschaft-laden")
+        self.PRIVATE_DIR     = "/homeassistant/nachbarschaft-laden-data"
+        os.makedirs(self.PRIVATE_DIR, exist_ok=True)
 
         self.SESSION_FILE  = os.path.join(self.WWW_DIR, "sessions.json")
         self.STATE_FILE    = os.path.join(self.WWW_DIR, "session_active.json")
@@ -604,7 +606,7 @@ class LadeSession(hass.Hass):
         Format: eine JSON-Zeile pro Ereignis, maschinenlesbar für
         Grafana (Infinity Plugin), InfluxDB-Import, Pandas, etc.
         """
-        stats_path = os.path.join(self.WWW_DIR, "statistics.jsonl")
+        stats_path = os.path.join(self.PRIVATE_DIR, "statistics.jsonl")
         try:
             duration_min = round(session.get("duration_s", 0) / 60, 1)
             entry = {

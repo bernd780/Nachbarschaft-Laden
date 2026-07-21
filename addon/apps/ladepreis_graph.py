@@ -74,6 +74,8 @@ class LadepreisGraph(hass.Hass):
         self.H_LADEZIEL      = a.get("helper_ladeziel_soc",       "") or None
         self.QR_CODE_URL     = a.get("qr_code_url",               "")
         self.WWW_DIR         = a.get("www_dir",                   "/homeassistant/www/nachbarschaft-laden")
+        self.PRIVATE_DIR     = "/homeassistant/nachbarschaft-laden-data"
+        os.makedirs(self.PRIVATE_DIR, exist_ok=True)
         self.HISTORY_FILE    = os.path.join(self.WWW_DIR, "price_history.json")
 
         self.render_combined({})
@@ -776,7 +778,7 @@ class LadepreisGraph(hass.Hass):
                 })
 
             # Datei laden, anhängen, kürzen
-            health_path = os.path.join(self.WWW_DIR, "health_history.json")
+            health_path = os.path.join(self.PRIVATE_DIR, "health_history.json")
             history = []
             if os.path.exists(health_path):
                 try:
@@ -811,7 +813,7 @@ class LadepreisGraph(hass.Hass):
         Eine Zeile pro Ereignis, maschinenlesbar für Grafana (Infinity Plugin),
         InfluxDB-Import, Pandas, etc. Retention: 365 Tage.
         """
-        stats_path = os.path.join(self.WWW_DIR, "statistics.jsonl")
+        stats_path = os.path.join(self.PRIVATE_DIR, "statistics.jsonl")
         try:
             entry = {
                 "ts":               ts.isoformat(),
