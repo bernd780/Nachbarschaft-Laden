@@ -440,6 +440,24 @@ Alle Dateien landen unter `/config/www/<web_unterverzeichnis>/`:
 | `display_preview.png` | 480×800px RGB-Vorschau des vollständigen E-Paper-Layouts |
 | `session_active.json` | Start-Snapshot der laufenden Session (Zählerstand, Kosten-Integral) |
 
+Nicht-öffentliche Daten (nicht über den Webserver erreichbar) landen unter `/config/nachbarschaft-laden-data/`:
+
+| Datei | Inhalt |
+|---|---|
+| `statistics.jsonl` | Long-Term-Statistik (1 Zeile pro Session + Preis-Tick alle 5 Min), 365 Tage – für Grafana & Co. |
+| `health_history.json` | Diagnose-Snapshots mit Anomalie-Erkennung, 7 Tage |
+| `backups/` | Automatische Daten-Backups (ZIP) |
+
+---
+
+## Backup & Restore
+
+**Gesamtsicherung:** Alle Daten des Add-ons liegen unter `/config/` – sie sind damit automatisch in jedem **Home-Assistant-Backup** enthalten (Einstellungen → System → Backups). Auch die Add-on-Konfiguration wird dort mitgesichert. Empfehlung: automatische HA-Backups aktivieren.
+
+**Gezielter Daten-Export:** Das Add-on erstellt täglich um 03:30 Uhr ein ZIP mit allen Datendateien (Sessions, Salden, Preishistorie, Statistik, Health-History) unter `/config/nachbarschaft-laden-data/backups/`. Die letzten 10 Backups werden aufbewahrt. Zusätzlich kann ein Backup manuell ausgelöst werden: einen **Button-Helfer** mit der Entity-ID `input_button.nl_backup_erstellen` anlegen (Einstellungen → Geräte & Dienste → Helfer) – jeder Druck erzeugt sofort ein Backup. Abholen per Samba, SSH oder Datei-Editor-Add-on – die Backups liegen bewusst **nicht** im öffentlichen `www/`-Verzeichnis.
+
+**Restore:** Ein Backup-ZIP nach `/config/nachbarschaft-laden-data/restore/` kopieren und das Add-on neu starten. Vor dem Einspielen wird automatisch ein Sicherungs-Backup des aktuellen Stands erstellt; alle Dateien werden vor dem Überschreiben validiert. Nach Erfolg wird das ZIP in `*.zip.restored` umbenannt.
+
 ---
 
 ## E-Paper-Display (optional)

@@ -1,7 +1,9 @@
 ﻿import appdaemon.plugins.hass.hassapi as hass
 import json
 import os
-from datetime import datetime, timezone
+import glob
+import zipfile
+from datetime import datetime, timedelta, timezone
 
 class LadeSession(hass.Hass):
     """
@@ -98,6 +100,15 @@ class LadeSession(hass.Hass):
         self.run_in(self._check_charging_at_startup, 5)
         self.run_in(self._check_gap_on_startup,      12)
         self.run_in(self._check_sensors,              8)
+
+        # Backup: täglich 03:30, zusätzlich per Button-Helfer auslösbar.
+        # Restore: ZIP in <PRIVATE_DIR>/restore/ legen, wird beim Start eingespielt.
+        self.run_daily(self._backup_daily, "03:30:00")
+        try:
+            self.listen_state(self._on_backup_button, "input_button.nl_backup_erstellen")
+        except Exception:
+            pass
+        self.run_in(self._check_restore, 3)
 
     def _check_sensors(self, kwargs):
         sensors = {
@@ -633,7 +644,7 @@ class LadeSession(hass.Hass):
         """Entfernt Einträge die älter als STATS_MAX_DAYS sind."""
         try:
             cutoff = (datetime.now(timezone.utc)
-                      - __import__("datetime").timedelta(days=self.STATS_MAX_DAYS)).isoformat()
+                      - timedelta(days=self.STATS_MAX_DAYS)).isoformat()
             lines = []
             with open(path, encoding="utf-8") as f:
                 for line in f:
@@ -650,3 +661,92 @@ class LadeSession(hass.Hass):
                 f.write("\n".join(lines) + "\n" if lines else "")
         except Exception:
             pass
+
+    # ── Backup & Restore ─────────────────────────────────────────────────────
+
+    BACKUP_KEEP = 10
+
+    def _backup_files(self):
+        """Alle Datendateien des Add-ons (Pfad, Name-im-ZIP)."""
+        www = [("sessions.json", self.WWW_DIR), ("balances.json", self.WWW_DIR),
+               ("price_history.json", self.WWW_DIR), ("data.json", self.WWW_DIR),
+               ("session_active.json", self.WWW_DIR)]
+        priv = [("statistics.jsonl", self.PRIVATE_DIR),
+                ("health_history.json", self.PRIVATE_DIR)]
+        return www + priv
+
+    def _backup_daily(self, kwargs):
+        self._create_backup(trigger="taeglich")
+
+    def _on_backup_button(self, entity, attribute, old, new, kwargs):
+        if new in (None, "unknown", "unavailable"):
+            return
+        self._create_backup(trigger="button")
+
+    def _create_backup(self, trigger=""):
+        backup_dir = os.path.join(self.PRIVATE_DIR, "backups")
+        try:
+            os.makedirs(backup_dir, exist_ok=True)
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            zpath = os.path.join(backup_dir, f"nl_backup_{stamp}.zip")
+            count = 0
+            with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
+                for name, folder in self._backup_files():
+                    src = os.path.join(folder, name)
+                    if os.path.exists(src):
+                        z.write(src, name)
+                        count += 1
+            self.log(f"Backup erstellt ({trigger}): {zpath} ({count} Dateien)")
+            # Nur die neuesten BACKUP_KEEP behalten
+            backups = sorted(glob.glob(os.path.join(backup_dir, "nl_backup_*.zip")))
+            for old_zip in backups[:-self.BACKUP_KEEP]:
+                os.remove(old_zip)
+        except Exception as e:
+            self.log(f"Backup fehlgeschlagen: {e}", level="ERROR")
+
+    def _check_restore(self, kwargs):
+        """Spielt ein ZIP aus <PRIVATE_DIR>/restore/ ein (beim App-Start).
+
+        Ablauf für Admins: ZIP dorthin kopieren, Add-on neu starten.
+        Vor dem Einspielen wird ein Sicherungs-Backup des Ist-Zustands erstellt.
+        Nach Erfolg wird das ZIP in .restored umbenannt.
+        """
+        restore_dir = os.path.join(self.PRIVATE_DIR, "restore")
+        try:
+            zips = sorted(glob.glob(os.path.join(restore_dir, "*.zip")))
+        except Exception:
+            return
+        if not zips:
+            return
+        zpath = zips[0]
+        self.log(f"Restore gefunden: {zpath}")
+        self._create_backup(trigger="vor-restore")
+        try:
+            with zipfile.ZipFile(zpath) as z:
+                names = set(z.namelist())
+                targets = {n: d for n, d in self._backup_files() if n in names}
+                if not targets:
+                    self.log("Restore-ZIP enthält keine bekannten Dateien", level="ERROR")
+                    return
+                for name, folder in targets.items():
+                    data = z.read(name)
+                    # Validierung: muss parsbares JSON bzw. JSONL sein
+                    text = data.decode("utf-8")
+                    if name.endswith(".jsonl"):
+                        for line in text.splitlines():
+                            if line.strip():
+                                json.loads(line)
+                    else:
+                        json.loads(text)
+                    dst = os.path.join(folder, name)
+                    tmp = dst + ".tmp"
+                    with open(tmp, "w", encoding="utf-8") as f:
+                        f.write(text)
+                    os.replace(tmp, dst)
+                    self.log(f"Restore: {name} → {folder}")
+            os.replace(zpath, zpath + ".restored")
+            self.log(f"Restore abgeschlossen: {len(targets)} Dateien. "
+                     "Add-on ggf. erneut neu starten, damit alle Apps die Daten laden.")
+        except Exception as e:
+            self.log(f"Restore fehlgeschlagen (nichts überschrieben ab Fehlerdatei): {e}",
+                     level="ERROR")
